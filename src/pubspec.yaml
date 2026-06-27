@@ -1,0 +1,39 @@
+name: beobachter_app
+description: "Schiedsrichterbeobachter — Live-Ereigniserfassung für Fußballspiele"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Datenbank
+  drift: ^2.22.0
+  drift_flutter: ^0.2.4
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Utilities
+  uuid: ^4.5.1
+  file_picker: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code-Generierung für Drift
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.14
+
+  # Mocking für Tests
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
