@@ -182,15 +182,37 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
   }
 
   Future<void> _doImport() async {
+    // FileType.custom mit allowedExtensions: ['csv'] graut auf macOS (Sandbox +
+    // UTI-Filterung) alle Dateien aus. FileType.any + manuelle Extension-Prüfung
+    // ist das zuverlässige Cross-Platform-Workaround.
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
+      type: FileType.any,
       withData: true,
     );
 
     if (result == null || result.files.isEmpty) return;
 
-    final bytes = result.files.single.bytes;
+    final file = result.files.single;
+    if ((file.extension ?? '').toLowerCase() != 'csv') {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Falsches Dateiformat'),
+          content: const Text(
+              'Bitte eine CSV-Datei aus dem DFB/FLVW-Pressebericht auswählen.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final bytes = file.bytes;
     if (bytes == null) return;
 
     String content;
