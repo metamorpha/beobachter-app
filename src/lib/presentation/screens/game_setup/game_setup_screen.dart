@@ -87,11 +87,13 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
             const SizedBox(height: 16),
             _SectionTitle('Spieldaten'),
             TextField(
+              key: const Key('tf_home_team'),
               controller: _homeCtrl,
               decoration: const InputDecoration(labelText: 'Heimmannschaft'),
             ),
             const SizedBox(height: 8),
             TextField(
+              key: const Key('tf_away_team'),
               controller: _awayCtrl,
               decoration: const InputDecoration(labelText: 'Gastmannschaft'),
             ),
@@ -131,6 +133,7 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                key: const Key('btn_start_game'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,

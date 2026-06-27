@@ -19,6 +19,7 @@ class PitchCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: const Key('pitch_canvas'),
       onTapDown: (details) {
         final box = context.findRenderObject() as RenderBox;
         final local = box.globalToLocal(details.globalPosition);

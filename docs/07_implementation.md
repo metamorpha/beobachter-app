@@ -143,14 +143,47 @@ final result = PresskBerichtCsvParser.parse(csvContent);
 
 ---
 
+### Fensterverwaltung Windows + macOS (US-107, US-108)
+
+`window_manager ^0.4.0` wird in `main.dart` vor `runApp()` initialisiert. Der Guard schließt iOS/Android aus:
+
+```dart
+if (Platform.isWindows || Platform.isMacOS) {
+  await windowManager.ensureInitialized();
+  windowManager.waitUntilReadyToShow(
+    const WindowOptions(skipTaskbar: false),
+    () async {
+      await windowManager.maximize();
+      await windowManager.setResizable(false);
+      await windowManager.show();
+      await windowManager.focus();
+    },
+  );
+}
+```
+
+`waitUntilReadyToShow` hält das Fenster verborgen, bis es maximiert ist — kein Flackern beim Start. `setResizable(false)` deaktiviert alle Drag-Handles auf Windows und macOS gleichermaßen.
+
+---
+
+### Navigationsfluß (US-104)
+
+```
+GameListScreen
+  ├── FAB "Neues Spiel"  → GameSetupScreen  → LiveScreen (pushReplacement)
+  └── Tap Spielkachel    → ReviewScreen
+                               └── Edit-Icon (✏)  → GameSetupScreen
+```
+
+Jede Spielkachel zeigt Datum und Ereignisanzahl im Subtitle. Der `eventCountProvider(gameId)` ist ein `FutureProvider.family<int, String>` in `providers.dart` und ruft `getEvents` auf.
+
+---
+
 ## Bekannte Einschränkungen (MVP)
 
 | Bereich | Einschränkung | Nächster Schritt |
 |---------|--------------|------------------|
-| Spieler-Ranking | Zeigt Placeholder — EventPlayer werden in Statistik nicht ausgewertet | Provider für Spieler-Aggregation ergänzen |
-| providers.dart `homeSquadProvider` | Enthält fehlerhaften cast, wird derzeit nicht verwendet | Durch separaten Squad-Provider ersetzen |
 | `EventFormPanel._save()` | Ruft sowohl `notifier.save()` als auch direkt `repo.createEvent()` auf (doppelt) | Notifier-State in FormPanel vollständig nutzen, direkten Repo-Call entfernen |
-| Aufstellungs-Chips im Formular | Zeigt aktuell nur manuell eingegebene Nummern, nicht die vorerfassten | Squad-Provider in EventFormPanel einbinden |
 
 ---
 

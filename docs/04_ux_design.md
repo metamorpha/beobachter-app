@@ -337,4 +337,28 @@ Nachbearbeitungs-Screen
 - Anzeige: `MM:SS` (z. B. `47:23`), Schriftgröße ≥ 32 pt
 - Start/Stop: einzelner großer Button (`▶` / `■`), mindestens 80×60 pt
 - Uhr läuft im Hintergrund (Plattform-Timer, kein App-Vordergrund erforderlich)
+
+---
+
+## Plattformverhalten — Fensterverwaltung (US-107)
+
+### Grundsatz
+
+Die UI ist ausschließlich für **Tablet-Querformat in fester Größe** gestaltet. Ein responsives Layout für beliebige Fenstergrößen ist nicht vorgesehen und würde die One-Tap-Bedienung im Live-Betrieb gefährden.
+
+### Verhalten je Plattform
+
+| Plattform | Verhalten |
+|-----------|-----------|
+| **Windows (Surface)** | App startet maximiert; Resize-Handles deaktiviert; Minimieren erlaubt |
+| **macOS** | App startet maximiert; Resize-Handles deaktiviert; Minimieren in Dock erlaubt (US-108) |
+| **iOS** | Vollbild vom Betriebssystem erzwungen — keine App-seitige Änderung |
+| **Android** | Vollbild vom Betriebssystem erzwungen — keine App-seitige Änderung |
+
+### UX-Entscheidungen
+
+- **Kein Restore-Button / kein „Fenstermodus"** — die App hat keinen Kleinfenster-Modus; ein Restore würde ebenfalls maximiert landen
+- **Minimieren erlaubt** — der Beobachter muss kurz zu anderen Windows-Apps wechseln können (z. B. Kalender, Notizen)
+- **Kein Vollbild im F11-Sinne** — das Windows-Titlelbar bleibt sichtbar (native Tablet-UX auf Surface); nur die Fenstergröße ist fixiert
+- **Kein explizites Nutzer-Feedback** — das Verhalten ist erwartungskonform und braucht keinen Toast oder Dialog
 - Bei Tap auf Spielfeld während laufender Uhr: aktuelle Zeit wird sofort als Zeitstempel des Ereignisses eingefroren

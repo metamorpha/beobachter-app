@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../domain/entities/game.dart';
 import '../../providers/providers.dart';
 import '../game_setup/game_setup_screen.dart';
+import '../review/review_screen.dart';
 
 class GameListScreen extends ConsumerWidget {
   const GameListScreen({super.key});
@@ -30,6 +31,7 @@ class GameListScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Fehler: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        key: const Key('fab_new_game'),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
         onPressed: () => _createGame(context, ref),
@@ -74,14 +76,19 @@ class _GameTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dateStr =
         '${game.date.day.toString().padLeft(2, '0')}.${game.date.month.toString().padLeft(2, '0')}.${game.date.year}';
+    final countAsync = ref.watch(eventCountProvider(game.id));
+    final countStr = countAsync.valueOrNull != null
+        ? ' · ${countAsync.value} Ereignisse'
+        : '';
 
     return ListTile(
+      key: Key('game_tile_${game.id}'),
       leading: const Icon(Icons.sports_soccer, color: Colors.green),
       title: Text(
         _displayName,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
-      subtitle: Text(dateStr),
+      subtitle: Text('$dateStr$countStr'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -90,6 +97,7 @@ class _GameTile extends ConsumerWidget {
             child: const Icon(Icons.chevron_right),
           ),
           IconButton(
+            key: Key('btn_delete_game_${game.id}'),
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: () => _confirmDelete(context, ref),
           ),
@@ -102,7 +110,7 @@ class _GameTile extends ConsumerWidget {
   void _openGame(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => GameSetupScreen(game: game)),
+      MaterialPageRoute(builder: (_) => ReviewScreen(game: game)),
     );
   }
 
@@ -117,10 +125,12 @@ class _GameTile extends ConsumerWidget {
         ),
         actions: [
           TextButton(
+            key: const Key('dialog_btn_cancel'),
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Abbrechen'),
           ),
           TextButton(
+            key: const Key('dialog_btn_delete_confirm'),
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Löschen'),

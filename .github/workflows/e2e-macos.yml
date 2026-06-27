@@ -1,0 +1,45 @@
+name: E2E Tests (macOS)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.7'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: src
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: src
+        run: flutter analyze
+
+      - name: Unit tests
+        working-directory: src
+        run: flutter test
+
+      - name: E2E — Spielverwaltung
+        working-directory: src
+        run: flutter test integration_test/flows/game_setup_test.dart -d macos
+
+      - name: E2E — Timer
+        working-directory: src
+        run: flutter test integration_test/flows/timer_test.dart -d macos
+
+      - name: E2E — Live-Ereigniserfassung
+        working-directory: src
+        run: flutter test integration_test/flows/live_event_test.dart -d macos
+
+      - name: E2E — Spiel löschen
+        working-directory: src
+        run: flutter test integration_test/flows/game_delete_test.dart -d macos

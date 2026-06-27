@@ -97,6 +97,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                 ),
                 const Spacer(),
                 IconButton(
+                  key: const Key('btn_close_event_form'),
                   icon: const Icon(Icons.close, color: Colors.white70),
                   onPressed: widget.onClose,
                   tooltip: 'Abbrechen',
@@ -163,6 +164,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
+                key: const Key('btn_save_event'),
                 onPressed: _canSave
                     ? () => _save(timerService.currentMs)
                     : null,
@@ -207,6 +209,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
       children: EventType.values.map((t) {
         final sel = _type == t;
         return GestureDetector(
+          key: Key('event_type_${t.name}'),
           onTap: () => setState(() => _type = sel ? null : t),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -235,6 +238,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
       children: RefDecision.values.map((d) {
         final sel = _decision == d;
         return GestureDetector(
+          key: Key('decision_${d.name}'),
           onTap: () => setState(() => _decision = sel ? null : d),
           child: Container(
             width: 70,
@@ -260,7 +264,9 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   }
 
   Widget _cardRow() {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: CardType.values.map((c) {
         final sel = _card == c;
         final color = c == CardType.yellow
@@ -268,24 +274,22 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
             : c == CardType.yellowRed
                 ? Colors.orange.shade700
                 : Colors.red.shade700;
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: GestureDetector(
-            onTap: () => setState(() => _card = sel ? null : c),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: sel ? color : color.withOpacity(0.35),
-                borderRadius: BorderRadius.circular(6),
-                border: sel
-                    ? Border.all(color: Colors.white, width: 1.5)
-                    : null,
-              ),
-              child: Text(c.label,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+        return GestureDetector(
+          key: Key('card_${c.name}'),
+          onTap: () => setState(() => _card = sel ? null : c),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: sel ? color : color.withOpacity(0.35),
+              borderRadius: BorderRadius.circular(6),
+              border: sel
+                  ? Border.all(color: Colors.white, width: 1.5)
+                  : null,
             ),
+            child: Text(c.label,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         );
       }).toList(),

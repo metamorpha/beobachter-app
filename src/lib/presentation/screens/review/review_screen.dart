@@ -10,6 +10,7 @@ import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
 import '../../widgets/heatmap_canvas.dart';
+import '../game_setup/game_setup_screen.dart';
 import '../live/event_form_panel.dart';
 
 class ReviewScreen extends ConsumerWidget {
@@ -31,6 +32,17 @@ class ReviewScreen extends ConsumerWidget {
             '${game.awayTeamName.isEmpty ? 'Gast' : game.awayTeamName}',
             style: const TextStyle(fontSize: 15),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Spiel einrichten',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => GameSetupScreen(game: game)),
+              ),
+            ),
+          ],
           bottom: const TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white54,

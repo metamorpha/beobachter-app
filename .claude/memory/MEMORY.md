@@ -4,3 +4,4 @@
 - [Regression gegen User Stories](feedback_regression_user_stories.md) — Nach jeder Codeänderung alle Akzeptanzkriterien prüfen und Checkboxen in docs/02_user_stories.md aktualisieren
 - [Konflikt-Erkennung vor Implementierung](feedback_conflict_detection.md) — Vor jeder Implementierung User Stories auf Widersprüche prüfen, Nutzer entscheiden lassen bevor Code entsteht
 - [Memory-Speicherort](feedback_memory_storage.md) — Memories nur in `.claude/memory/` im Projekt-Root speichern, nie außerhalb
+- [flutter analyze vor flutter test](feedback_analyze_before_test.md) — `flutter analyze` immer nach Code-Änderungen ausführen; `flutter test` allein deckt main.dart nicht ab

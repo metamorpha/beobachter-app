@@ -42,6 +42,7 @@ class AssessmentGrid extends StatelessWidget {
     final isSelected = selected == value;
     return Expanded(
       child: GestureDetector(
+        key: Key('assessment_${value.name}'),
         onTap: () => onChanged(isSelected ? null : value),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),

@@ -53,6 +53,12 @@ final eventsProvider =
   return ref.watch(eventRepositoryProvider).getEvents(gameId);
 });
 
+final eventCountProvider =
+    FutureProvider.family<int, String>((ref, gameId) async {
+  final events = await ref.read(eventRepositoryProvider).getEvents(gameId);
+  return events.length;
+});
+
 // ── Squad ─────────────────────────────────────────────────────────────────────
 
 final homeSquadProvider =

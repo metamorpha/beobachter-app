@@ -33,6 +33,7 @@ class TimerDisplay extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
+          key: const Key('timer_label'),
           label,
           style: const TextStyle(
             fontSize: 36,
@@ -43,6 +44,7 @@ class TimerDisplay extends ConsumerWidget {
         ),
         const SizedBox(width: 12),
         ElevatedButton.icon(
+          key: const Key('btn_timer_toggle'),
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 state.isRunning ? Colors.red : Colors.green,

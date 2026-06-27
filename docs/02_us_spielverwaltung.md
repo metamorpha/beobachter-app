@@ -15,7 +15,7 @@
 - [x] Ich kann ein neues Spiel mit folgenden Feldern anlegen: Datum, Uhrzeit (Anstoß), Spielort, Heimmannschaft (Name), Gastmannschaft (Name)
 - [x] Alle Felder sind optional — ich kann das Spiel auch ohne Angaben starten
 - [x] Das Spiel wird sofort lokal gespeichert
-- [ ] Nach dem Anlegen lande ich direkt auf dem Live-Screen (Spielfeld-Sketch + Uhr)
+- [x] Nach dem Anlegen lande ich direkt auf dem Live-Screen (Spielfeld-Sketch + Uhr)
 
 ---
 
@@ -28,7 +28,7 @@
 **Akzeptanzkriterien:**
 - [x] Ich kann für jede Mannschaft eine Liste von Rückennummern (1–99) eingeben
 - [x] Die Eingabe ist optional — ich kann auch ohne Aufstellung Ereignisse erfassen
-- [ ] Ich kann Nummern jederzeit (auch während des Spiels) nachträglich ergänzen
+- [x] Ich kann Nummern jederzeit (auch während des Spiels) nachträglich ergänzen
 - [x] Es sind keine Spielernamen erforderlich
 
 ---
@@ -57,8 +57,8 @@
 
 **Akzeptanzkriterien:**
 - [x] Die Startseite zeigt eine Liste aller gespeicherten Spiele (absteigend nach Datum)
-- [ ] Pro Spiel werden angezeigt: Datum, Teams, Anzahl erfasster Ereignisse
-- [ ] Ein Tap auf ein Spiel öffnet die Nachbearbeitungsansicht (Epic 3)
+- [x] Pro Spiel werden angezeigt: Datum, Teams, Anzahl erfasster Ereignisse
+- [x] Ein Tap auf ein Spiel öffnet die Nachbearbeitungsansicht (Epic 3)
 - [x] Spiele bleiben dauerhaft gespeichert bis ich sie manuell lösche
 
 ---
@@ -89,11 +89,47 @@
 **damit** die Liste übersichtlich bleibt und nicht mehr relevante Spiele nach dem Coaching nicht dauerhaft gespeichert sind.
 
 **Akzeptanzkriterien:**
-- [ ] Jede Spielkachel in der Übersicht zeigt ein Löschen-Icon (🗑), das ohne Swipe-Geste sichtbar ist
-- [ ] Ein Tap auf das Icon öffnet einen Bestätigungs-Dialog mit Spielname und Warnung vor unwiderruflichem Datenverlust
-- [ ] Der Dialog bietet „Abbrechen" (kein Effekt) und „Löschen" (rot hervorgehoben)
-- [ ] Nach Bestätigung wird das Spiel mit allen zugehörigen Ereignissen, Aufstellungen und Timer-Daten gelöscht
-- [ ] Die Kachel verschwindet sofort aus der Liste; andere Spiele bleiben unverändert
-- [ ] Wird das letzte Spiel gelöscht, erscheint der Leer-Hinweis „Noch keine Spiele erfasst."
-- [ ] Bei Spielen ohne Teamnamen zeigt der Dialog „Unbenanntes Spiel"
-- [ ] Ein Tap auf Spielname oder Chevron (›) öffnet das Spiel — kein Löschen-Dialog
+- [x] Jede Spielkachel in der Übersicht zeigt ein Löschen-Icon (🗑), das ohne Swipe-Geste sichtbar ist
+- [x] Ein Tap auf das Icon öffnet einen Bestätigungs-Dialog mit Spielname und Warnung vor unwiderruflichem Datenverlust
+- [x] Der Dialog bietet „Abbrechen" (kein Effekt) und „Löschen" (rot hervorgehoben)
+- [x] Nach Bestätigung wird das Spiel mit allen zugehörigen Ereignissen, Aufstellungen und Timer-Daten gelöscht
+- [x] Die Kachel verschwindet sofort aus der Liste; andere Spiele bleiben unverändert
+- [x] Wird das letzte Spiel gelöscht, erscheint der Leer-Hinweis „Noch keine Spiele erfasst."
+- [x] Bei Spielen ohne Teamnamen zeigt der Dialog „Unbenanntes Spiel"
+- [x] Ein Tap auf Spielname oder Chevron (›) öffnet das Spiel — kein Löschen-Dialog
+
+---
+
+### US-107 · Fenstergröße fixiert auf Gerätauflösung
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich**, dass die App beim Start automatisch die maximale Bildschirmgröße einnimmt und nicht manuell verkleinert werden kann,  
+**damit** das Layout stets optimal ausgerichtet ist und nicht versehentlich durch eine Fensterverkleinerung zerstört wird.
+
+**Hintergrund:** Die UI ist für Tablet-Querformat optimiert und nicht responsive für beliebige Fenstergrößen. Ein versehentliches Verkleinern während des Live-Spiels würde die Bedienung unmöglich machen.
+
+**Akzeptanzkriterien:**
+- [x] Die App startet auf Windows (Surface) maximiert — sie nimmt die volle Bildschirmfläche ein
+- [x] Das Fenster kann unter Windows nicht durch Ziehen der Ränder verkleinert oder vergrößert werden (Resize-Handles deaktiviert)
+- [x] Das Fenster kann unter Windows weiterhin minimiert werden (Zugang zur Taskleiste bleibt erhalten)
+- [x] Nach dem Minimieren und Wiederherstellen nimmt das Fenster wieder die volle Bildschirmgröße ein
+- [x] Auf iOS und Android bleibt das native Vollbild-Verhalten des Betriebssystems unverändert erhalten
+- [x] Das Verhalten tritt ohne Nutzeraktion ein — kein zusätzlicher Schritt beim App-Start erforderlich
+
+---
+
+### US-108 · Fenstergröße fixiert auf Gerätauflösung — macOS
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich**, dass die App beim Start auf macOS automatisch maximiert wird und die Fenstergröße nicht manuell verändert werden kann,  
+**damit** das Layout auf dem Mac genauso zuverlässig fixiert ist wie auf dem Windows Surface.
+
+**Hintergrund:** US-107 hat dieses Verhalten für Windows implementiert. macOS war kein ursprüngliches Zielgerät, wird aber in der Praxis für Entwicklung und Vorbereitungsarbeiten genutzt. Der `Platform.isWindows`-Guard in `main.dart` schließt macOS derzeit aus.
+
+**Akzeptanzkriterien:**
+- [x] Die App startet auf macOS maximiert — sie nimmt die volle Bildschirmfläche ein
+- [x] Das Fenster kann unter macOS nicht durch Ziehen der Ränder verkleinert oder vergrößert werden
+- [x] Das Fenster kann unter macOS weiterhin minimiert werden (Dock-Zugang bleibt erhalten)
+- [x] Nach dem Minimieren und Wiederherstellen aus dem Dock nimmt das Fenster wieder die volle Bildschirmgröße ein
+- [x] Windows, iOS und Android sind von dieser Änderung nicht betroffen (keine Regression)
+- [x] Das Verhalten tritt ohne Nutzeraktion ein — kein zusätzlicher Schritt beim App-Start erforderlich
