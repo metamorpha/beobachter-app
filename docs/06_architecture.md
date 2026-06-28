@@ -89,6 +89,7 @@ Die App folgt einer **3-Schichten-Architektur** mit Repository-Pattern. Der Repo
 │ sceneNote: String?           │
 │ coachingFlag: bool           │
 │ coachingNote: String?        │
+│ gamePhase: GamePhase         │  ← Spielphase beim Zeitstempel
 │ createdAt: DateTime          │
 └──────────────┬───────────────┘
                │ 0..2
@@ -143,6 +144,22 @@ enum Assessment {
 
 enum TeamSide { home, away }
 enum PlayerRole { fouler, fouled }
+
+enum GamePhase {
+  bereit,
+  ersteHalbzeit,                          // MM:SS, auto-advance → NS nach 45 Min
+  ersteHalbzeitNachspielzeit,             // 45+XX
+  halbzeit,                               // gestoppt
+  zweiteHalbzeit,                         // MM:SS, auto-advance → NS nach 90 Min
+  zweiteHalbzeitNachspielzeit,            // 90+XX
+  beendet,                                // gestoppt, Verlängerung optional
+  verlaengerungErsteHalbzeit,             // MM:SS, auto-advance → NS nach 105 Min
+  verlaengerungErsteHalbzeitNachspielzeit,// 105+XX
+  verlaengerungHalbzeit,                  // gestoppt
+  verlaengerungZweiteHalbzeit,            // MM:SS, auto-advance → NS nach 120 Min
+  verlaengerungZweiteHalbzeitNachspielzeit,// 120+XX
+  beendetVerlaengerung,                   // gestoppt, kein weiterer Übergang
+}
 ```
 
 ---
@@ -155,7 +172,13 @@ SQLite-Datenbankdatei im App-internen Verzeichnis (kein Cloud-Zugriff, kein Back
 
 ### Migrationsstrategie
 
-Drift unterstützt deklarative Schemamigration. Jede Schemaänderung erhält eine Versionnummer. MVP startet mit `schemaVersion = 1`.
+Drift unterstützt deklarative Schemamigration. Jede Schemaänderung erhält eine Versionnummer. Aktuell: `schemaVersion = 3`.
+
+| Version | Änderung |
+|---------|---------|
+| 1 | Initiales Schema (games, events, event_players, squads, timer_states) |
+| 2 | `games`: +`liga`, +`spieltag` (CSV-Import) |
+| 3 | `timer_states`: +`phase`; `events`: +`game_phase` (Spielphasen) |
 
 ### Schreibstrategie
 
@@ -388,7 +411,7 @@ lib/
 │
 ├── domain/
 │   ├── entities/               # Game, Event, EventPlayer, Squad, TimerState
-│   ├── enums/                  # EventType, RefDecision, CardType, Assessment, …
+│   ├── enums/                  # EventType, RefDecision, CardType, Assessment, GamePhase, …
 │   └── repositories/           # Abstract Repository Interfaces
 │
 ├── presentation/

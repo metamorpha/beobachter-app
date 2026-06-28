@@ -11,7 +11,7 @@
 cd src/
 flutter pub get
 flutter pub run build_runner build   # Drift-Code generieren (einmalig / nach Schema-Änderungen)
-flutter test                          # 57 Tests, alle grün
+flutter test                          # 99 Tests, alle grün
 flutter run                           # iOS / Android / Windows
 ```
 
@@ -25,12 +25,12 @@ src/lib/
 ├── app.dart                         # MaterialApp, BeobachterApp
 ├── domain/
 │   ├── entities/                    # Game · Event · EventPlayer · Squad · TimerState
-│   ├── enums/                       # EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole
+│   ├── enums/                       # EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole · GamePhase
 │   └── repositories/               # Abstrakte Interfaces (4 Stück)
 ├── data/
 │   ├── database/
 │   │   ├── tables/                  # 5 Drift-Tabellen (@DataClassName je Tabelle)
-│   │   └── app_database.dart        # @DriftDatabase + PRAGMA foreign_keys, Schema v2
+│   │   └── app_database.dart        # @DriftDatabase + PRAGMA foreign_keys, Schema v3
 │   └── repositories/               # 4 konkrete Implementierungen
 ├── core/
 │   ├── timer_service.dart           # Background-safe Spieluhr
@@ -124,6 +124,36 @@ Der `EventFormPanel` zeigt Spielernummern als Chips (Heim/Gast farblich getrennt
 
 ---
 
+### Spielphasen-System (US-210, US-211)
+
+`GamePhase` in `domain/enums/game_phase.dart` definiert 13 Spielzustände:
+
+| Phase | Anzeige | Timer |
+|-------|---------|-------|
+| `bereit` | `00:00` | gestoppt |
+| `ersteHalbzeit` | `MM:SS` | läuft |
+| `ersteHalbzeitNachspielzeit` | `45+XX` | läuft |
+| `halbzeit` | eingefroren | gestoppt |
+| `zweiteHalbzeit` | `MM:SS` | läuft |
+| `zweiteHalbzeitNachspielzeit` | `90+XX` | läuft |
+| `beendet` | eingefroren | gestoppt |
+| `verlaengerungErsteHalbzeit` | `MM:SS` | läuft |
+| `verlaengerungErsteHalbzeitNachspielzeit` | `105+XX` | läuft |
+| `verlaengerungHalbzeit` | eingefroren | gestoppt |
+| `verlaengerungZweiteHalbzeit` | `MM:SS` | läuft |
+| `verlaengerungZweiteHalbzeitNachspielzeit` | `120+XX` | läuft |
+| `beendetVerlaengerung` | eingefroren | gestoppt |
+
+**Auto-Advance:** `_tick()` im `TimerService` prüft `phase.nachspielzeitSchwelle` — bei Überschreitung wechselt die Phase automatisch in die NS-Phase (kein manueller Eingriff nötig).
+
+**Phase-aware Formatierung:** `GamePhaseX.formatMs(ms, phase)` ist die zentrale Methode, die von `TimerState.formattedTime` und `Event.elapsedLabel` genutzt wird.
+
+**Ereignis-Zeitstempel:** Jedes `Event` speichert seine `gamePhase` — notwendig, weil der Timer nie zurückgesetzt wird und `elapsedMs` allein nicht eindeutig (z. B. 47 Min kann 1. HZ-NS oder reguläre 2. HZ sein).
+
+**Datenbankschema v3:** Neue Spalten `phase` in `timer_states` und `game_phase` in `events`. Migration in `app_database.dart`.
+
+---
+
 ### CSV-Import (US-105)
 
 `PresskBerichtCsvParser` in `core/pressebericht_csv_parser.dart` liest das DFB/FLVW-Pressebericht-Format (`;`-separiert, Header + 1 Datenzeile):
@@ -179,21 +209,14 @@ Jede Spielkachel zeigt Datum und Ereignisanzahl im Subtitle. Der `eventCountProv
 
 ---
 
-## Bekannte Einschränkungen (MVP)
-
-| Bereich | Einschränkung | Nächster Schritt |
-|---------|--------------|------------------|
-| `EventFormPanel._save()` | Ruft sowohl `notifier.save()` als auch direkt `repo.createEvent()` auf (doppelt) | Notifier-State in FormPanel vollständig nutzen, direkten Repo-Call entfernen |
-
----
-
-## Tests (57 gesamt)
+## Tests (99 gesamt)
 
 | Datei | Tests | Fokus |
 |-------|-------|-------|
 | `test/core/pressebericht_csv_parser_test.dart` | 26 | CSV-Parser: Teamnamen, Meta, Spielernummern, Warnungen, Fehlerbehandlung |
-| `test/domain/entities/timer_state_test.dart` | 5 | Timer-Logik, Akkumulation, Background-safety |
-| `test/domain/entities/event_test.dart` | 5 | Zeitformatierung, copyWith, Defaults |
+| `test/core/timer_service_phase_test.dart` | 22 | Phasenübergänge, Auto-Advance, Stream, Persistenz, formatMs |
+| `test/domain/entities/timer_state_test.dart` | 16 | Timer-Logik, Akkumulation, Phase-Erhalt, formattedTime (alle NS-Formate) |
+| `test/domain/entities/event_test.dart` | 13 | Zeitformatierung (regulär + alle NS-Phasen), copyWith, Defaults |
 | `test/data/repositories/game_repository_test.dart` | 6 | CRUD, Sortierung, Isolation |
 | `test/data/repositories/event_repository_test.dart` | 8 | CRUD, Cascade, Enum-Persistenz, optionale Felder |
 | `test/data/repositories/squad_repository_test.dart` | 4 | Upsert, Team-Trennung, leere Liste |
@@ -201,22 +224,3 @@ Jede Spielkachel zeigt Datum und Ereignisanzahl im Subtitle. Der `eventCountProv
 
 Alle Tests laufen gegen eine In-Memory-SQLite-Datenbank (`NativeDatabase.memory()`).
 
----
-
-## CLAUDE.md — Build-Befehle ergänzen
-
-Folgende Befehle in `CLAUDE.md` unter "Commands" eintragen:
-
-```bash
-# Abhängigkeiten installieren
-flutter pub get
-
-# Drift-Code neu generieren (nach Schema-Änderungen)
-flutter pub run build_runner build
-
-# Tests ausführen
-flutter test
-
-# App starten (Simulator/Gerät)
-flutter run
-```

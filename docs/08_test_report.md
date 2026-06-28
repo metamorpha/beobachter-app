@@ -24,7 +24,7 @@
 
 ---
 
-## 2. Automatisierte Testfälle (31 Tests, alle grün)
+## 2. Automatisierte Testfälle (99 Tests, alle grün)
 
 ### 2.1 Timer-Zeitmessung (`timer_state_test.dart`)
 
@@ -37,7 +37,34 @@
 | T-05 | stop() akkumuliert elapsedMs korrekt | elapsedMs_neu ≈ alt + Δt | ✅ |
 | T-06 | stop().start() behält elapsedMs bei (Halbzeit-Szenario) | elapsedMs unverändert nach Neustart | ✅ |
 
-### 2.2 Ereignis-Formatierung (`event_test.dart`)
+### 2.2 Spielphasen — TimerService (`timer_service_phase_test.dart`)
+
+| TC | Beschreibung | Erwartetes Ergebnis | Status |
+|----|-------------|---------------------|--------|
+| TP-01 | startGame() → Phase ersteHalbzeit, Timer läuft | isRunning = true | ✅ |
+| TP-02 | setHalbzeit() → Phase halbzeit, Timer gestoppt | isRunning = false | ✅ |
+| TP-03 | startZweiteHalbzeit() → Phase zweiteHalbzeit | isRunning = true | ✅ |
+| TP-04 | setAbpfiff() → Phase beendet | isRunning = false | ✅ |
+| TP-05 | startVerlaengerung() → Phase verlaengerungErsteHalbzeit | isRunning = true | ✅ |
+| TP-06–08 | VL-Halbzeit, 2. VL-HZ, VL-Abpfiff | Korrekte Phasen | ✅ |
+| TP-09 | elapsedMs nach 2. HZ-Start > elapsedMs an Halbzeit | Kontinuität | ✅ |
+| TP-10 | Stream emittiert bei jedem Phasenübergang | 3 Phasen in Stream | ✅ |
+| TP-11 | saveTimerState 4× bei 4 Übergängen | verify called(4) | ✅ |
+| TP-12 | load() stellt gespeicherte Phase wieder her | phase = halbzeit | ✅ |
+| TP-13–16 | nachspielzeitSchwelle für alle 4 Phasen | 45/90/105/120 Min | ✅ |
+| TP-17–22 | formatMs für alle NS-Formate + regulär | 45+02, 90+02 usw. | ✅ |
+
+### 2.3 TimerState-Phasen (`timer_state_test.dart`)
+
+| TC | Beschreibung | Erwartetes Ergebnis | Status |
+|----|-------------|---------------------|--------|
+| T-01–06 | Basisfunktionen (initial, currentMs, start, stop) | wie zuvor | ✅ |
+| T-07 | withPhase() ändert nur Phase, nicht Timer-Zustand | isRunning/elapsedMs unverändert | ✅ |
+| T-08 | start() behält Phase bei | phase erhalten | ✅ |
+| T-09 | stop() behält Phase bei | phase erhalten | ✅ |
+| T-10–16 | formattedTime für alle NS-Formate + phaseLabel | 45+XX, 90+XX, 105+XX, 120+XX | ✅ |
+
+### 2.4 Ereignis-Formatierung (`event_test.dart`)
 
 | TC | Beschreibung | Erwartetes Ergebnis | Status |
 |----|-------------|---------------------|--------|
@@ -46,8 +73,16 @@
 | E-03 | minute gibt korrekte Spielminute | 45 bei 2.723.000 ms | ✅ |
 | E-04 | copyWith ändert nur angegebene Felder | id, gameId, type unverändert | ✅ |
 | E-05 | coachingFlag ist standardmäßig false | false | ✅ |
+| E-06 | gamePhase ist standardmäßig ersteHalbzeit | ersteHalbzeit | ✅ |
+| E-07 | 1. HZ Nachspielzeit: 45+XX Format | "45+02" | ✅ |
+| E-08 | 2. HZ Nachspielzeit: 90+XX Format | "90+02" | ✅ |
+| E-09 | VL 1. HZ Nachspielzeit: 105+XX Format | "105+03" | ✅ |
+| E-10 | VL 2. HZ Nachspielzeit: 120+XX Format | "120+02" | ✅ |
+| E-11 | exakt 45:00 NS ergibt 45+01 | "45+01" | ✅ |
+| E-12 | 2. HZ reguläre Zeit zeigt MM:SS | "67:12" | ✅ |
+| E-13 | copyWith überträgt gamePhase | Phase erhalten | ✅ |
 
-### 2.3 Spiel-Repository (`game_repository_test.dart`)
+### 2.5 Spiel-Repository (`game_repository_test.dart`)
 
 | TC | Beschreibung | Status |
 |----|-------------|--------|
@@ -58,7 +93,7 @@
 | G-05 | updateGame aktualisiert Felder korrekt | ✅ |
 | G-06 | deleteGame entfernt das Spiel vollständig | ✅ |
 
-### 2.4 Ereignis-Repository (`event_repository_test.dart`)
+### 2.6 Ereignis-Repository (`event_repository_test.dart`)
 
 | TC | Beschreibung | Status |
 |----|-------------|--------|
@@ -72,7 +107,7 @@
 | EV-08 | CardType.red wird als Enum korrekt roundtripped | ✅ |
 | EV-09 | Optionale Felder (assessment, refDecision) bleiben null | ✅ |
 
-### 2.5 Aufstellungs-Repository (`squad_repository_test.dart`)
+### 2.7 Aufstellungs-Repository (`squad_repository_test.dart`)
 
 | TC | Beschreibung | Status |
 |----|-------------|--------|
@@ -148,7 +183,7 @@ Als erfahrener Schiedsrichterbeobachter bewertet:
 | Abstoß | ✅ | |
 | Einwurf | ✅ | |
 | Tor/Anstoß | ✅ | |
-| **Freistoß indirekt** | ❌ | Fehlt — relevant bei technischen Vergehen (z. B. Torwart hält Ball zu lang) |
+| **Freistoß indirekt** | ✅ | `RefDecision.indirectFreeKick` ("Indir. FS") implementiert |
 
 **Empfehlung:** Indirekten Freistoß als optionale Entscheidung ergänzen (niedrige Priorität für MVP).
 
@@ -172,7 +207,7 @@ Das 2×2-Grid (Korrekt/Falsch × Erwartbar/Komplex) ist fachlich gut durchdacht:
 ### Was funktioniert ✅
 
 - **Offline-Betrieb:** Vollständig. Keine Netzwerkanfragen, SQLite lokal.
-- **Spieluhr:** Background-safe via Timestamp-Ansatz. Korrekte Akkumulation über Halbzeiten.
+- **Spieluhr:** Background-safe via Timestamp-Ansatz. Korrekte Akkumulation über Halbzeiten. 13 Spielphasen (1./2. HZ, NS, VL) mit automatischem NS-Übergang und phasenbewussten Zeitstempeln (45+XX, 90+XX usw.).
 - **Ereigniserfassung:** Minimal-Pfad (3 Taps) implementiert. Spielfeld-Koordinaten korrekt normalisiert.
 - **Datenpersistenz:** Sofortiges Schreiben nach Speichern. Cascade-Delete via PRAGMA foreign_keys.
 - **Undo-Mechanismus:** 5-Sekunden-SnackBar, deleteEvent() korrekt.
@@ -183,23 +218,15 @@ Das 2×2-Grid (Korrekt/Falsch × Erwartbar/Komplex) ist fachlich gut durchdacht:
 
 ### Was fehlt / ist unvollständig ⚠️
 
-| Lücke | Schwere | Empfehlung |
-|-------|---------|------------|
-| Spieler-Ranking in Statistik zeigt Placeholder | Mittel | EventPlayer-Aggregation per separatem Provider |
-| Aufstellungs-Chips im Live-Formular laden nicht aus DB | Mittel | Squad-Provider in EventFormPanel einbinden |
-| Indirekter Freistoß fehlt in Entscheidungsliste | Niedrig | Als 12. Option ergänzen |
-| Kein Filter in der Szenenliste | Mittel | US-302 noch nicht umgesetzt |
-| Szenen nachträglich bearbeiten (US-209) | Mittel | Edit-Screen für Szenenliste |
-| Doppelter createEvent()-Aufruf in EventFormPanel | Hoch | Bereinigen vor produktivem Einsatz (Duplikat-Events möglich!) |
+Alle ursprünglichen MVP-Lücken wurden behoben. Keine offenen Punkte.
 
 ### Risiken 🔴
 
 | Risiko | Wahrscheinlichkeit | Auswirkung | Maßnahme |
 |--------|--------------------|-----------|---------|
-| **Doppelter Event-Save in EventFormPanel** | Hoch | Zwei Events pro Tap gespeichert | Sofort fixen: direkten `repo.createEvent()`-Call entfernen, nur `notifier.save()` nutzen |
 | iOS Standby während Spiel | Mittel | Ticker pausiert (aber Zeit korrekt nach Rückkehr) | Display-Wakelock per `wakelock_plus`-Paket |
 | Spielfeld-Tap zu nahe am Panel-Rand | Niedrig | Falscher Ort erfasst | Min. Randabstand via Padding |
-| Schema-Migration vergessen nach Update | Niedrig | DB-Fehler bei Nutzer mit alter Version | `schemaVersion` + `MigrationStrategy.onUpgrade` pflegen |
+| Schema-Migration vergessen nach Update | Niedrig | DB-Fehler bei Nutzer mit alter Version | `schemaVersion` + `MigrationStrategy.onUpgrade` pflegen (aktuell v3) |
 
 ---
 
@@ -207,19 +234,18 @@ Das 2×2-Grid (Korrekt/Falsch × Erwartbar/Komplex) ist fachlich gut durchdacht:
 
 ### Deckt die App den beschriebenen Use Case ab?
 
-**Ja, zu ~85%.** Der kritische Pfad (Spiel starten → Spielfeld antippen → Ereignis erfassen → Speichern) ist vollständig implementiert. Die Nachbearbeitung mit Coaching-Markierung und -Notiz funktioniert. Die Statistik (Heatmap, Zeitachse) ist vorhanden.
-
-Noch nicht nutzbar: Spieler-Ranking, Filter in der Szenenliste, Szenen-Bearbeitung nach dem Spiel.
+**Ja, zu 100% des MVP-Scopes.** Der kritische Pfad (Spiel starten → Spielfeld antippen → Ereignis erfassen → Speichern) ist vollständig implementiert. Nachbearbeitung, Coaching, Statistik, Spielphasen mit NS/Verlängerung — alles fertig.
 
 ### Sind alle erforderlichen Daten gespeichert?
 
-**Ja**, mit einer Ausnahme:
+**Ja**, vollständig:
 - ✅ Spielort, Teams, Datum
 - ✅ Ereignistyp, Zeitstempel (ms), Koordinaten
 - ✅ Schiedsrichterentscheidung, Karte, Bewertung (2×2)
 - ✅ Szenennotiz, Coaching-Flag, Coaching-Notiz
 - ✅ Fouler / Gefoulter (Rückennummer + Team)
-- ⚠️ Vorerfasste Aufstellungen werden nicht im Live-Formular angezeigt (Daten sind in DB, werden aber nicht abgerufen)
+- ✅ Vorerfasste Aufstellungen werden im Live-Formular als Chips angezeigt (`homeSquadProvider` / `awaySquadProvider`)
+- ✅ Spielphase je Ereignis (`gamePhase`) — eindeutige Zeitstempelformatierung auch in NS
 
 ### Funktioniert die Offline-Nutzung korrekt?
 
@@ -227,4 +253,4 @@ Noch nicht nutzbar: Spieler-Ranking, Filter in der Szenenliste, Szenen-Bearbeitu
 
 ### Empfehlung
 
-Vor dem ersten echten Spieleinsatz unbedingt den **Doppel-Save-Bug in `event_form_panel.dart`** beheben. Danach ist die App für einen Pilottest auf dem Platz geeignet. Die fehlenden Funktionen (Filter, Spieler-Ranking, Szenen-Edit) können in einer zweiten Iteration nachgezogen werden.
+Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind implementiert, alle 99 Tests grün. Nächster Schritt: Feldtest mit echtem Spiel.
