@@ -74,6 +74,7 @@ Key design decisions:
 | `10_csv_import_tests.md` | CSV import test cases (24 TCs) |
 | `11_delete_game_tests.md` | Delete game test cases (13 TCs) |
 | `12_window_management_tests.md` | Window management test cases — US-107 (10 TCs) |
+| `13_timer_phases_tests.md` | Timer phases test cases — US-210/211 (31 TCs) |
 
 ### src/lib/ structure
 

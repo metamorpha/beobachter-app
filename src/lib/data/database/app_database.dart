@@ -18,7 +18,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,6 +27,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.addColumn(games, games.liga);
             await m.addColumn(games, games.spieltag);
+          }
+          if (from < 3) {
+            await m.addColumn(timerStates, timerStates.phase);
+            await m.addColumn(events, events.gamePhase);
           }
         },
         beforeOpen: (details) async {

@@ -334,9 +334,107 @@ Nachbearbeitungs-Screen
 
 ### Spieluhr
 
-- Anzeige: `MM:SS` (z. B. `47:23`), Schriftgröße ≥ 32 pt
-- Start/Stop: einzelner großer Button (`▶` / `■`), mindestens 80×60 pt
+- Anzeige: `MM:SS` (z. B. `47:23`) in der regulären Spielzeit, Schriftgröße ≥ 32 pt
+- In der Nachspielzeit wechselt die Anzeige automatisch auf `45+X` / `90+X` / `105+X` / `120+X`
+- Phase-Label direkt unter der Zeit (z. B. „1. Halbzeit", „Nachspielzeit", „Halbzeitpause")
+- Phasen-Button rechts neben der Uhr: beschriftungsabhängig von aktuellem Zustand (s. Flow 5)
 - Uhr läuft im Hintergrund (Plattform-Timer, kein App-Vordergrund erforderlich)
+
+---
+
+### Flow 5 — Spielphasen-Steuerung (US-210 / US-211)
+
+#### Zustandsmaschine
+
+```
+[BEREIT]
+   │ ▶ Start
+   ▼
+[1. HALBZEIT]  ──── automatisch bei 45:00 ────▶  [1. HZ NACHSPIELZEIT]
+                                                          │ ⏸ Halbzeit
+                                                          ▼
+                                                  [HALBZEITPAUSE]
+                                                          │ ▶ 2. HZ starten
+                                                          ▼
+[2. HALBZEIT]  ◀────────────────────────────────────────┘
+   │                                   automatisch bei 90:00
+   └──── automatisch bei 90:00 ────▶  [2. HZ NACHSPIELZEIT]
+                                                          │ ⏸ Abpfiff
+                                                          ▼
+                                                  [BEENDET]
+                                                 /         \
+                                  (kein Verl.)  /           \ ▶ Verlängerung starten
+                                               /             ▼
+                                         [Ende]    [VERL. 1. HZ]  ──▶  [VERL. 1. HZ NS]
+                                                                               │ ⏸ HZ (Verl.)
+                                                                               ▼
+                                                                    [VERL. HALBZEIT]
+                                                                               │ ▶ 2. Verl. starten
+                                                                               ▼
+                                                                    [VERL. 2. HZ]  ──▶  [VERL. 2. HZ NS]
+                                                                                               │ ⏸ Abpfiff
+                                                                                               ▼
+                                                                                           [BEENDET]
+```
+
+#### Phasen-Tabelle: Zeitanzeige und Steuerbutton
+
+| Phase | Zeitanzeige | Phase-Label | Button (rechts) |
+|-------|-------------|-------------|-----------------|
+| Bereit | `00:00` | — | `▶ Start` |
+| 1. Halbzeit | `MM:SS` (0–44:59) | 1. Halbzeit | `⏸ Halbzeit` |
+| 1. HZ Nachspielzeit | `45+01`, `45+02`, … | Nachspielzeit | `⏸ Halbzeit` |
+| Halbzeitpause | eingefroren | Halbzeitpause | `▶ 2. HZ starten` |
+| 2. Halbzeit | `MM:SS` (45:00–89:59) | 2. Halbzeit | `⏸ Abpfiff` |
+| 2. HZ Nachspielzeit | `90+01`, `90+02`, … | Nachspielzeit | `⏸ Abpfiff` |
+| Beendet (regulär) | eingefroren | Beendet | `▶ Verlängerung` |
+| Verl. 1. HZ | `MM:SS` (90:00–104:59) | Verl. 1. HZ | `⏸ HZ (Verl.)` |
+| Verl. 1. HZ NS | `105+01`, … | Nachspielzeit | `⏸ HZ (Verl.)` |
+| Verl. Halbzeit | eingefroren | Verl. Halbzeit | `▶ 2. Verl. starten` |
+| Verl. 2. HZ | `MM:SS` (105:00–119:59) | Verl. 2. HZ | `⏸ Abpfiff (Verl.)` |
+| Verl. 2. HZ NS | `120+01`, … | Nachspielzeit | `⏸ Abpfiff (Verl.)` |
+| Beendet (n. Verl.) | eingefroren | Beendet | — |
+
+#### Wireframes — Live-Screen Header je Phase
+
+```
+── 1. Halbzeit (23:45) ─────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  23:45  ·  1. Halbzeit  ·  Gastteam  [⏸ HALBZEIT]  │
+
+── 1. HZ Nachspielzeit ──────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  45+02  ·  Nachspielzeit  ·  Gastteam [⏸ HALBZEIT]  │
+
+── Halbzeitpause ────────────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  45+03  ·  Halbzeitpause  ·  Gastteam [▶ 2. HZ]    │
+
+── 2. Halbzeit (67:12) ──────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  67:12  ·  2. Halbzeit  ·  Gastteam  [⏸ ABPFIFF]   │
+
+── 2. HZ Nachspielzeit ──────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  90+02  ·  Nachspielzeit  ·  Gastteam [⏸ ABPFIFF]  │
+
+── Beendet (regulär) ────────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  90+03  ·  Beendet        ·  Gastteam [▶ VERLÄNGERUNG] │
+
+── Verlängerung 1. HZ (97:30) ───────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  97:30  ·  Verl. 1. HZ   ·  Gastteam [⏸ HZ (VERL.)] │
+
+── Verlängerung 1. HZ Nachspielzeit ─────────────────────────────────────────
+│  ◀ Spiele    Heimteam  · 105+01  ·  Nachspielzeit  ·  Gastteam [⏸ HZ (VERL.)] │
+
+── Verlängerung 2. HZ (112:15) ──────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  · 112:15  ·  Verl. 2. HZ   ·  Gastteam [⏸ ABPFIFF (VERL.)] │
+
+── Verlängerung 2. HZ Nachspielzeit ─────────────────────────────────────────
+│  ◀ Spiele    Heimteam  · 120+02  ·  Nachspielzeit  ·  Gastteam [⏸ ABPFIFF (VERL.)] │
+```
+
+**UX-Entscheidungen:**
+- Phase-Label und Zeitanzeige sind immer sichtbar — kein Suchen, kein Modal
+- Immer genau **ein** Phasen-Button sichtbar: kontextsensitiv und eindeutig beschriftet
+- „Verlängerung starten" erscheint erst nach regulärem Abpfiff — kein versehentlicher Tap während des Spiels
+- Phasen-Button mindestens **120×48 pt** — sicher tappbar auch mit ablenktem Blick
+- Automatischer NS-Wechsel läuft unhörbar/visuell (Anzeige wechselt, kein Dialog, kein Ton)
 
 ---
 

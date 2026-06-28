@@ -134,3 +134,65 @@
 - [x] Aus der Szenenliste (Epic 3) kann ich jedes Ereignis antippen und bearbeiten
 - [x] Alle Felder sind editierbar (inkl. Zeitstempel und Ort)
 - [x] Änderungen werden lokal gespeichert
+
+---
+
+### US-210 · Spieluhr mit Halbzeit-Phasensteuerung und Nachspielzeit
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** dass die Spieluhr die realen Spielphasen (Halbzeiten, Nachspielzeiten) abbildet,  
+**damit** alle erfassten Ereignisse der richtigen Spielminute zugeordnet sind und ich mit einem Tap zwischen den Phasen wechseln kann.
+
+**Akzeptanzkriterien:**
+
+*1. Halbzeit (0:00 – 45:00)*
+- [ ] Nach dem Spielstart läuft die Uhr von 0:00 aufwärts im Format MM:SS (z. B. `23:45`)
+- [ ] Ab 45:00 wechselt die Anzeige automatisch in das Nachspielzeit-Format `45+01`, `45+02`, ...
+
+*Halbzeitpause*
+- [ ] Im Live-Screen ist ein Button **„Halbzeit"** sichtbar, solange die 1. Halbzeit (inkl. deren Nachspielzeit) läuft
+- [ ] Ein Tap stoppt die Uhr; der Timer-Zustand wechselt in den Status `halbzeit`
+- [ ] In der Halbzeitpause zeigt der Screen einen Button **„2. Halbzeit starten"**
+
+*2. Halbzeit (45:00 – 90:00)*
+- [ ] „2. Halbzeit starten" setzt die Uhr bei 45:00 fort (kein Neustart bei 0:00)
+- [ ] Die Anzeige läuft MM:SS weiter (z. B. `67:12`)
+- [ ] Ab 90:00 wechselt die Anzeige automatisch in das Nachspielzeit-Format `90+01`, `90+02`, ...
+
+*Spielende / Abpfiff*
+- [ ] Im Live-Screen ist ein Button **„Abpfiff"** sichtbar, solange die 2. Halbzeit (inkl. deren Nachspielzeit) läuft
+- [ ] Ein Tap stoppt die Uhr; der Timer-Zustand wechselt in den Status `beendet`
+- [ ] Nach dem Abpfiff erscheint optional der Button **„Verlängerung starten"** (→ US-211)
+
+*Ereignis-Zeitstempel*
+- [ ] Ein Ereignis, das während der Nachspielzeit der 1. Halbzeit erfasst wird, erhält den Zeitstempel im Format `45+X` (z. B. `45+02`)
+- [ ] Ein Ereignis, das während der Nachspielzeit der 2. Halbzeit erfasst wird, erhält den Zeitstempel im Format `90+X`
+- [ ] In Ereignisformular und Szenenliste wird der Zeitstempel immer im jeweils geltenden Format angezeigt
+
+---
+
+### US-211 · Verlängerung starten und verwalten
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** bei Bedarf eine Verlängerung (2 × 15 Min.) starten können,  
+**damit** auch Ereignisse in der Verlängerung mit der korrekten Spielminute erfasst werden.
+
+**Akzeptanzkriterien:**
+
+*Verlängerung 1. Halbzeit (90:00 – 105:00)*
+- [ ] Nach dem Abpfiff der regulären Spielzeit (Status `beendet`) erscheint der Button **„Verlängerung starten"**
+- [ ] Ein Tap startet die Verlängerung: die Uhr setzt bei 90:00 fort
+- [ ] Ab 105:00 wechselt die Anzeige automatisch in das Nachspielzeit-Format `105+01`, `105+02`, ...
+- [ ] Ein Button **„Halbzeit (Verl.)"** ist sichtbar, solange die 1. Hälfte der Verlängerung (inkl. Nachspielzeit) läuft
+- [ ] Ein Tap stoppt die Uhr; der Timer-Zustand wechselt in den Status `halbzeit_verlaengerung`
+
+*Verlängerung 2. Halbzeit (105:00 – 120:00)*
+- [ ] In der Halbzeitpause der Verlängerung erscheint der Button **„2. Verlängerung starten"**
+- [ ] Ein Tap setzt die Uhr bei 105:00 fort
+- [ ] Ab 120:00 wechselt die Anzeige automatisch in das Nachspielzeit-Format `120+01`, `120+02`, ...
+- [ ] Ein Button **„Abpfiff (Verl.)"** ist sichtbar, solange die 2. Hälfte der Verlängerung (inkl. Nachspielzeit) läuft
+- [ ] Ein Tap stoppt die Uhr; der Timer-Zustand wechselt in den Status `beendet`
+
+*Ereignis-Zeitstempel*
+- [ ] Ereignisse in der Verlängerung 1. HZ erhalten Zeitstempel im Format `90:XX` bzw. `105+X`
+- [ ] Ereignisse in der Verlängerung 2. HZ erhalten Zeitstempel im Format `105:XX` bzw. `120+X`

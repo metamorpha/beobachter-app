@@ -32,7 +32,7 @@ void main() {
 
     expect(find.text('Borussia – Schalke'), findsOneWidget);
     expect(find.byKey(const Key('pitch_canvas')), findsOneWidget);
-    expect(find.byKey(const Key('btn_timer_toggle')), findsOneWidget);
+    expect(find.byKey(const Key('btn_start_game')), findsOneWidget);
   });
 
   testWidgets('Spiel ohne Teamnamen öffnet Live-Screen mit Platzhaltern',

@@ -608,6 +608,18 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _gamePhaseMeta = const VerificationMeta(
+    'gamePhase',
+  );
+  @override
+  late final GeneratedColumn<String> gamePhase = GeneratedColumn<String>(
+    'game_phase',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ersteHalbzeit'),
+  );
   static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
   late final GeneratedColumn<String> type = GeneratedColumn<String>(
@@ -734,6 +746,7 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
     id,
     gameId,
     elapsedMs,
+    gamePhase,
     type,
     customTypeLabel,
     locationX,
@@ -778,6 +791,12 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
       );
     } else if (isInserting) {
       context.missing(_elapsedMsMeta);
+    }
+    if (data.containsKey('game_phase')) {
+      context.handle(
+        _gamePhaseMeta,
+        gamePhase.isAcceptableOrUnknown(data['game_phase']!, _gamePhaseMeta),
+      );
     }
     if (data.containsKey('type')) {
       context.handle(
@@ -886,6 +905,10 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
         DriftSqlType.int,
         data['${effectivePrefix}elapsed_ms'],
       )!,
+      gamePhase: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}game_phase'],
+      )!,
       type: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}type'],
@@ -943,6 +966,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
   final String id;
   final String gameId;
   final int elapsedMs;
+  final String gamePhase;
   final String type;
   final String? customTypeLabel;
   final double locationX;
@@ -958,6 +982,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     required this.id,
     required this.gameId,
     required this.elapsedMs,
+    required this.gamePhase,
     required this.type,
     this.customTypeLabel,
     required this.locationX,
@@ -976,6 +1001,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     map['id'] = Variable<String>(id);
     map['game_id'] = Variable<String>(gameId);
     map['elapsed_ms'] = Variable<int>(elapsedMs);
+    map['game_phase'] = Variable<String>(gamePhase);
     map['type'] = Variable<String>(type);
     if (!nullToAbsent || customTypeLabel != null) {
       map['custom_type_label'] = Variable<String>(customTypeLabel);
@@ -1007,6 +1033,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       id: Value(id),
       gameId: Value(gameId),
       elapsedMs: Value(elapsedMs),
+      gamePhase: Value(gamePhase),
       type: Value(type),
       customTypeLabel: customTypeLabel == null && nullToAbsent
           ? const Value.absent()
@@ -1040,6 +1067,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       id: serializer.fromJson<String>(json['id']),
       gameId: serializer.fromJson<String>(json['gameId']),
       elapsedMs: serializer.fromJson<int>(json['elapsedMs']),
+      gamePhase: serializer.fromJson<String>(json['gamePhase']),
       type: serializer.fromJson<String>(json['type']),
       customTypeLabel: serializer.fromJson<String?>(json['customTypeLabel']),
       locationX: serializer.fromJson<double>(json['locationX']),
@@ -1060,6 +1088,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       'id': serializer.toJson<String>(id),
       'gameId': serializer.toJson<String>(gameId),
       'elapsedMs': serializer.toJson<int>(elapsedMs),
+      'gamePhase': serializer.toJson<String>(gamePhase),
       'type': serializer.toJson<String>(type),
       'customTypeLabel': serializer.toJson<String?>(customTypeLabel),
       'locationX': serializer.toJson<double>(locationX),
@@ -1078,6 +1107,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     String? id,
     String? gameId,
     int? elapsedMs,
+    String? gamePhase,
     String? type,
     Value<String?> customTypeLabel = const Value.absent(),
     double? locationX,
@@ -1093,6 +1123,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     id: id ?? this.id,
     gameId: gameId ?? this.gameId,
     elapsedMs: elapsedMs ?? this.elapsedMs,
+    gamePhase: gamePhase ?? this.gamePhase,
     type: type ?? this.type,
     customTypeLabel: customTypeLabel.present
         ? customTypeLabel.value
@@ -1112,6 +1143,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       id: data.id.present ? data.id.value : this.id,
       gameId: data.gameId.present ? data.gameId.value : this.gameId,
       elapsedMs: data.elapsedMs.present ? data.elapsedMs.value : this.elapsedMs,
+      gamePhase: data.gamePhase.present ? data.gamePhase.value : this.gamePhase,
       type: data.type.present ? data.type.value : this.type,
       customTypeLabel: data.customTypeLabel.present
           ? data.customTypeLabel.value
@@ -1142,6 +1174,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
           ..write('id: $id, ')
           ..write('gameId: $gameId, ')
           ..write('elapsedMs: $elapsedMs, ')
+          ..write('gamePhase: $gamePhase, ')
           ..write('type: $type, ')
           ..write('customTypeLabel: $customTypeLabel, ')
           ..write('locationX: $locationX, ')
@@ -1162,6 +1195,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     id,
     gameId,
     elapsedMs,
+    gamePhase,
     type,
     customTypeLabel,
     locationX,
@@ -1181,6 +1215,7 @@ class EventRow extends DataClass implements Insertable<EventRow> {
           other.id == this.id &&
           other.gameId == this.gameId &&
           other.elapsedMs == this.elapsedMs &&
+          other.gamePhase == this.gamePhase &&
           other.type == this.type &&
           other.customTypeLabel == this.customTypeLabel &&
           other.locationX == this.locationX &&
@@ -1198,6 +1233,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
   final Value<String> id;
   final Value<String> gameId;
   final Value<int> elapsedMs;
+  final Value<String> gamePhase;
   final Value<String> type;
   final Value<String?> customTypeLabel;
   final Value<double> locationX;
@@ -1214,6 +1250,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     this.id = const Value.absent(),
     this.gameId = const Value.absent(),
     this.elapsedMs = const Value.absent(),
+    this.gamePhase = const Value.absent(),
     this.type = const Value.absent(),
     this.customTypeLabel = const Value.absent(),
     this.locationX = const Value.absent(),
@@ -1231,6 +1268,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     required String id,
     required String gameId,
     required int elapsedMs,
+    this.gamePhase = const Value.absent(),
     required String type,
     this.customTypeLabel = const Value.absent(),
     required double locationX,
@@ -1254,6 +1292,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     Expression<String>? id,
     Expression<String>? gameId,
     Expression<int>? elapsedMs,
+    Expression<String>? gamePhase,
     Expression<String>? type,
     Expression<String>? customTypeLabel,
     Expression<double>? locationX,
@@ -1271,6 +1310,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
       if (id != null) 'id': id,
       if (gameId != null) 'game_id': gameId,
       if (elapsedMs != null) 'elapsed_ms': elapsedMs,
+      if (gamePhase != null) 'game_phase': gamePhase,
       if (type != null) 'type': type,
       if (customTypeLabel != null) 'custom_type_label': customTypeLabel,
       if (locationX != null) 'location_x': locationX,
@@ -1290,6 +1330,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     Value<String>? id,
     Value<String>? gameId,
     Value<int>? elapsedMs,
+    Value<String>? gamePhase,
     Value<String>? type,
     Value<String?>? customTypeLabel,
     Value<double>? locationX,
@@ -1307,6 +1348,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
       id: id ?? this.id,
       gameId: gameId ?? this.gameId,
       elapsedMs: elapsedMs ?? this.elapsedMs,
+      gamePhase: gamePhase ?? this.gamePhase,
       type: type ?? this.type,
       customTypeLabel: customTypeLabel ?? this.customTypeLabel,
       locationX: locationX ?? this.locationX,
@@ -1333,6 +1375,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     }
     if (elapsedMs.present) {
       map['elapsed_ms'] = Variable<int>(elapsedMs.value);
+    }
+    if (gamePhase.present) {
+      map['game_phase'] = Variable<String>(gamePhase.value);
     }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
@@ -1379,6 +1424,7 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
           ..write('id: $id, ')
           ..write('gameId: $gameId, ')
           ..write('elapsedMs: $elapsedMs, ')
+          ..write('gamePhase: $gamePhase, ')
           ..write('type: $type, ')
           ..write('customTypeLabel: $customTypeLabel, ')
           ..write('locationX: $locationX, ')
@@ -2082,12 +2128,23 @@ class $TimerStatesTable extends TimerStates
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _phaseMeta = const VerificationMeta('phase');
+  @override
+  late final GeneratedColumn<String> phase = GeneratedColumn<String>(
+    'phase',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('bereit'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     gameId,
     isRunning,
     startTimestamp,
     elapsedMs,
+    phase,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2130,6 +2187,12 @@ class $TimerStatesTable extends TimerStates
         elapsedMs.isAcceptableOrUnknown(data['elapsed_ms']!, _elapsedMsMeta),
       );
     }
+    if (data.containsKey('phase')) {
+      context.handle(
+        _phaseMeta,
+        phase.isAcceptableOrUnknown(data['phase']!, _phaseMeta),
+      );
+    }
     return context;
   }
 
@@ -2155,6 +2218,10 @@ class $TimerStatesTable extends TimerStates
         DriftSqlType.int,
         data['${effectivePrefix}elapsed_ms'],
       )!,
+      phase: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phase'],
+      )!,
     );
   }
 
@@ -2169,11 +2236,13 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
   final bool isRunning;
   final DateTime? startTimestamp;
   final int elapsedMs;
+  final String phase;
   const TimerStateRow({
     required this.gameId,
     required this.isRunning,
     this.startTimestamp,
     required this.elapsedMs,
+    required this.phase,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2184,6 +2253,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
       map['start_timestamp'] = Variable<DateTime>(startTimestamp);
     }
     map['elapsed_ms'] = Variable<int>(elapsedMs);
+    map['phase'] = Variable<String>(phase);
     return map;
   }
 
@@ -2195,6 +2265,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
           ? const Value.absent()
           : Value(startTimestamp),
       elapsedMs: Value(elapsedMs),
+      phase: Value(phase),
     );
   }
 
@@ -2208,6 +2279,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
       isRunning: serializer.fromJson<bool>(json['isRunning']),
       startTimestamp: serializer.fromJson<DateTime?>(json['startTimestamp']),
       elapsedMs: serializer.fromJson<int>(json['elapsedMs']),
+      phase: serializer.fromJson<String>(json['phase']),
     );
   }
   @override
@@ -2218,6 +2290,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
       'isRunning': serializer.toJson<bool>(isRunning),
       'startTimestamp': serializer.toJson<DateTime?>(startTimestamp),
       'elapsedMs': serializer.toJson<int>(elapsedMs),
+      'phase': serializer.toJson<String>(phase),
     };
   }
 
@@ -2226,6 +2299,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
     bool? isRunning,
     Value<DateTime?> startTimestamp = const Value.absent(),
     int? elapsedMs,
+    String? phase,
   }) => TimerStateRow(
     gameId: gameId ?? this.gameId,
     isRunning: isRunning ?? this.isRunning,
@@ -2233,6 +2307,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
         ? startTimestamp.value
         : this.startTimestamp,
     elapsedMs: elapsedMs ?? this.elapsedMs,
+    phase: phase ?? this.phase,
   );
   TimerStateRow copyWithCompanion(TimerStatesCompanion data) {
     return TimerStateRow(
@@ -2242,6 +2317,7 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
           ? data.startTimestamp.value
           : this.startTimestamp,
       elapsedMs: data.elapsedMs.present ? data.elapsedMs.value : this.elapsedMs,
+      phase: data.phase.present ? data.phase.value : this.phase,
     );
   }
 
@@ -2251,13 +2327,15 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
           ..write('gameId: $gameId, ')
           ..write('isRunning: $isRunning, ')
           ..write('startTimestamp: $startTimestamp, ')
-          ..write('elapsedMs: $elapsedMs')
+          ..write('elapsedMs: $elapsedMs, ')
+          ..write('phase: $phase')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(gameId, isRunning, startTimestamp, elapsedMs);
+  int get hashCode =>
+      Object.hash(gameId, isRunning, startTimestamp, elapsedMs, phase);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2265,7 +2343,8 @@ class TimerStateRow extends DataClass implements Insertable<TimerStateRow> {
           other.gameId == this.gameId &&
           other.isRunning == this.isRunning &&
           other.startTimestamp == this.startTimestamp &&
-          other.elapsedMs == this.elapsedMs);
+          other.elapsedMs == this.elapsedMs &&
+          other.phase == this.phase);
 }
 
 class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
@@ -2273,12 +2352,14 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
   final Value<bool> isRunning;
   final Value<DateTime?> startTimestamp;
   final Value<int> elapsedMs;
+  final Value<String> phase;
   final Value<int> rowid;
   const TimerStatesCompanion({
     this.gameId = const Value.absent(),
     this.isRunning = const Value.absent(),
     this.startTimestamp = const Value.absent(),
     this.elapsedMs = const Value.absent(),
+    this.phase = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TimerStatesCompanion.insert({
@@ -2286,6 +2367,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
     this.isRunning = const Value.absent(),
     this.startTimestamp = const Value.absent(),
     this.elapsedMs = const Value.absent(),
+    this.phase = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : gameId = Value(gameId);
   static Insertable<TimerStateRow> custom({
@@ -2293,6 +2375,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
     Expression<bool>? isRunning,
     Expression<DateTime>? startTimestamp,
     Expression<int>? elapsedMs,
+    Expression<String>? phase,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2300,6 +2383,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
       if (isRunning != null) 'is_running': isRunning,
       if (startTimestamp != null) 'start_timestamp': startTimestamp,
       if (elapsedMs != null) 'elapsed_ms': elapsedMs,
+      if (phase != null) 'phase': phase,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2309,6 +2393,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
     Value<bool>? isRunning,
     Value<DateTime?>? startTimestamp,
     Value<int>? elapsedMs,
+    Value<String>? phase,
     Value<int>? rowid,
   }) {
     return TimerStatesCompanion(
@@ -2316,6 +2401,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
       isRunning: isRunning ?? this.isRunning,
       startTimestamp: startTimestamp ?? this.startTimestamp,
       elapsedMs: elapsedMs ?? this.elapsedMs,
+      phase: phase ?? this.phase,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2335,6 +2421,9 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
     if (elapsedMs.present) {
       map['elapsed_ms'] = Variable<int>(elapsedMs.value);
     }
+    if (phase.present) {
+      map['phase'] = Variable<String>(phase.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2348,6 +2437,7 @@ class TimerStatesCompanion extends UpdateCompanion<TimerStateRow> {
           ..write('isRunning: $isRunning, ')
           ..write('startTimestamp: $startTimestamp, ')
           ..write('elapsedMs: $elapsedMs, ')
+          ..write('phase: $phase, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2982,6 +3072,7 @@ typedef $$EventsTableCreateCompanionBuilder =
       required String id,
       required String gameId,
       required int elapsedMs,
+      Value<String> gamePhase,
       required String type,
       Value<String?> customTypeLabel,
       required double locationX,
@@ -3000,6 +3091,7 @@ typedef $$EventsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> gameId,
       Value<int> elapsedMs,
+      Value<String> gamePhase,
       Value<String> type,
       Value<String?> customTypeLabel,
       Value<double> locationX,
@@ -3070,6 +3162,11 @@ class $$EventsTableFilterComposer
 
   ColumnFilters<int> get elapsedMs => $composableBuilder(
     column: $table.elapsedMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gamePhase => $composableBuilder(
+    column: $table.gamePhase,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3196,6 +3293,11 @@ class $$EventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get gamePhase => $composableBuilder(
+    column: $table.gamePhase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
@@ -3289,6 +3391,9 @@ class $$EventsTableAnnotationComposer
 
   GeneratedColumn<int> get elapsedMs =>
       $composableBuilder(column: $table.elapsedMs, builder: (column) => column);
+
+  GeneratedColumn<String> get gamePhase =>
+      $composableBuilder(column: $table.gamePhase, builder: (column) => column);
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
@@ -3413,6 +3518,7 @@ class $$EventsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> gameId = const Value.absent(),
                 Value<int> elapsedMs = const Value.absent(),
+                Value<String> gamePhase = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String?> customTypeLabel = const Value.absent(),
                 Value<double> locationX = const Value.absent(),
@@ -3429,6 +3535,7 @@ class $$EventsTableTableManager
                 id: id,
                 gameId: gameId,
                 elapsedMs: elapsedMs,
+                gamePhase: gamePhase,
                 type: type,
                 customTypeLabel: customTypeLabel,
                 locationX: locationX,
@@ -3447,6 +3554,7 @@ class $$EventsTableTableManager
                 required String id,
                 required String gameId,
                 required int elapsedMs,
+                Value<String> gamePhase = const Value.absent(),
                 required String type,
                 Value<String?> customTypeLabel = const Value.absent(),
                 required double locationX,
@@ -3463,6 +3571,7 @@ class $$EventsTableTableManager
                 id: id,
                 gameId: gameId,
                 elapsedMs: elapsedMs,
+                gamePhase: gamePhase,
                 type: type,
                 customTypeLabel: customTypeLabel,
                 locationX: locationX,
@@ -4165,6 +4274,7 @@ typedef $$TimerStatesTableCreateCompanionBuilder =
       Value<bool> isRunning,
       Value<DateTime?> startTimestamp,
       Value<int> elapsedMs,
+      Value<String> phase,
       Value<int> rowid,
     });
 typedef $$TimerStatesTableUpdateCompanionBuilder =
@@ -4173,6 +4283,7 @@ typedef $$TimerStatesTableUpdateCompanionBuilder =
       Value<bool> isRunning,
       Value<DateTime?> startTimestamp,
       Value<int> elapsedMs,
+      Value<String> phase,
       Value<int> rowid,
     });
 
@@ -4220,6 +4331,11 @@ class $$TimerStatesTableFilterComposer
 
   ColumnFilters<int> get elapsedMs => $composableBuilder(
     column: $table.elapsedMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phase => $composableBuilder(
+    column: $table.phase,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4271,6 +4387,11 @@ class $$TimerStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get phase => $composableBuilder(
+    column: $table.phase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GamesTableOrderingComposer get gameId {
     final $$GamesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4314,6 +4435,9 @@ class $$TimerStatesTableAnnotationComposer
 
   GeneratedColumn<int> get elapsedMs =>
       $composableBuilder(column: $table.elapsedMs, builder: (column) => column);
+
+  GeneratedColumn<String> get phase =>
+      $composableBuilder(column: $table.phase, builder: (column) => column);
 
   $$GamesTableAnnotationComposer get gameId {
     final $$GamesTableAnnotationComposer composer = $composerBuilder(
@@ -4371,12 +4495,14 @@ class $$TimerStatesTableTableManager
                 Value<bool> isRunning = const Value.absent(),
                 Value<DateTime?> startTimestamp = const Value.absent(),
                 Value<int> elapsedMs = const Value.absent(),
+                Value<String> phase = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TimerStatesCompanion(
                 gameId: gameId,
                 isRunning: isRunning,
                 startTimestamp: startTimestamp,
                 elapsedMs: elapsedMs,
+                phase: phase,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4385,12 +4511,14 @@ class $$TimerStatesTableTableManager
                 Value<bool> isRunning = const Value.absent(),
                 Value<DateTime?> startTimestamp = const Value.absent(),
                 Value<int> elapsedMs = const Value.absent(),
+                Value<String> phase = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TimerStatesCompanion.insert(
                 gameId: gameId,
                 isRunning: isRunning,
                 startTimestamp: startTimestamp,
                 elapsedMs: elapsedMs,
+                phase: phase,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

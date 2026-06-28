@@ -7,6 +7,7 @@ import '../helpers/app_driver.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  // Navigiert zum Live-Screen (über Game-Setup btn_start_game)
   Future<void> openLiveScreen(WidgetTester tester) async {
     await pumpApp(tester);
     await tester.tap(find.byKey(const Key('fab_new_game')));
@@ -21,55 +22,74 @@ void main() {
     expect(find.text('00:00'), findsOneWidget);
   });
 
-  testWidgets('Timer-Button zeigt START beim Start', (tester) async {
+  testWidgets('Timer-Button zeigt "Start" im Bereit-Zustand', (tester) async {
     await openLiveScreen(tester);
-    expect(find.text('START'), findsOneWidget);
+    // Nach openLiveScreen ist der LiveScreen sichtbar; btn_start_game
+    // gehört jetzt zum Timer (bereit-Phase), nicht mehr zum Game-Setup.
+    expect(find.text('Start'), findsOneWidget);
   });
 
-  testWidgets('Timer läuft nach START-Tap und Button wechselt zu STOP',
+  testWidgets(
+      'Timer läuft nach Start-Tap; Button wechselt zu "Halbzeit"',
       (tester) async {
     await openLiveScreen(tester);
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    await tester.tap(find.byKey(const Key('btn_start_game')));
     await tester.pump(const Duration(seconds: 2));
 
-    expect(find.text('STOP'), findsOneWidget);
+    expect(find.byKey(const Key('btn_halbzeit')), findsOneWidget);
     expect(find.text('00:00'), findsNothing);
   });
 
-  testWidgets('Timer pausiert nach STOP-Tap', (tester) async {
+  testWidgets(
+      'Halbzeit-Tap stoppt Timer; Button wechselt zu "2. HZ starten"',
+      (tester) async {
     await openLiveScreen(tester);
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    await tester.tap(find.byKey(const Key('btn_start_game')));
     await tester.pump(const Duration(seconds: 1));
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    await tester.tap(find.byKey(const Key('btn_halbzeit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('START'), findsOneWidget);
+    expect(find.byKey(const Key('btn_start_zweite_halbzeit')), findsOneWidget);
   });
 
-  testWidgets('Timer setzt nach erneutem START fort ohne Reset', (tester) async {
+  testWidgets('Timer setzt nach 2. HZ-Start ohne Reset fort', (tester) async {
     await openLiveScreen(tester);
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    // Start → 1. HZ
+    await tester.tap(find.byKey(const Key('btn_start_game')));
     await tester.pump(const Duration(seconds: 2));
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    // Halbzeit
+    await tester.tap(find.byKey(const Key('btn_halbzeit')));
     await tester.pumpAndSettle();
 
-    final pausedLabel = (tester.widget(find.byKey(const Key('timer_label')))
-            as Text)
-        .data!;
+    final pausedLabel =
+        (tester.widget(find.byKey(const Key('timer_label'))) as Text).data!;
 
-    await tester.tap(find.byKey(const Key('btn_timer_toggle')));
+    // 2. HZ starten
+    await tester.tap(find.byKey(const Key('btn_start_zweite_halbzeit')));
     await tester.pump(const Duration(milliseconds: 500));
 
-    final runningLabel = (tester.widget(find.byKey(const Key('timer_label')))
-            as Text)
-        .data!;
+    final runningLabel =
+        (tester.widget(find.byKey(const Key('timer_label'))) as Text).data!;
 
     expect(pausedLabel, isNot(equals('00:00')));
     expect(runningLabel, isNot(equals('00:00')));
+  });
+
+  testWidgets('Phase-Label zeigt "1. Halbzeit" nach Start', (tester) async {
+    await openLiveScreen(tester);
+
+    await tester.tap(find.byKey(const Key('btn_start_game')));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('timer_phase_label')), findsOneWidget);
+    final label =
+        (tester.widget(find.byKey(const Key('timer_phase_label'))) as Text)
+            .data!;
+    expect(label, '1. Halbzeit');
   });
 }

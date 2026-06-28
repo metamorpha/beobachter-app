@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/entities/timer_state.dart';
+import '../../domain/enums/game_phase.dart';
 import '../../domain/repositories/timer_repository.dart';
 import '../database/app_database.dart';
 
@@ -17,6 +18,7 @@ class TimerRepositoryImpl implements TimerRepository {
             isRunning: Value(state.isRunning),
             startTimestamp: Value(state.startTimestamp),
             elapsedMs: Value(state.elapsedMs),
+            phase: Value(state.phase.name),
           ),
         );
   }
@@ -33,6 +35,15 @@ class TimerRepositoryImpl implements TimerRepository {
       isRunning: row.isRunning,
       startTimestamp: row.startTimestamp,
       elapsedMs: row.elapsedMs,
+      phase: _parsePhase(row.phase),
     );
+  }
+
+  static GamePhase _parsePhase(String name) {
+    try {
+      return GamePhase.values.byName(name);
+    } catch (_) {
+      return GamePhase.bereit;
+    }
   }
 }

@@ -1,16 +1,18 @@
 import '../enums/assessment.dart';
 import '../enums/card_type.dart';
 import '../enums/event_type.dart';
+import '../enums/game_phase.dart';
 import '../enums/ref_decision.dart';
 
 class Event {
   final String id;
   final String gameId;
-  final int elapsedMs;         // Zeit ab Spielstart in Millisekunden
+  final int elapsedMs;
+  final GamePhase gamePhase;
   final EventType type;
-  final String? customTypeLabel; // nur bei EventType.custom
-  final double locationX;      // 0.0–1.0 (normalisiert)
-  final double locationY;      // 0.0–1.0 (normalisiert)
+  final String? customTypeLabel;
+  final double locationX;
+  final double locationY;
   final RefDecision? refDecision;
   final CardType? card;
   final Assessment? assessment;
@@ -23,6 +25,7 @@ class Event {
     required this.id,
     required this.gameId,
     required this.elapsedMs,
+    this.gamePhase = GamePhase.ersteHalbzeit,
     required this.type,
     this.customTypeLabel,
     required this.locationX,
@@ -36,18 +39,15 @@ class Event {
     required this.createdAt,
   });
 
-  /// Spielzeit als lesbarer String, z. B. "47:23"
-  String get elapsedLabel {
-    final minutes = elapsedMs ~/ 60000;
-    final seconds = (elapsedMs % 60000) ~/ 1000;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
+  /// Phasenbewusster Zeitstempel-String, z. B. "23:45", "45+02", "90+01".
+  String get elapsedLabel => GamePhaseX.formatMs(elapsedMs, gamePhase);
 
-  /// Spielminute für die Anzeige in der Szenenliste
+  /// Spielminute (ganzzahlig) für Sortierung und einfache Anzeige.
   int get minute => elapsedMs ~/ 60000;
 
   Event copyWith({
     int? elapsedMs,
+    GamePhase? gamePhase,
     EventType? type,
     String? customTypeLabel,
     double? locationX,
@@ -63,6 +63,7 @@ class Event {
         id: id,
         gameId: gameId,
         elapsedMs: elapsedMs ?? this.elapsedMs,
+        gamePhase: gamePhase ?? this.gamePhase,
         type: type ?? this.type,
         customTypeLabel: customTypeLabel ?? this.customTypeLabel,
         locationX: locationX ?? this.locationX,

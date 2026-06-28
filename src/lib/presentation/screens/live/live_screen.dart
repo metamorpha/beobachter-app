@@ -133,9 +133,9 @@ class _RecentEvents extends ConsumerWidget {
           ...recent.map((e) => Row(
                 children: [
                   SizedBox(
-                    width: 32,
+                    width: 44,
                     child: Text(
-                      "${e.minute}'",
+                      e.elapsedLabel,
                       style: const TextStyle(
                           color: Colors.white54, fontSize: 12),
                     ),

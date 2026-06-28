@@ -6,6 +6,7 @@ import '../../../domain/entities/event_player.dart';
 import '../../../domain/enums/assessment.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/event_type.dart';
+import '../../../domain/enums/game_phase.dart';
 import '../../../domain/enums/player_role.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
@@ -166,7 +167,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                 ),
                 key: const Key('btn_save_event'),
                 onPressed: _canSave
-                    ? () => _save(timerService.currentMs)
+                    ? () => _save(timerService.currentMs, timerService.current.phase)
                     : null,
                 icon: const Icon(Icons.save),
                 label: Text(
@@ -459,7 +460,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     );
   }
 
-  Future<void> _save(int elapsedMs) async {
+  Future<void> _save(int elapsedMs, GamePhase gamePhase) async {
     if (_type == null || _saving) return;
     setState(() => _saving = true);
 
@@ -502,6 +503,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           id: '',
           gameId: widget.gameId,
           elapsedMs: elapsedMs,
+          gamePhase: gamePhase,
           type: _type!,
           customTypeLabel:
               _type == EventType.custom ? _customLabel : null,

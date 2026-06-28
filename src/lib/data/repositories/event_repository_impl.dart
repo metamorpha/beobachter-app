@@ -6,6 +6,7 @@ import '../../domain/entities/event_player.dart';
 import '../../domain/enums/assessment.dart';
 import '../../domain/enums/card_type.dart';
 import '../../domain/enums/event_type.dart';
+import '../../domain/enums/game_phase.dart';
 import '../../domain/enums/player_role.dart';
 import '../../domain/enums/ref_decision.dart';
 import '../../domain/enums/team_side.dart';
@@ -134,6 +135,7 @@ class EventRepositoryImpl implements EventRepository {
         id: Value(id),
         gameId: Value(e.gameId),
         elapsedMs: Value(e.elapsedMs),
+        gamePhase: Value(e.gamePhase.name),
         type: Value(e.type.name),
         customTypeLabel: Value(e.customTypeLabel),
         locationX: Value(e.locationX),
@@ -151,6 +153,7 @@ class EventRepositoryImpl implements EventRepository {
         id: row.id,
         gameId: row.gameId,
         elapsedMs: row.elapsedMs,
+        gamePhase: _parsePhase(row.gamePhase),
         type: EventType.values.byName(row.type),
         customTypeLabel: row.customTypeLabel,
         locationX: row.locationX,
@@ -167,4 +170,12 @@ class EventRepositoryImpl implements EventRepository {
         coachingNote: row.coachingNote,
         createdAt: row.createdAt,
       );
+
+  static GamePhase _parsePhase(String name) {
+    try {
+      return GamePhase.values.byName(name);
+    } catch (_) {
+      return GamePhase.ersteHalbzeit;
+    }
+  }
 }
