@@ -24,7 +24,7 @@
 
 ---
 
-## 2. Automatisierte Testfälle (99 Tests, alle grün)
+## 2. Automatisierte Testfälle (119 Tests, alle grün)
 
 ### 2.1 Timer-Zeitmessung (`timer_state_test.dart`)
 
@@ -116,6 +116,40 @@
 | S-03 | Heim- und Gastaufstellung sind getrennt gespeichert | ✅ |
 | S-04 | saveSquad überschreibt bestehende Aufstellung (Upsert) | ✅ |
 
+### 2.8 Heatmap-Dichteverteilung KDE (`heatmap_density_test.dart`)
+
+Details siehe `docs/14_heatmap_kde_tests.md`.
+
+| TC | Beschreibung | Status |
+|----|-------------|--------|
+| TC-1401 | Leere Ereignisliste ergibt Nullgitter | ✅ |
+| TC-1402 | Einzelereignis: Maximum an Ereignisposition, radial abfallend | ✅ |
+| TC-1403 | Zwei identische Positionen normalisieren auf 1.0 | ✅ |
+| TC-1404 | Zwei weit entfernte Einzelereignisse gleich intensiv | ✅ |
+| TC-1405 | Ereignisse in Feldecken ohne Index-Fehler | ✅ |
+| TC-1406 | Cluster intensiver, Einzelereignis bleibt sichtbar | ✅ |
+| TC-1407 | Kernel radialsymmetrisch (analytischer Gauß-Vergleich) | ✅ |
+| TC-1408 | Widget rendert ohne Fehler bei 0/1/50 Ereignissen | ✅ |
+| TC-1409 | shouldRepaint bei geänderter Ereignisliste | ✅ |
+
+### 2.9 Spiel endgültig beenden — US-212 (`spiel_beenden_test.dart`)
+
+Details siehe `docs/15_spiel_beenden_tests.md`.
+
+| TC | Beschreibung | Status |
+|----|-------------|--------|
+| TC-1501 | spielBeenden() setzt `abgeschlossen`, stoppt Uhr, persistiert | ✅ |
+| TC-1502 | spielBeenden() aus `beendetVerlaengerung` | ✅ |
+| TC-1503 | Abgeschlossenes Spiel nicht erneut startbar (Service-Sperre) | ✅ |
+| TC-1504 | load() stellt `abgeschlossen` wieder her, kein Ticker | ✅ |
+| TC-1505 | Phase `beendet`: Buttons „Verlängerung" + „Spiel beenden" | ✅ |
+| TC-1506 | Phase `beendetVerlaengerung`: nur „Spiel beenden" | ✅ |
+| TC-1507 | Bestätigungsdialog; Abbrechen ändert nichts | ✅ |
+| TC-1508 | Dialog bestätigen → `abgeschlossen`, keine Buttons | ✅ |
+| TC-1509 | Phase `abgeschlossen`: kein Phasen-Button | ✅ |
+| TC-1510 | Feldtipp im abgeschlossenen Spiel öffnet kein Formular | ✅ |
+| TC-1511 | Spielliste: „Beendet"-Badge nur für abgeschlossenes Spiel | ✅ |
+
 ---
 
 ## 3. Manuelle Testfälle (UI & Workflow)
@@ -142,8 +176,10 @@
 | M-11 | Szenenliste: Coaching-Stern tippen | Stern wird gold, Flag gesetzt |
 | M-12 | Coaching-Tab: nur markierte Szenen sichtbar | Ungeflagte nicht sichtbar |
 | M-13 | Szene antippen → Coaching-Notiz erfassen | Notiz in Coaching-Tab sichtbar |
-| M-14 | Statistik: Heatmap zeigt Hotspots | Zonen mit mehr Ereignissen intensiver |
+| M-14 | Statistik: Heatmap zeigt Hotspots | KDE-Dichteverteilung: Hotspots punktgenau rot-orange, Einzelereignisse als weiche gelbe Flecken, keine Rasterkanten (TC-1410, bestanden 02.07.2026) |
 | M-15 | Statistik: Zeitachse zeigt 6 Phasen | Balken proportional zur Ereignisanzahl |
+| M-16 | Abgeschlossenes Spiel: Nachbereitung vollständig nutzbar (TC-1512, bestanden 02.07.2026) | Szenen/Coaching/Statistik erreichbar, Szenen editierbar |
+| M-17 | App-Neustart nach „Spiel beenden" (TC-1513, bestanden 02.07.2026) | Phase bleibt „Abgeschlossen", Badge in Spielliste |
 
 ---
 

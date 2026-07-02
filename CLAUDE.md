@@ -75,6 +75,8 @@ Key design decisions:
 | `11_delete_game_tests.md` | Delete game test cases (13 TCs) |
 | `12_window_management_tests.md` | Window management test cases — US-107 (10 TCs) |
 | `13_timer_phases_tests.md` | Timer phases test cases — US-210/211 (31 TCs) |
+| `14_heatmap_kde_tests.md` | Heatmap KDE test cases — US-401 (10 TCs) |
+| `15_spiel_beenden_tests.md` | End game test cases — US-212 (13 TCs) |
 
 ### src/lib/ structure
 
@@ -111,7 +113,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (57 tests, all green)
+# Run tests (119 tests, all green)
 flutter test
 
 # Run app (simulator or device)

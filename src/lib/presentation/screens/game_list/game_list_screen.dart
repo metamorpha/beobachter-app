@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/game.dart';
+import '../../../domain/enums/game_phase.dart';
 import '../../providers/providers.dart';
 import '../game_setup/game_setup_screen.dart';
 import '../review/review_screen.dart';
@@ -81,12 +82,41 @@ class _GameTile extends ConsumerWidget {
         ? ' · ${countAsync.value} Ereignisse'
         : '';
 
+    final abgeschlossen = ref.watch(gamePhaseProvider(game.id)).valueOrNull ==
+        GamePhase.abgeschlossen;
+
     return ListTile(
       key: Key('game_tile_${game.id}'),
       leading: const Icon(Icons.sports_soccer, color: Colors.green),
-      title: Text(
-        _displayName,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              _displayName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (abgeschlossen)
+            Container(
+              key: Key('badge_beendet_${game.id}'),
+              margin: const EdgeInsets.only(left: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Beendet',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey.shade800,
+                ),
+              ),
+            ),
+        ],
       ),
       subtitle: Text('$dateStr$countStr'),
       trailing: Row(

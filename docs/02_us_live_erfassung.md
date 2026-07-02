@@ -196,3 +196,29 @@
 *Ereignis-Zeitstempel*
 - [ ] Ereignisse in der Verlängerung 1. HZ erhalten Zeitstempel im Format `90:XX` bzw. `105+X`
 - [ ] Ereignisse in der Verlängerung 2. HZ erhalten Zeitstempel im Format `105:XX` bzw. `120+X`
+
+---
+
+### US-212 · Spiel endgültig beenden
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** nach dem Abpfiff der 2. Halbzeit wählen können, ob das Spiel beendet ist oder in die Verlängerung geht,  
+**damit** ein abgeschlossenes Spiel nicht versehentlich weiterläuft, ich aber weiterhin auf Statistik, Szenen und Notizen zugreifen kann.
+
+**Akzeptanzkriterien:**
+
+*Wahlmöglichkeit nach Abpfiff*
+- [x] Nach dem Abpfiff der 2. Halbzeit (Status `beendet`) zeigt der Live-Screen zwei Buttons: **„Verlängerung starten"** und **„Spiel beenden"**
+- [x] Nach dem Abpfiff der Verlängerung (Status `beendetVerlaengerung`) zeigt der Live-Screen den Button **„Spiel beenden"**
+- [x] Ein Tap auf „Spiel beenden" öffnet einen Bestätigungsdialog (Hinweis: nicht rückgängig machbar); erst „Beenden" im Dialog schließt das Spiel ab
+
+*Abgeschlossenes Spiel*
+- [x] Ein abgeschlossenes Spiel kann nicht erneut gestartet werden: keine Phasen-Buttons mehr, die Spieluhr bleibt stehen
+- [x] Im abgeschlossenen Spiel können keine neuen Ereignisse mehr erfasst werden (Feldtipp öffnet kein Formular)
+- [x] Der Abgeschlossen-Zustand überlebt App-Neustart (Persistenz)
+
+*Zugriff auf Nachbereitung bleibt erhalten*
+- [x] Statistik (Heatmap, Zeitachse, Ranking), Szenenliste und Coaching-Tab bleiben vollständig erreichbar
+- [x] Bestehende Szenen können weiterhin bearbeitet werden (US-209), inkl. Szenen- und Coaching-Notizen
+- [x] In der Spielliste wird ein abgeschlossenes Spiel als „Beendet" gekennzeichnet
+- [x] Tap auf ein abgeschlossenes Spiel in der Spielliste öffnet direkt die Nachbereitung (Review) statt des Live-Screens

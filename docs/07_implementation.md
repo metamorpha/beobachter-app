@@ -44,7 +44,7 @@ src/lib/
     │   └── review/                  # Szenen · Coaching · Statistik (3 Tabs)
     └── widgets/
         ├── pitch_canvas.dart        # CustomPainter: Spielfeld + Marker
-        ├── heatmap_canvas.dart      # CustomPainter: 6×4-Zonen-Heatmap
+        ├── heatmap_canvas.dart      # CustomPainter: KDE-Dichte-Heatmap
         ├── timer_display.dart       # Spieluhr + Start/Stop-Button
         └── assessment_grid.dart    # 2×2-Bewertungs-Grid
 ```
@@ -118,15 +118,24 @@ final y = (local.dy / box.size.height).clamp(0.0, 1.0);
 
 Heatmap und Marker berechnen Pixel-Positionen beim Rendern aus diesen Werten.
 
+### Heatmap als Dichteverteilung — KDE (US-401)
+
+`HeatmapCanvas` rendert die Ereignisorte als kontinuierliche Dichteverteilung statt eines festen Zonenrasters:
+
+- **`HeatmapDensity`** (in `heatmap_canvas.dart`, öffentlich für Tests): reine Dart-Klasse, berechnet ein normalisiertes Dichtegitter (96×64) per Gauß-Kernel (σ = 0.04 in normierten Koordinaten, abgeschnitten bei 3σ). Maximum = 1.0; leere Ereignisliste → Nullgitter.
+- **Rendering:** Zellen oberhalb eines Schwellwerts (0.05) werden in eine `saveLayer`-Ebene gezeichnet und mit einem einzelnen `ImageFilter.blur`-Pass geglättet — keine sichtbaren Rasterkanten, ein Blur für alle Zellen statt pro Rechteck.
+- **Farbrampe:** gelb (niedrige Dichte) → orange → rot (Maximum); Alpha 0.15–0.85, sodass Einzelereignisse sichtbar bleiben und Feldlinien durchscheinen.
+- **Aufwand:** Events × Kernel-Fußabdruck (~25×25 Zellen) — bei 200 Events unkritisch, Berechnung einmal pro Ereignisliste im Painter gecacht.
+
 ### Spieler-Auswahl im Live-Formular
 
 Der `EventFormPanel` zeigt Spielernummern als Chips (Heim/Gast farblich getrennt). Nicht vorerfasste Nummern können via Ziffernblock-TextField eingegeben werden. Die Spieler werden als separate `EventPlayer`-Objekte in einer eigenen Tabelle gespeichert und per CASCADE beim Löschen des Events mit entfernt.
 
 ---
 
-### Spielphasen-System (US-210, US-211)
+### Spielphasen-System (US-210, US-211, US-212)
 
-`GamePhase` in `domain/enums/game_phase.dart` definiert 13 Spielzustände:
+`GamePhase` in `domain/enums/game_phase.dart` definiert 14 Spielzustände:
 
 | Phase | Anzeige | Timer |
 |-------|---------|-------|
@@ -143,6 +152,7 @@ Der `EventFormPanel` zeigt Spielernummern als Chips (Heim/Gast farblich getrennt
 | `verlaengerungZweiteHalbzeit` | `MM:SS` | läuft |
 | `verlaengerungZweiteHalbzeitNachspielzeit` | `120+XX` | läuft |
 | `beendetVerlaengerung` | eingefroren | gestoppt |
+| `abgeschlossen` | eingefroren | gestoppt, endgültig |
 
 **Auto-Advance:** `_tick()` im `TimerService` prüft `phase.nachspielzeitSchwelle` — bei Überschreitung wechselt die Phase automatisch in die NS-Phase (kein manueller Eingriff nötig).
 
@@ -151,6 +161,8 @@ Der `EventFormPanel` zeigt Spielernummern als Chips (Heim/Gast farblich getrennt
 **Ereignis-Zeitstempel:** Jedes `Event` speichert seine `gamePhase` — notwendig, weil der Timer nie zurückgesetzt wird und `elapsedMs` allein nicht eindeutig (z. B. 47 Min kann 1. HZ-NS oder reguläre 2. HZ sein).
 
 **Datenbankschema v3:** Neue Spalten `phase` in `timer_states` und `game_phase` in `events`. Migration in `app_database.dart`.
+
+**Spiel endgültig beenden (US-212):** Aus `beendet` und `beendetVerlaengerung` führt `TimerService.spielBeenden()` (nach Bestätigungsdialog im `TimerDisplay`) in den Endzustand `abgeschlossen`. `_advancePhase()` und `start()` sind gegen Übergänge aus `abgeschlossen` gesperrt — ein abgeschlossenes Spiel kann nicht erneut gestartet werden. Der Live-Screen ignoriert Feldtipps (keine neue Erfassung); die Nachbereitung (Review) bleibt unverändert nutzbar. Die Spielphase wird per `TimerRepository.watchTimerState()` (Drift-Stream) reaktiv in der Spielliste angezeigt („Beendet"-Badge, `gamePhaseProvider`). Keine Schema-Migration nötig: die Phase wird als Enum-`name` gespeichert.
 
 ---
 
@@ -209,10 +221,12 @@ Jede Spielkachel zeigt Datum und Ereignisanzahl im Subtitle. Der `eventCountProv
 
 ---
 
-## Tests (99 gesamt)
+## Tests (119 gesamt)
 
 | Datei | Tests | Fokus |
 |-------|-------|-------|
+| `test/spiel_beenden_test.dart` | 11 | US-212: spielBeenden, Neustart-Sperre, Buttons, Dialog, Badge |
+| `test/heatmap_density_test.dart` | 9 | KDE-Dichtegitter: Normalisierung, Symmetrie, Randfälle, Widget-Smoke |
 | `test/core/pressebericht_csv_parser_test.dart` | 26 | CSV-Parser: Teamnamen, Meta, Spielernummern, Warnungen, Fehlerbehandlung |
 | `test/core/timer_service_phase_test.dart` | 22 | Phasenübergänge, Auto-Advance, Stream, Persistenz, formatMs |
 | `test/domain/entities/timer_state_test.dart` | 16 | Timer-Logik, Akkumulation, Phase-Erhalt, formattedTime (alle NS-Formate) |

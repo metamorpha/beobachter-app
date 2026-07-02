@@ -12,6 +12,7 @@ enum GamePhase {
   verlaengerungZweiteHalbzeit,
   verlaengerungZweiteHalbzeitNachspielzeit,
   beendetVerlaengerung,
+  abgeschlossen,
 }
 
 extension GamePhaseX on GamePhase {
@@ -43,8 +44,13 @@ extension GamePhaseX on GamePhase {
         return 'Nachspielzeit';
       case GamePhase.beendetVerlaengerung:
         return 'Beendet';
+      case GamePhase.abgeschlossen:
+        return 'Abgeschlossen';
     }
   }
+
+  /// Endgültig beendetes Spiel: keine Phasen-Übergänge, keine neue Erfassung.
+  bool get istAbgeschlossen => this == GamePhase.abgeschlossen;
 
   /// MS-Schwelle, ab der diese Phase automatisch in die Nachspielzeit wechselt.
   int? get nachspielzeitSchwelle {

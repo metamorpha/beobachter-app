@@ -57,9 +57,13 @@ class TimerService {
   Future<void> setAbpfiffVerlaengerung() =>
       _advancePhase(GamePhase.beendetVerlaengerung, startTimer: false);
 
+  Future<void> spielBeenden() =>
+      _advancePhase(GamePhase.abgeschlossen, startTimer: false);
+
   // ── Interner Start/Stop (für Tests und Load) ──────────────────────────────
 
   Future<void> start() async {
+    if (_state.phase.istAbgeschlossen) return;
     if (_state.isRunning) return;
     _state = _state.start();
     await _repository.saveTimerState(_state);
@@ -81,6 +85,8 @@ class TimerService {
   // ── Private ───────────────────────────────────────────────────────────────
 
   Future<void> _advancePhase(GamePhase phase, {required bool startTimer}) async {
+    // Ein abgeschlossenes Spiel kann nicht erneut gestartet werden (US-212).
+    if (_state.phase.istAbgeschlossen) return;
     if (startTimer) {
       _state = _state.withPhase(phase).start();
       _startTicker();

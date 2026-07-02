@@ -13,6 +13,11 @@
 
 **Akzeptanzkriterien:**
 - [x] Das Spielfeld wird als Draufsicht dargestellt mit Farbintensität proportional zur Ereignisdichte
+- [x] Die Heatmap wird als kontinuierliche Dichteverteilung (KDE) gerendert, nicht als festes Zonenraster
+- [x] Nah beieinanderliegende Ereignisse bilden einen gemeinsamen, intensiveren Hotspot mit punktgenauer Lage
+- [x] Farbverlauf: transparent (keine Dichte) → gelb (niedrig) → orange → rot (Maximum)
+- [x] Einzelereignisse sind als weiche Flecken sichtbar (Mindest-Sichtbarkeit)
+- [x] Rendering bleibt bei typischer Ereignisanzahl (< 200) flüssig
 - [ ] Ich kann nach Ereignistyp filtern (z. B. nur Fouls)
 - [ ] Ich kann nach Team filtern (Heimteam / Gastteam)
 

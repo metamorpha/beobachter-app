@@ -302,6 +302,13 @@ Nachbearbeitungs-Screen
 └──────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
+**Heatmap-Darstellung (KDE):**
+
+- Die Heatmap wird als kontinuierliche Dichteverteilung gerendert (Kernel Density Estimation), nicht als festes Zonenraster. Jedes Ereignis trägt eine weiche Gauß-Glocke bei; Überlagerungen addieren sich.
+- Farbrampe nach Dichte: transparent (keine Dichte) → gelb (niedrig) → orange (mittel) → rot (Maximum). Hotspots erscheinen dadurch punktgenau und intensiv, ohne sichtbare Rasterkanten.
+- Einzelereignisse bleiben als weiche gelbe Flecken sichtbar (Mindest-Deckkraft), damit auch spärlich belegte Bereiche lesbar sind.
+- Grüner Rasen und vereinfachte Feldlinien (Außenlinie, Mittellinie) bleiben als Untergrund bzw. durchscheinendes Overlay erhalten.
+
 ---
 
 ## Interaktions-Spezifikationen
@@ -342,7 +349,7 @@ Nachbearbeitungs-Screen
 
 ---
 
-### Flow 5 — Spielphasen-Steuerung (US-210 / US-211)
+### Flow 5 — Spielphasen-Steuerung (US-210 / US-211 / US-212)
 
 #### Zustandsmaschine
 
@@ -363,9 +370,9 @@ Nachbearbeitungs-Screen
                                                           ▼
                                                   [BEENDET]
                                                  /         \
-                                  (kein Verl.)  /           \ ▶ Verlängerung starten
-                                               /             ▼
-                                         [Ende]    [VERL. 1. HZ]  ──▶  [VERL. 1. HZ NS]
+                        ⏹ Spiel beenden        /           \ ▶ Verlängerung starten
+                        (mit Bestätigung)     /             ▼
+                                 [ABGESCHLOSSEN]    [VERL. 1. HZ]  ──▶  [VERL. 1. HZ NS]
                                                                                │ ⏸ HZ (Verl.)
                                                                                ▼
                                                                     [VERL. HALBZEIT]
@@ -374,8 +381,14 @@ Nachbearbeitungs-Screen
                                                                     [VERL. 2. HZ]  ──▶  [VERL. 2. HZ NS]
                                                                                                │ ⏸ Abpfiff
                                                                                                ▼
-                                                                                           [BEENDET]
+                                                                                     [BEENDET n. VERL.]
+                                                                                               │ ⏹ Spiel beenden
+                                                                                               │ (mit Bestätigung)
+                                                                                               ▼
+                                                                                     [ABGESCHLOSSEN]
 ```
+
+`ABGESCHLOSSEN` ist ein Endzustand: keine weiteren Phasen-Übergänge, Spieluhr eingefroren, keine neue Ereigniserfassung. Nachbereitung (Szenen, Coaching, Statistik) bleibt vollständig zugänglich.
 
 #### Phasen-Tabelle: Zeitanzeige und Steuerbutton
 
@@ -387,13 +400,14 @@ Nachbearbeitungs-Screen
 | Halbzeitpause | eingefroren | Halbzeitpause | `▶ 2. HZ starten` |
 | 2. Halbzeit | `MM:SS` (45:00–89:59) | 2. Halbzeit | `⏸ Abpfiff` |
 | 2. HZ Nachspielzeit | `90+01`, `90+02`, … | Nachspielzeit | `⏸ Abpfiff` |
-| Beendet (regulär) | eingefroren | Beendet | `▶ Verlängerung` |
+| Beendet (regulär) | eingefroren | Beendet | `▶ Verlängerung` + `⏹ Spiel beenden` |
 | Verl. 1. HZ | `MM:SS` (90:00–104:59) | Verl. 1. HZ | `⏸ HZ (Verl.)` |
 | Verl. 1. HZ NS | `105+01`, … | Nachspielzeit | `⏸ HZ (Verl.)` |
 | Verl. Halbzeit | eingefroren | Verl. Halbzeit | `▶ 2. Verl. starten` |
 | Verl. 2. HZ | `MM:SS` (105:00–119:59) | Verl. 2. HZ | `⏸ Abpfiff (Verl.)` |
 | Verl. 2. HZ NS | `120+01`, … | Nachspielzeit | `⏸ Abpfiff (Verl.)` |
-| Beendet (n. Verl.) | eingefroren | Beendet | — |
+| Beendet (n. Verl.) | eingefroren | Beendet | `⏹ Spiel beenden` |
+| Abgeschlossen | eingefroren | Abgeschlossen | — |
 
 #### Wireframes — Live-Screen Header je Phase
 
@@ -414,7 +428,7 @@ Nachbearbeitungs-Screen
 │  ◀ Spiele    Heimteam  ·  90+02  ·  Nachspielzeit  ·  Gastteam [⏸ ABPFIFF]  │
 
 ── Beendet (regulär) ────────────────────────────────────────────────────────
-│  ◀ Spiele    Heimteam  ·  90+03  ·  Beendet        ·  Gastteam [▶ VERLÄNGERUNG] │
+│  ◀ Spiele  Heimteam · 90+03 · Beendet · Gastteam [▶ VERLÄNGERUNG] [⏹ SPIEL BEENDEN] │
 
 ── Verlängerung 1. HZ (97:30) ───────────────────────────────────────────────
 │  ◀ Spiele    Heimteam  ·  97:30  ·  Verl. 1. HZ   ·  Gastteam [⏸ HZ (VERL.)] │
@@ -427,12 +441,35 @@ Nachbearbeitungs-Screen
 
 ── Verlängerung 2. HZ Nachspielzeit ─────────────────────────────────────────
 │  ◀ Spiele    Heimteam  · 120+02  ·  Nachspielzeit  ·  Gastteam [⏸ ABPFIFF (VERL.)] │
+
+── Beendet nach Verlängerung ────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  · 120+03  ·  Beendet        ·  Gastteam [⏹ SPIEL BEENDEN] │
+
+── Abgeschlossen ────────────────────────────────────────────────────────────
+│  ◀ Spiele    Heimteam  ·  90+03  ·  Abgeschlossen  ·  Gastteam              │
+```
+
+#### Bestätigungsdialog „Spiel beenden" (US-212)
+
+```
+┌─────────────────────────────────────────────┐
+│  Spiel endgültig beenden?                   │
+│                                             │
+│  Das Spiel kann danach nicht erneut         │
+│  gestartet werden. Szenen, Notizen und      │
+│  Statistik bleiben weiterhin verfügbar.     │
+│                                             │
+│                  [Abbrechen]  [Beenden]     │
+└─────────────────────────────────────────────┘
 ```
 
 **UX-Entscheidungen:**
 - Phase-Label und Zeitanzeige sind immer sichtbar — kein Suchen, kein Modal
-- Immer genau **ein** Phasen-Button sichtbar: kontextsensitiv und eindeutig beschriftet
+- Während des laufenden Spiels genau **ein** Phasen-Button sichtbar: kontextsensitiv und eindeutig beschriftet. Einzige Ausnahme: nach dem Abpfiff (Spiel steht, keine Zeitnot) stehen „Verlängerung" und „Spiel beenden" nebeneinander
 - „Verlängerung starten" erscheint erst nach regulärem Abpfiff — kein versehentlicher Tap während des Spiels
+- „Spiel beenden" ist irreversibel und verlangt daher eine Bestätigung — nach dem Abpfiff ist die Zeitkritik des Live-Betriebs vorbei, der Dialog stört nicht (US-212)
+- Im abgeschlossenen Spiel öffnet ein Feldtipp kein Ereignisformular mehr; die Nachbereitung (Szenen bearbeiten, Coaching-Notizen, Statistik) bleibt unverändert nutzbar
+- In der Spielliste trägt ein abgeschlossenes Spiel ein „Beendet"-Badge; der Tap führt (wie bei allen Spielen) zur Nachbereitung
 - Phasen-Button mindestens **120×48 pt** — sicher tappbar auch mit ablenktem Blick
 - Automatischer NS-Wechsel läuft unhörbar/visuell (Anzeige wechselt, kein Dialog, kein Ton)
 

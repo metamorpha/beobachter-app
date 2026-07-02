@@ -29,15 +29,24 @@ class TimerRepositoryImpl implements TimerRepository {
           ..where((t) => t.gameId.equals(gameId)))
         .get();
     if (rows.isEmpty) return null;
-    final row = rows.first;
-    return TimerState(
-      gameId: row.gameId,
-      isRunning: row.isRunning,
-      startTimestamp: row.startTimestamp,
-      elapsedMs: row.elapsedMs,
-      phase: _parsePhase(row.phase),
-    );
+    return _toState(rows.first);
   }
+
+  @override
+  Stream<TimerState?> watchTimerState(String gameId) {
+    return (_db.select(_db.timerStates)
+          ..where((t) => t.gameId.equals(gameId)))
+        .watchSingleOrNull()
+        .map((row) => row == null ? null : _toState(row));
+  }
+
+  static TimerState _toState(TimerStateRow row) => TimerState(
+        gameId: row.gameId,
+        isRunning: row.isRunning,
+        startTimestamp: row.startTimestamp,
+        elapsedMs: row.elapsedMs,
+        phase: _parsePhase(row.phase),
+      );
 
   static GamePhase _parsePhase(String name) {
     try {

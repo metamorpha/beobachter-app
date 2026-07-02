@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/game.dart';
 import '../../../domain/enums/event_type.dart';
+import '../../../domain/enums/game_phase.dart';
 import '../../providers/providers.dart';
 import '../../widgets/pitch_canvas.dart';
 import '../../widgets/timer_display.dart';
@@ -27,6 +28,12 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsProvider(widget.game.id));
     final events = eventsAsync.valueOrNull ?? [];
+    final abgeschlossen = ref
+            .watch(timerStateProvider(widget.game.id))
+            .valueOrNull
+            ?.phase
+            .istAbgeschlossen ??
+        false;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade900,
@@ -70,7 +77,8 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                 events: events,
                 dimmed: _formVisible,
                 onTap: (x, y) {
-                  if (_formVisible) return;
+                  // Abgeschlossenes Spiel: keine neue Erfassung (US-212)
+                  if (_formVisible || abgeschlossen) return;
                   setState(() {
                     _tapX = x;
                     _tapY = y;

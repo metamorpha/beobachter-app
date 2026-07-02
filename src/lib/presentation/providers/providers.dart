@@ -11,6 +11,7 @@ import '../../domain/entities/game.dart';
 import '../../domain/entities/timer_state.dart';
 import '../../domain/enums/assessment.dart';
 import '../../domain/enums/event_type.dart';
+import '../../domain/enums/game_phase.dart';
 import '../../domain/enums/team_side.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../../domain/repositories/game_repository.dart';
@@ -87,6 +88,16 @@ final timerServiceProvider =
 final timerStateProvider =
     StreamProvider.family<TimerState, String>((ref, gameId) {
   return ref.watch(timerServiceProvider(gameId)).stream;
+});
+
+/// Persistierte Spielphase eines Spiels, reaktiv aus der DB
+/// (z. B. für das „Beendet"-Badge in der Spielliste, US-212).
+final gamePhaseProvider =
+    StreamProvider.family.autoDispose<GamePhase?, String>((ref, gameId) {
+  return ref
+      .watch(timerRepositoryProvider)
+      .watchTimerState(gameId)
+      .map((state) => state?.phase);
 });
 
 // ── Player Ranking ────────────────────────────────────────────────────────────
