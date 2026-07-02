@@ -48,7 +48,7 @@ class AssessmentGrid extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           height: 52,
           decoration: BoxDecoration(
-            color: isSelected ? color : color.withOpacity(0.25),
+            color: isSelected ? color : color.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(6),
             border: isSelected
                 ? Border.all(color: Colors.white, width: 2)

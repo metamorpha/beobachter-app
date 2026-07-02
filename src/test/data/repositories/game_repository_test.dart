@@ -17,7 +17,7 @@ void main() {
   tearDown(() => db.close());
 
   group('GameRepository', () {
-    Game _testGame({String id = 'g-1'}) => Game(
+    Game testGame({String id = 'g-1'}) => Game(
           id: id,
           date: DateTime(2026, 4, 30),
           homeTeamName: 'FC Heim',
@@ -26,23 +26,23 @@ void main() {
         );
 
     test('createGame speichert und gibt das Spiel zurück', () async {
-      final game = await repo.createGame(_testGame());
+      final game = await repo.createGame(testGame());
       expect(game.id, 'g-1');
       expect(game.homeTeamName, 'FC Heim');
       expect(game.awayTeamName, 'FC Gast');
     });
 
     test('getGames gibt alle Spiele zurück', () async {
-      await repo.createGame(_testGame(id: 'g-1'));
-      await repo.createGame(_testGame(id: 'g-2'));
+      await repo.createGame(testGame(id: 'g-1'));
+      await repo.createGame(testGame(id: 'g-2'));
       final games = await repo.getGames();
       expect(games.length, 2);
     });
 
     test('getGames ist absteigend nach Datum sortiert', () async {
-      await repo.createGame(_testGame(id: 'g-1')
+      await repo.createGame(testGame(id: 'g-1')
           .copyWith(date: DateTime(2026, 4, 29)));
-      await repo.createGame(_testGame(id: 'g-2')
+      await repo.createGame(testGame(id: 'g-2')
           .copyWith(date: DateTime(2026, 4, 30)));
       final games = await repo.getGames();
       expect(games.first.id, 'g-2'); // neueres Spiel zuerst
@@ -54,15 +54,15 @@ void main() {
     });
 
     test('updateGame aktualisiert Teamname', () async {
-      await repo.createGame(_testGame());
-      final updated = _testGame().copyWith(homeTeamName: 'SV Neuer Name');
+      await repo.createGame(testGame());
+      final updated = testGame().copyWith(homeTeamName: 'SV Neuer Name');
       await repo.updateGame(updated);
       final result = await repo.getGame('g-1');
       expect(result?.homeTeamName, 'SV Neuer Name');
     });
 
     test('deleteGame entfernt das Spiel', () async {
-      await repo.createGame(_testGame());
+      await repo.createGame(testGame());
       await repo.deleteGame('g-1');
       final result = await repo.getGame('g-1');
       expect(result, isNull);

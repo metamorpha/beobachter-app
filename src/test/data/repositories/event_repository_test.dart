@@ -35,7 +35,7 @@ void main() {
 
   tearDown(() => db.close());
 
-  Event _testEvent({String id = 'e-1', int elapsedMs = 60000}) => Event(
+  Event testEvent({String id = 'e-1', int elapsedMs = 60000}) => Event(
         id: id,
         gameId: gameId,
         elapsedMs: elapsedMs,
@@ -52,7 +52,7 @@ void main() {
 
   group('EventRepository', () {
     test('createEvent speichert Event und gibt es zurück', () async {
-      final event = await eventRepo.createEvent(_testEvent(), []);
+      final event = await eventRepo.createEvent(testEvent(), []);
       expect(event.type, EventType.footFoul);
       expect(event.locationX, 0.3);
       expect(event.assessment, Assessment.correctExpected);
@@ -66,13 +66,13 @@ void main() {
         team: TeamSide.home,
         jerseyNumber: 7,
       );
-      final event = await eventRepo.createEvent(_testEvent(), [player]);
+      final event = await eventRepo.createEvent(testEvent(), [player]);
       expect(event.id, isNotEmpty);
     });
 
     test('getEvents gibt Events chronologisch sortiert zurück', () async {
-      await eventRepo.createEvent(_testEvent(id: 'e-1', elapsedMs: 120000), []);
-      await eventRepo.createEvent(_testEvent(id: 'e-2', elapsedMs: 60000), []);
+      await eventRepo.createEvent(testEvent(id: 'e-1', elapsedMs: 120000), []);
+      await eventRepo.createEvent(testEvent(id: 'e-2', elapsedMs: 60000), []);
       final events = await eventRepo.getEvents(gameId);
       expect(events.first.elapsedMs, 60000); // früher zuerst
       expect(events.last.elapsedMs, 120000);
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('updateEvent aktualisiert coachingFlag', () async {
-      final created = await eventRepo.createEvent(_testEvent(), []);
+      final created = await eventRepo.createEvent(testEvent(), []);
       final updated = created.copyWith(coachingFlag: true);
       await eventRepo.updateEvent(updated, []);
       final result = await eventRepo.getEvent(created.id);
@@ -92,21 +92,21 @@ void main() {
     });
 
     test('deleteEvent entfernt das Event', () async {
-      final created = await eventRepo.createEvent(_testEvent(), []);
+      final created = await eventRepo.createEvent(testEvent(), []);
       await eventRepo.deleteEvent(created.id);
       final result = await eventRepo.getEvent(created.id);
       expect(result, isNull);
     });
 
     test('deleteGame löscht Events via Cascade', () async {
-      await eventRepo.createEvent(_testEvent(), []);
+      await eventRepo.createEvent(testEvent(), []);
       await gameRepo.deleteGame(gameId);
       final events = await eventRepo.getEvents(gameId);
       expect(events, isEmpty);
     });
 
     test('Event mit CardType.red wird korrekt persistiert', () async {
-      final event = _testEvent().copyWith(card: CardType.red);
+      final event = testEvent().copyWith(card: CardType.red);
       final saved = await eventRepo.createEvent(event, []);
       expect(saved.card, CardType.red);
     });

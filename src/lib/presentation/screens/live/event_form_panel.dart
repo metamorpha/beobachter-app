@@ -282,7 +282,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? color : color.withOpacity(0.35),
+              color: sel ? color : color.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(6),
               border: sel
                   ? Border.all(color: Colors.white, width: 1.5)
@@ -347,8 +347,11 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                 onChanged: (v) {
                   final n = int.tryParse(v);
                   setState(() {
-                    if (role == PlayerRole.fouler) _foulerNumber = n;
-                    else _fouledNumber = n;
+                    if (role == PlayerRole.fouler) {
+                      _foulerNumber = n;
+                    } else {
+                      _fouledNumber = n;
+                    }
                   });
                 },
               ),
@@ -369,8 +372,11 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
               return GestureDetector(
                 onTap: () => setState(() {
                   final newVal = isSel ? null : n;
-                  if (role == PlayerRole.fouler) _foulerNumber = newVal;
-                  else _fouledNumber = newVal;
+                  if (role == PlayerRole.fouler) {
+                    _foulerNumber = newVal;
+                  } else {
+                    _fouledNumber = newVal;
+                  }
                 }),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -378,7 +384,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                   decoration: BoxDecoration(
                     color: isSel
                         ? teamColor
-                        : teamColor.withOpacity(0.3),
+                        : teamColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                     border: isSel
                         ? Border.all(color: Colors.white, width: 1)
@@ -413,7 +419,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
         padding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withOpacity(0.3),
+          color: isSelected ? color : color.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(side.label,

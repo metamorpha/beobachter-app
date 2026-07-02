@@ -31,7 +31,7 @@ class PitchCanvas extends StatelessWidget {
         child: CustomPaint(
           painter: _PitchPainter(events: events, dimmed: dimmed),
           child: dimmed
-              ? Container(color: Colors.black.withOpacity(0.3))
+              ? Container(color: Colors.black.withValues(alpha: 0.3))
               : const SizedBox.expand(),
         ),
       ),

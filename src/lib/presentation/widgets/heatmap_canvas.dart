@@ -92,7 +92,7 @@ class HeatmapPainter extends CustomPainter {
     final color = t < 0.5
         ? Color.lerp(Colors.yellow, Colors.orange, t * 2)!
         : Color.lerp(Colors.orange, Colors.red, (t - 0.5) * 2)!;
-    return color.withOpacity(0.15 + 0.70 * t);
+    return color.withValues(alpha: 0.15 + 0.70 * t);
   }
 
   @override
@@ -130,7 +130,7 @@ class HeatmapPainter extends CustomPainter {
 
     // Feldlinien (vereinfacht)
     final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+      ..color = Colors.white.withValues(alpha: 0.4)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     canvas.drawRect(Rect.fromLTWH(2, 2, w - 4, h - 4), linePaint);

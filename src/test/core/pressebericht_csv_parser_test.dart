@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // Minimal valid CSV row matching the real Pressebericht format
-  const _header =
+  const csvHeader =
       'Spielberichtsnummer;Bearbeitungsstatus;Bearbeiter;Hinweise-Fehler;'
       'Liganame;Spieltag;Spielnummer;Spieltyp;Spieldatum;Anstoßzeit;Stadion;Ort;'
       'Schiedsrichter;Assistent-1;Assistent-2;Vierter-Offizieller;'
@@ -57,7 +57,7 @@ void main() {
       'G-A9-Nr;G-A9-Spieler;G-A9-Hinweis;G-A9-Status';
 
   // Build a data row with the given overrides; all other fields empty.
-  String _dataRow({
+  String dataRow({
     String spielbericht = '1',
     String liganame = 'Testliga',
     String spieltag = '5',
@@ -72,7 +72,7 @@ void main() {
     List<String> gastStartelf = const [],
     List<String> gastAuswechsler = const [],
   }) {
-    final cols = _header.split(';');
+    final cols = csvHeader.split(';');
     final vals = List<String>.filled(cols.length, '');
 
     void set(String key, String val) {
@@ -106,7 +106,7 @@ void main() {
     return vals.join(';');
   }
 
-  String _csv({
+  String buildCsv({
     String? customHeader,
     String? customData,
     String heim = 'FC Heim',
@@ -122,9 +122,9 @@ void main() {
     List<String> gastStartelf = const [],
     List<String> gastAuswechsler = const [],
   }) {
-    final header = customHeader ?? _header;
+    final header = customHeader ?? csvHeader;
     final data = customData ??
-        _dataRow(
+        dataRow(
           heim: heim,
           gast: gast,
           liganame: liganame,
@@ -145,20 +145,20 @@ void main() {
     group('Teamnamen', () {
       test('importiert Heim- und Gastmannschaft', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heim: 'DJK TuS Hordel', gast: 'SC Westfalia Herne'));
+            buildCsv(heim: 'DJK TuS Hordel', gast: 'SC Westfalia Herne'));
         expect(result.homeTeamName, 'DJK TuS Hordel');
         expect(result.awayTeamName, 'SC Westfalia Herne');
       });
 
       test('wirft CsvFormatException wenn beide Teamnamen fehlen', () {
         expect(
-          () => PresskBerichtCsvParser.parse(_csv(heim: '', gast: '')),
+          () => PresskBerichtCsvParser.parse(buildCsv(heim: '', gast: '')),
           throwsA(isA<CsvFormatException>()),
         );
       });
 
       test('importiert auch wenn nur Heimteam vorhanden', () {
-        final result = PresskBerichtCsvParser.parse(_csv(heim: 'FC Test', gast: ''));
+        final result = PresskBerichtCsvParser.parse(buildCsv(heim: 'FC Test', gast: ''));
         expect(result.homeTeamName, 'FC Test');
         expect(result.awayTeamName, isNull);
       });
@@ -167,38 +167,38 @@ void main() {
     group('Meta-Daten', () {
       test('importiert Liga und Spieltag', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(liganame: 'Westfalenliga Staffel 2', spieltag: '23'));
+            buildCsv(liganame: 'Westfalenliga Staffel 2', spieltag: '23'));
         expect(result.liga, 'Westfalenliga Staffel 2');
         expect(result.spieltag, '23');
       });
 
       test('importiert Datum und Uhrzeit korrekt', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(spieldatum: '11.04.2026', anstosszeit: '18:00'));
+            buildCsv(spieldatum: '11.04.2026', anstosszeit: '18:00'));
         expect(result.date, DateTime(2026, 4, 11, 18, 0));
       });
 
       test('gibt null für Datum zurück wenn Format ungültig', () {
         final result =
-            PresskBerichtCsvParser.parse(_csv(spieldatum: '32.13.2026'));
+            PresskBerichtCsvParser.parse(buildCsv(spieldatum: '32.13.2026'));
         expect(result.date, isNull);
       });
 
       test('kombiniert Stadion und Ort zu location', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(stadion: 'Hordeler Heide', ort: 'Bochum'));
+            buildCsv(stadion: 'Hordeler Heide', ort: 'Bochum'));
         expect(result.location, 'Hordeler Heide, Bochum');
       });
 
       test('gibt nur Ort zurück wenn Stadion leer', () {
         final result =
-            PresskBerichtCsvParser.parse(_csv(stadion: '', ort: 'Bochum'));
+            PresskBerichtCsvParser.parse(buildCsv(stadion: '', ort: 'Bochum'));
         expect(result.location, 'Bochum');
       });
 
       test('gibt null für location zurück wenn beides leer', () {
         final result =
-            PresskBerichtCsvParser.parse(_csv(stadion: '', ort: ''));
+            PresskBerichtCsvParser.parse(buildCsv(stadion: '', ort: ''));
         expect(result.location, isNull);
       });
     });
@@ -206,14 +206,14 @@ void main() {
     group('Spielernummern Heim', () {
       test('importiert Startelf (S1–S11)', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: ['21', '4', '5', '10', '14', '16', '17', '22', '23', '27', '29']));
+            buildCsv(heimStartelf: ['21', '4', '5', '10', '14', '16', '17', '22', '23', '27', '29']));
         expect(result.homeNumbers, containsAll([4, 5, 10, 14, 16, 17, 21, 22, 23, 27, 29]));
         expect(result.homeNumbers.length, 11);
       });
 
       test('importiert Auswechsler (A1–A9)', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimAuswechsler: ['1', '6', '7', '9', '11']));
+            buildCsv(heimAuswechsler: ['1', '6', '7', '9', '11']));
         expect(result.homeNumbers, containsAll([1, 6, 7, 9, 11]));
       });
 
@@ -221,31 +221,31 @@ void main() {
         final startelf = List.generate(11, (i) => '${i + 1}');
         final bank = List.generate(9, (i) => '${i + 12}');
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: startelf, heimAuswechsler: bank));
+            buildCsv(heimStartelf: startelf, heimAuswechsler: bank));
         expect(result.homeNumbers.length, 20);
       });
 
       test('ignoriert Nummern außerhalb 1–99', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: ['0', '100', '50']));
+            buildCsv(heimStartelf: ['0', '100', '50']));
         expect(result.homeNumbers, [50]);
       });
 
       test('ignoriert nicht-numerische Werte (TW, C, leer)', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: ['TW', 'C', '', '9']));
+            buildCsv(heimStartelf: ['TW', 'C', '', '9']));
         expect(result.homeNumbers, [9]);
       });
 
       test('dedupliziert doppelte Nummern', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: ['10', '10'], heimAuswechsler: ['10']));
+            buildCsv(heimStartelf: ['10', '10'], heimAuswechsler: ['10']));
         expect(result.homeNumbers.where((n) => n == 10).length, 1);
       });
 
       test('gibt sortierte Liste zurück', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(heimStartelf: ['9', '1', '5']));
+            buildCsv(heimStartelf: ['9', '1', '5']));
         expect(result.homeNumbers, [1, 5, 9]);
       });
     });
@@ -253,20 +253,20 @@ void main() {
     group('Spielernummern Gast', () {
       test('importiert Gast-Startelf korrekt', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(gastStartelf: ['44', '4', '6', '9', '10']));
+            buildCsv(gastStartelf: ['44', '4', '6', '9', '10']));
         expect(result.awayNumbers, containsAll([4, 6, 9, 10, 44]));
       });
 
       test('importiert Gast-Auswechsler korrekt', () {
         final result = PresskBerichtCsvParser.parse(
-            _csv(gastAuswechsler: ['2', '5', '7']));
+            buildCsv(gastAuswechsler: ['2', '5', '7']));
         expect(result.awayNumbers, containsAll([2, 5, 7]));
       });
     });
 
     group('Warnungen', () {
       test('keine Warnungen bei vollständigem Import', () {
-        final result = PresskBerichtCsvParser.parse(_csv(
+        final result = PresskBerichtCsvParser.parse(buildCsv(
           heimStartelf: ['1', '2', '3'],
           gastStartelf: ['4', '5', '6'],
         ));
@@ -274,12 +274,12 @@ void main() {
       });
 
       test('warnt wenn Aufstellung Heim leer (aber Spalte vorhanden)', () {
-        final result = PresskBerichtCsvParser.parse(_csv());
+        final result = PresskBerichtCsvParser.parse(buildCsv());
         expect(result.warnings, contains('Aufstellung Heim'));
       });
 
       test('warnt wenn Aufstellung Gast leer (aber Spalte vorhanden)', () {
-        final result = PresskBerichtCsvParser.parse(_csv());
+        final result = PresskBerichtCsvParser.parse(buildCsv());
         expect(result.warnings, contains('Aufstellung Gast'));
       });
     });
@@ -294,30 +294,30 @@ void main() {
 
       test('wirft CsvFormatException bei nur einer Zeile', () {
         expect(
-          () => PresskBerichtCsvParser.parse(_header),
+          () => PresskBerichtCsvParser.parse(csvHeader),
           throwsA(isA<CsvFormatException>()),
         );
       });
 
       test('toleriert Windows-Zeilenenden CRLF', () {
-        final csv = _csv(heim: 'FC Test', gast: 'SC Test').replaceAll('\n', '\r\n');
+        final csv = buildCsv(heim: 'FC Test', gast: 'SC Test').replaceAll('\n', '\r\n');
         final result = PresskBerichtCsvParser.parse(csv);
         expect(result.homeTeamName, 'FC Test');
       });
 
       test('toleriert quoted Felder mit Semikolon drin', () {
-        final cols = _header.split(';');
+        final cols = csvHeader.split(';');
         final vals = List<String>.filled(cols.length, '');
         vals[cols.indexOf('Heimmannschaft')] = '"FC;Test"';
         vals[cols.indexOf('Gastmannschaft')] = 'SC Gast';
-        final csv = '$_header\n${vals.join(';')}\n';
+        final csv = '$csvHeader\n${vals.join(';')}\n';
         final result = PresskBerichtCsvParser.parse(csv);
         expect(result.homeTeamName, 'FC;Test');
       });
 
       test('wirft keine Exception bei mehr als 2 Zeilen (nimmt erste Datenzeile)', () {
-        final csv = '${_csv(heim: 'Team A', gast: 'Team B')}'
-            '${_dataRow(heim: 'Team C', gast: 'Team D')}\n';
+        final csv = '${buildCsv(heim: 'Team A', gast: 'Team B')}'
+            '${dataRow(heim: 'Team C', gast: 'Team D')}\n';
         final result = PresskBerichtCsvParser.parse(csv);
         expect(result.homeTeamName, 'Team A');
       });

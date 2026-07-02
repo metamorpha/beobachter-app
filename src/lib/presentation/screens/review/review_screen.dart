@@ -97,7 +97,7 @@ class _SceneListTab extends ConsumerWidget {
               }
               return ListView.separated(
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (context, index) =>
                     const Divider(height: 1, indent: 16),
                 itemBuilder: (ctx, i) =>
                     _SceneTile(event: filtered[i], gameId: gameId),
