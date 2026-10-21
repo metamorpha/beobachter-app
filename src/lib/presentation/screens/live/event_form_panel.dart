@@ -408,7 +408,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                       }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 4),
+                            horizontal: 8, vertical: 4.5),
                         decoration: BoxDecoration(
                           color: isSel
                               ? teamColor
@@ -421,7 +421,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                         child: Text(
                           '#$n',
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 11),
+                              color: Colors.white, fontSize: 12),
                         ),
                       ),
                     ),

@@ -56,7 +56,7 @@ final eventsProvider =
 
 final eventCountProvider =
     FutureProvider.family<int, String>((ref, gameId) async {
-  final events = await ref.read(eventRepositoryProvider).getEvents(gameId);
+  final events = await ref.watch(eventsProvider(gameId).future);
   return events.length;
 });
 
