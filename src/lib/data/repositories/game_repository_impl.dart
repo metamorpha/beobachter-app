@@ -66,6 +66,13 @@ class GameRepositoryImpl implements GameRepository {
     await (_db.delete(_db.games)..where((t) => t.id.equals(id))).go();
   }
 
+  @override
+  Future<void> updateCoachingNote(String gameId, String? note) async {
+    await (_db.update(_db.games)..where((t) => t.id.equals(gameId))).write(
+      GamesCompanion(coachingNote: Value(note)),
+    );
+  }
+
   Game _toEntity(GameRow row) => Game(
         id: row.id,
         date: row.date,
@@ -75,6 +82,7 @@ class GameRepositoryImpl implements GameRepository {
         awayTeamName: row.awayTeamName,
         liga: row.liga,
         spieltag: row.spieltag,
+        coachingNote: row.coachingNote,
         createdAt: row.createdAt,
       );
 }

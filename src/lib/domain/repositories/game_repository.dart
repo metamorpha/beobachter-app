@@ -6,4 +6,5 @@ abstract class GameRepository {
   Future<Game?> getGame(String id);
   Future<void> updateGame(Game game);
   Future<void> deleteGame(String id);
+  Future<void> updateCoachingNote(String gameId, String? note);
 }

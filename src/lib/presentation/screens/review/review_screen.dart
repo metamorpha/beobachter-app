@@ -57,7 +57,7 @@ class ReviewScreen extends ConsumerWidget {
         body: TabBarView(
           children: [
             _SceneListTab(gameId: game.id),
-            _CoachingTab(gameId: game.id),
+            _CoachingTab(game: game),
             _StatsTab(gameId: game.id),
           ],
         ),
@@ -312,24 +312,32 @@ class _SceneTile extends ConsumerWidget {
   }
 
   Future<void> _toggleCoaching(WidgetRef ref, Event event) async {
-    final updated = event.copyWith(coachingFlag: !event.coachingFlag);
-    await ref.read(eventRepositoryProvider).updateEvent(updated, []);
+    await ref
+        .read(eventRepositoryProvider)
+        .updateCoachingFlag(event.id, !event.coachingFlag);
     ref.invalidate(eventsProvider(gameId));
   }
 
-  void _openEdit(BuildContext context, WidgetRef ref) {
+  Future<void> _openEdit(BuildContext context, WidgetRef ref) async {
+    final allPlayers =
+        await ref.read(eventRepositoryProvider).getPlayersForGame(gameId);
+    final eventPlayers =
+        allPlayers.where((p) => p.eventId == event.id).toList();
+
+    if (!context.mounted) return;
     showDialog<void>(
       context: context,
       builder: (ctx) => Dialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: SizedBox(
           width: 480,
-          height: 600,
+          height: 620,
           child: EventFormPanel(
             gameId: gameId,
             locationX: event.locationX,
             locationY: event.locationY,
             initialEvent: event,
+            initialPlayers: eventPlayers,
             onClose: () => Navigator.of(ctx).pop(),
             onSaved: (updated) {
               ref.invalidate(eventsProvider(gameId));
@@ -417,11 +425,11 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   }
 
   Future<void> _saveCoachingNote() async {
-    final updated = widget.event.copyWith(
-      coachingNote: _coachingCtrl.text.isEmpty ? null : _coachingCtrl.text,
-      coachingFlag: true,
-    );
-    await ref.read(eventRepositoryProvider).updateEvent(updated, []);
+    final note =
+        _coachingCtrl.text.isEmpty ? null : _coachingCtrl.text;
+    final repo = ref.read(eventRepositoryProvider);
+    await repo.updateCoachingNote(widget.event.id, note);
+    await repo.updateCoachingFlag(widget.event.id, true);
     ref.invalidate(eventsProvider(widget.gameId));
     if (mounted) Navigator.pop(context);
   }
@@ -435,51 +443,253 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
 
 // ── Coaching-Ansicht ─────────────────────────────────────────────────────────
 
-class _CoachingTab extends ConsumerWidget {
-  final String gameId;
+class _CoachingTab extends ConsumerStatefulWidget {
+  final Game game;
 
-  const _CoachingTab({required this.gameId});
+  const _CoachingTab({required this.game});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final eventsAsync = ref.watch(eventsProvider(gameId));
+  ConsumerState<_CoachingTab> createState() => _CoachingTabState();
+}
+
+class _CoachingTabState extends ConsumerState<_CoachingTab> {
+  late final TextEditingController _overallCtrl;
+  late final FocusNode _overallFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    _overallCtrl =
+        TextEditingController(text: widget.game.coachingNote ?? '');
+    _overallFocus = FocusNode()..addListener(_saveOverallNote);
+  }
+
+  void _saveOverallNote() {
+    if (!_overallFocus.hasFocus) {
+      final note =
+          _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
+      ref
+          .read(gameRepositoryProvider)
+          .updateCoachingNote(widget.game.id, note);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(eventsProvider(widget.game.id));
 
     return eventsAsync.when(
       data: (events) {
-        final coaching = events.where((e) => e.coachingFlag).toList();
-        if (coaching.isEmpty) {
-          return const Center(
-              child: Text('Noch keine Szenen für das Coaching markiert.'));
-        }
-        return ListView.builder(
-          itemCount: coaching.length,
-          itemBuilder: (ctx, i) {
-            final e = coaching[i];
-            return ListTile(
-              leading: Text("${e.minute}'",
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              title: Text(e.type.label),
-              subtitle: e.coachingNote != null
-                  ? Text(e.coachingNote!,
-                      style: const TextStyle(fontSize: 12))
-                  : null,
-              trailing: e.assessment != null
-                  ? Icon(
-                      e.assessment!.isCorrect
-                          ? Icons.check_circle
-                          : Icons.cancel,
-                      color: e.assessment!.isCorrect
-                          ? Colors.green
-                          : Colors.red,
-                    )
-                  : null,
-            );
-          },
+        final coaching =
+            events.where((e) => e.coachingFlag).toList();
+        return ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            _OverallNoteSection(
+              controller: _overallCtrl,
+              focusNode: _overallFocus,
+            ),
+            const SizedBox(height: 12),
+            if (coaching.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Noch keine Szenen für das Coaching markiert.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            else
+              ...coaching.map(
+                (e) => _CoachingItem(
+                  event: e,
+                  gameId: widget.game.id,
+                ),
+              ),
+          ],
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Fehler: $e')),
     );
+  }
+
+  @override
+  void dispose() {
+    _overallFocus.removeListener(_saveOverallNote);
+    _overallCtrl.dispose();
+    _overallFocus.dispose();
+    super.dispose();
+  }
+}
+
+class _OverallNoteSection extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+
+  const _OverallNoteSection({
+    required this.controller,
+    required this.focusNode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ALLGEMEINE NOTIZ',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Eröffnungsworte, allgemeines Fazit …',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CoachingItem extends ConsumerStatefulWidget {
+  final Event event;
+  final String gameId;
+
+  const _CoachingItem({required this.event, required this.gameId});
+
+  @override
+  ConsumerState<_CoachingItem> createState() => _CoachingItemState();
+}
+
+class _CoachingItemState extends ConsumerState<_CoachingItem> {
+  late final TextEditingController _noteCtrl;
+  late final FocusNode _noteFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    _noteCtrl =
+        TextEditingController(text: widget.event.coachingNote ?? '');
+    _noteFocus = FocusNode()..addListener(_saveNote);
+  }
+
+  void _saveNote() {
+    if (!_noteFocus.hasFocus) {
+      final note =
+          _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
+      ref
+          .read(eventRepositoryProvider)
+          .updateCoachingNote(widget.event.id, note);
+    }
+  }
+
+  Future<void> _toggleFlag() async {
+    await ref
+        .read(eventRepositoryProvider)
+        .updateCoachingFlag(widget.event.id, !widget.event.coachingFlag);
+    ref.invalidate(eventsProvider(widget.gameId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final e = widget.event;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row: minute · type · decision · assessment · flag
+            Row(
+              children: [
+                Text(
+                  "${e.minute}'",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    [
+                      e.type.label,
+                      if (e.refDecision != null) e.refDecision!.label,
+                      if (e.assessment != null) e.assessment!.label,
+                    ].join(' · '),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    e.coachingFlag
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: e.coachingFlag ? Colors.amber : Colors.grey,
+                  ),
+                  onPressed: _toggleFlag,
+                  tooltip: 'Coaching-Flag',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            // Scene note (read-only, from live capture)
+            if (e.sceneNote != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.sticky_note_2_outlined,
+                      size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      e.sceneNote!,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            // Coaching note (inline editable)
+            const SizedBox(height: 8),
+            TextField(
+              controller: _noteCtrl,
+              focusNode: _noteFocus,
+              maxLines: null,
+              decoration: const InputDecoration(
+                hintText: 'Coaching-Notiz …',
+                border: OutlineInputBorder(),
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 8),
+              ),
+              style: const TextStyle(fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _noteFocus.removeListener(_saveNote);
+    _noteCtrl.dispose();
+    _noteFocus.dispose();
+    super.dispose();
   }
 }
 

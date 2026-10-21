@@ -144,14 +144,60 @@ Nachbearbeitungs-Screen
   │     ├── Szene antippen → Detail-Ansicht / Bearbeiten
   │     └── Coaching-Flag (⭐) per Tap setzen
   │
-  ├── Tab: Coaching-Ansicht
-  │     └── Nur markierte Szenen, chronologisch
+  ├── Tab: Coaching-Ansicht  (US-306 / US-307)
+  │     ├── Abschnitt „Allgemeine Notiz" (mehrzeilig, autosave bei FocusLoss)
+  │     ├── [Kein Szenen-Hinweis wenn keine Szenen markiert]
+  │     └── Pro markierter Szene (chronologisch):
+  │           ├── Header-Zeile: Minute · Typ · Entscheidung · Bewertung · ⭐ Toggle
+  │           ├── Szenennotiz (read-only, falls vorhanden, grau + 📋-Icon)
+  │           └── Coaching-Notiz (inline TextField, autosave bei FocusLoss)
   │
   └── Tab: Statistik
         ├── Heatmap
         ├── Zeitachse
         └── Spieler-Ranking
 ```
+
+---
+
+### Screen 6 — Coaching-Ansicht (US-306 / US-307)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ◀ Spiele   Heimteam – Gastteam   30.04.2026   [Szenen][Coaching✓][Statistik]│
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ALLGEMEINE NOTIZ                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Eröffnungsworte, allgemeines Fazit …                                │   │
+│  │                                                                     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  12'  Fußvergehen · Freistoß · ✗ Komplex                              ⭐   │
+│  📋  "War knapp aber klar Foul"                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Coaching-Notiz …                                                    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  38'  Oberkörpervergehen · Strafstoß · ✗ Komplex                      ⭐   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Positionierung war gut, aber Kontaktstärke übersehen                │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  47'  Tätlichkeit · Rot · ✓ Komplex                                   ⭐   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Coaching-Notiz …                                                    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**UX-Entscheidungen:**
+- Allgemeine Notiz steht immer oben — auch wenn noch keine Szenen markiert sind
+- Autosave bei FocusLoss: kein Speichern-Button, keine Bestätigung
+- Szenennotiz (Live-Notiz) ist read-only und visuell abgesetzt (grau, 📋-Icon) — keine Verwechslung mit der editierbaren Coaching-Notiz
+- Coaching-Flag (⭐) bleibt per Tap in der Zeile togglebar, ohne die Notizen-Felder zu schließen
+- Ein demarkiertes Ereignis (☆ → ⭐ wieder aktiviert) erscheint sofort in der Liste (reaktiv über `eventsProvider`)
 
 ---
 
@@ -184,74 +230,77 @@ Nachbearbeitungs-Screen
 
 ---
 
-### Screen 2 — Ereignisformular (Minimal-Zustand)
+### Screen 2 — Ereignisformular (vor Typ-Auswahl)
 
 ```
 ┌──────────────────────────────────────────────┬──────────────────────────────┐
-│                                              │ 47:23  ✕ Abbrechen           │
+│                                              │ ⏱ 47:23  Ereignis erfassen ✕ │
 │          SPIELFELD-SKETCH                    ├──────────────────────────────┤
 │          (abgedunkelt, Marker sichtbar)      │ EREIGNISTYP                  │
-│                                              │ ┌────────┐ ┌────────────────┐│
-│                    ✕ ← Marker                │ │Fußverg.│ │Oberkörperverg. ││
-│                                              │ └────────┘ └────────────────┘│
-│                                              │ ┌────────┐ ┌──────┐ ┌──────┐ │
-│                                              │ │Handsp. │ │Unspt.│ │Tätkl.│ │
-│                                              │ └────────┘ └──────┘ └──────┘ │
-│                                              │ ┌────────┐ ┌──────┐ ┌──────┐ │
-│                                              │ │Abseits │ │Vort. │ │Tor   │ │
-│                                              │ └────────┘ └──────┘ └──────┘ │
-│                                              │ ┌──────────────────────────┐ │
-│                                              │ │        Sonstiges         │ │
-│                                              │ └──────────────────────────┘ │
+│                                              │ [Fußverg.] [Körperverg.]     │
+│                    ✕ ← Marker                │ [Handsp.]  [Unsptl.] [Tätk.] │
+│                                              │ [Abseits]  [Vorteil] [Tor]   │
+│                                              │ [Sonstiges              ]    │
+│                                              ├──────────────────────────────┤
 │                                              │                              │
-│                                              │        [▶ SPEICHERN]         │
+│                                              │  Typ auswählen, dann         │
+│                                              │  speichern                   │
+│                                              │                              │
+│                                              ├──────────────────────────────┤
+│                                              │       [▶ SPEICHERN]  (inakt.)│
 └──────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
-**Minimalzustand:** Typ gewählt → Speichern aktiv. Alle weiteren Felder erscheinen nach Typ-Auswahl darunter.
+**Verhalten vor Typ-Auswahl:** Nur Typ-Grid + inaktiver Speichern-Button sichtbar. Kein Scrollen erforderlich. Zeitstempel wird beim Öffnen des Formulars eingefroren (nicht erst beim Speichern).
 
 ---
 
-### Screen 3 — Ereignisformular (ausgeklappt, Foul-Szenario)
+### Screen 3 — Ereignisformular (Typ gewählt, Foul-Szenario)
 
 ```
 ┌──────────────────────────────────────────────┬──────────────────────────────┐
-│                                              │ 47:23  ✕ Abbrechen           │
+│                                              │ ⏱ 47:23  Ereignis erfassen ✕ │
 │          SPIELFELD-SKETCH                    ├──────────────────────────────┤
-│          (abgedunkelt)                       │ [Fußvergehen ✓]              │
+│          (abgedunkelt)                       │ EREIGNISTYP                  │
+│                                              │ [Fußverg.✓] [Körperverg.]    │
+│                    ✕                         │ [Handsp.]  [Unsptl.] [Tätk.] │
+│                                              │ [Abseits]  [Vorteil] [Tor]   │
 │                                              ├──────────────────────────────┤
-│                    ✕                         │ SPIELER                      │
-│                                              │       HEIM           GAST    │
-│                                              │  Fouler:  [5][7][9]  [3][11] │
-│                                              │  Gefoulter:[5][7][9] [3][11] │
+│                                              │ SPIELER                      │
+│                                              │ Fouler:  [H][G] #__ [5][9]   │
+│                                              │ Gefoul.: [H][G] #__ [5][9]   │
 │                                              ├──────────────────────────────┤
 │                                              │ ENTSCHEIDUNG                 │
-│                                              │[Freistoß][Strafstoß][Vorteil]│
-│                                              │[Weiter  ][Gelb     ][GR     ]│
-│                                              │[Rot     ][Ecke     ][Abstoß ]│
-│                                              │[Einwurf ][Tor              ] │
+│                                              │[Freistoß][Ind.FS][Strafstoß] │
+│                                              │[Vorteil ][Weiter][Gelb     ] │
+│                                              │[GR      ][Rot   ][Ecke     ] │
+│                                              │[Abstoß  ][Einw. ][Tor      ] │
 │                                              ├──────────────────────────────┤
-│                                              │ KARTE  [ ]Gelb [✓]GR [ ]Rot  │
+│                                              │ KARTE [Gelb][GR][Rot]        │
+│                                              │                    Coaching ☆│
 │                                              ├──────────────────────────────┤
 │                                              │ BEWERTUNG                    │
-│                                              │ ┌───────────┬──────────────┐ │
-│                                              │ │ Korrekt · │  Korrekt ·   │ │
-│                                              │ │ Erwartbar │  Komplex     │ │
-│                                              │ ├───────────┼──────────────┤ │
-│                                              │ │  Falsch · │   Falsch ·   │ │
-│                                              │ │ Erwartbar │   Komplex    │ │
-│                                              │ └───────────┴──────────────┘ │
+│                                              │ ┌──────────┬───────────────┐ │
+│                                              │ │ Korrekt  │  Korrekt      │ │
+│                                              │ │ Erwartb. │  Komplex      │ │
+│                                              │ ├──────────┼───────────────┤ │
+│                                              │ │  Falsch  │   Falsch      │ │
+│                                              │ │ Erwartb. │   Komplex     │ │
+│                                              │ └──────────┴───────────────┘ │
 │                                              ├──────────────────────────────┤
 │                                              │ [+ Notiz]                    │
-│                                              │                              │
 │                                              │        [▶ SPEICHERN]         │
 └──────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
-**Hinweise:**
-- Spieler-Buttons zeigen nur vorerfasste Nummern; Tap auf „+" öffnet Ziffernblock
-- Entscheidungs-Grid: 3 Spalten, 4 Zeilen, keine Labels länger als 9 Zeichen
-- 2×2-Bewertungs-Grid: ein Tap wählt beide Dimensionen gleichzeitig
+**Verhalten nach Typ-Auswahl:**
+- Felder erscheinen per AnimatedSwitcher (Fade, 150 ms)
+- Spieler-Sektion nur bei Foul-Typen (Fuß-/Körpervergehen, Handspiel, Unsportl., Tätlichkeit)
+- Spielernummern als horizontale Chip-Leiste scrollbar (Squad-Nummern), ergänzend ein `#`-Freitextfeld
+- KARTE und Coaching-Flag (☆/⭐) in einer gemeinsamen Zeile — spart vertikale Höhe
+- Coaching-Flag im Formular setzbar (statt nur in der Nachbereitung)
+- Kein Scrollen des gesamten Panels auf Ziel-Tablets (Querformat); SingleChildScrollView als Sicherheitsnetz für sehr kleine Bildschirme
+- Zeitstempel = Moment des Feldtipps (eingefroren beim Öffnen des Formulars)
 - „+ Notiz" klappt ein Textfeld auf (Tastatur erscheint erst dann)
 
 ---

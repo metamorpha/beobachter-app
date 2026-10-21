@@ -7,6 +7,7 @@ class Game {
   final String awayTeamName;
   final String? liga;
   final String? spieltag;
+  final String? coachingNote;
   final DateTime createdAt;
 
   const Game({
@@ -18,6 +19,7 @@ class Game {
     required this.awayTeamName,
     this.liga,
     this.spieltag,
+    this.coachingNote,
     required this.createdAt,
   });
 
@@ -39,6 +41,7 @@ class Game {
         awayTeamName: awayTeamName ?? this.awayTeamName,
         liga: liga ?? this.liga,
         spieltag: spieltag ?? this.spieltag,
+        coachingNote: coachingNote,
         createdAt: createdAt,
       );
 }

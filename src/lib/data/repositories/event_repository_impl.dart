@@ -96,6 +96,20 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Future<void> updateCoachingNote(String eventId, String? note) async {
+    await (_db.update(_db.events)..where((t) => t.id.equals(eventId))).write(
+      EventsCompanion(coachingNote: Value(note)),
+    );
+  }
+
+  @override
+  Future<void> updateCoachingFlag(String eventId, bool flag) async {
+    await (_db.update(_db.events)..where((t) => t.id.equals(eventId))).write(
+      EventsCompanion(coachingFlag: Value(flag)),
+    );
+  }
+
+  @override
   Future<List<EventPlayer>> getPlayersForGame(String gameId) async {
     final eventRows = await (_db.select(_db.events)
           ..where((t) => t.gameId.equals(gameId)))

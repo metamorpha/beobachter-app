@@ -10,6 +10,7 @@ class Games extends Table {
   TextColumn get awayTeamName => text().withDefault(const Constant(''))();
   TextColumn get liga => text().nullable()();
   TextColumn get spieltag => text().nullable()();
+  TextColumn get coachingNote => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

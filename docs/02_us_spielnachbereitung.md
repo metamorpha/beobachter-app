@@ -57,6 +57,37 @@
 
 ---
 
+### US-306 · Szenen- und Coaching-Notizen in der Coaching-Ansicht
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** in der Coaching-Ansicht zu jeder Szene die Live-Szenennotiz sehen und eine separate Coaching-Notiz direkt inline bearbeiten können,  
+**damit** ich im Coaching-Gespräch alle relevanten Informationen auf einen Blick habe und keine Notizen in einem separaten Dialog suchen muss.
+
+**Akzeptanzkriterien:**
+- [x] Pro Szene in der Coaching-Ansicht wird die Szenennotiz (aus dem Live-Screen) angezeigt, falls vorhanden
+- [x] Pro Szene ist die Coaching-Notiz direkt als bearbeitbares Textfeld (inline, kein Dialog) sichtbar — auch wenn noch keine Notiz vorhanden ist
+- [x] Änderungen an der Coaching-Notiz werden beim Verlassen des Feldes (onEditingComplete / FocusLoss) automatisch gespeichert
+- [x] Ist noch keine Coaching-Notiz vorhanden, zeigt das Feld den Platzhalter „Coaching-Notiz …"
+- [x] Das Setzen / Entfernen des Coaching-Flags (⭐) bleibt weiterhin per Tap möglich
+- [x] Szenennotiz und Coaching-Notiz sind visuell klar voneinander unterschieden (📋-Icon + grauer Text vs. editierbares TextField)
+
+---
+
+### US-307 · Allgemeine Coaching-Notiz
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** in der Coaching-Ansicht eine übergreifende Notiz zum gesamten Spiel hinterlegen können,  
+**damit** ich allgemeine Eindrücke, Eröffnungsworte oder ein Fazit festhalten kann, die keiner einzelnen Szene zugeordnet sind.
+
+**Akzeptanzkriterien:**
+- [x] Am Anfang der Coaching-Ansicht gibt es einen eigenen Abschnitt „Allgemeine Notiz" mit einem mehrzeiligen Textfeld
+- [x] Die Notiz wird automatisch gespeichert beim Verlassen des Felds (FocusLoss)
+- [x] Die Notiz bleibt lokal gespeichert und ist offline verfügbar
+- [x] Der Abschnitt ist auch sichtbar, wenn noch keine Szenen für das Coaching markiert wurden
+- [x] DB-Migration: `coaching_note`-Spalte in der `games`-Tabelle (nullable Text, Default null), Schema-Version 4
+
+---
+
 ### US-305 · Coaching-Ansicht aufrufen
 
 **Als** Schiedsrichterbeobachter  

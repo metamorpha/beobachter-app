@@ -92,6 +92,17 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _coachingNoteMeta = const VerificationMeta(
+    'coachingNote',
+  );
+  @override
+  late final GeneratedColumn<String> coachingNote = GeneratedColumn<String>(
+    'coaching_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -113,6 +124,7 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
     awayTeamName,
     liga,
     spieltag,
+    coachingNote,
     createdAt,
   ];
   @override
@@ -185,6 +197,15 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
         spieltag.isAcceptableOrUnknown(data['spieltag']!, _spieltagMeta),
       );
     }
+    if (data.containsKey('coaching_note')) {
+      context.handle(
+        _coachingNoteMeta,
+        coachingNote.isAcceptableOrUnknown(
+          data['coaching_note']!,
+          _coachingNoteMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -234,6 +255,10 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
         DriftSqlType.string,
         data['${effectivePrefix}spieltag'],
       ),
+      coachingNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}coaching_note'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -256,6 +281,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
   final String awayTeamName;
   final String? liga;
   final String? spieltag;
+  final String? coachingNote;
   final DateTime createdAt;
   const GameRow({
     required this.id,
@@ -266,6 +292,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     required this.awayTeamName,
     this.liga,
     this.spieltag,
+    this.coachingNote,
     required this.createdAt,
   });
   @override
@@ -287,6 +314,9 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     if (!nullToAbsent || spieltag != null) {
       map['spieltag'] = Variable<String>(spieltag);
     }
+    if (!nullToAbsent || coachingNote != null) {
+      map['coaching_note'] = Variable<String>(coachingNote);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -307,6 +337,9 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       spieltag: spieltag == null && nullToAbsent
           ? const Value.absent()
           : Value(spieltag),
+      coachingNote: coachingNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coachingNote),
       createdAt: Value(createdAt),
     );
   }
@@ -325,6 +358,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       awayTeamName: serializer.fromJson<String>(json['awayTeamName']),
       liga: serializer.fromJson<String?>(json['liga']),
       spieltag: serializer.fromJson<String?>(json['spieltag']),
+      coachingNote: serializer.fromJson<String?>(json['coachingNote']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -340,6 +374,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       'awayTeamName': serializer.toJson<String>(awayTeamName),
       'liga': serializer.toJson<String?>(liga),
       'spieltag': serializer.toJson<String?>(spieltag),
+      'coachingNote': serializer.toJson<String?>(coachingNote),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -353,6 +388,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     String? awayTeamName,
     Value<String?> liga = const Value.absent(),
     Value<String?> spieltag = const Value.absent(),
+    Value<String?> coachingNote = const Value.absent(),
     DateTime? createdAt,
   }) => GameRow(
     id: id ?? this.id,
@@ -363,6 +399,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     awayTeamName: awayTeamName ?? this.awayTeamName,
     liga: liga.present ? liga.value : this.liga,
     spieltag: spieltag.present ? spieltag.value : this.spieltag,
+    coachingNote: coachingNote.present ? coachingNote.value : this.coachingNote,
     createdAt: createdAt ?? this.createdAt,
   );
   GameRow copyWithCompanion(GamesCompanion data) {
@@ -381,6 +418,9 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           : this.awayTeamName,
       liga: data.liga.present ? data.liga.value : this.liga,
       spieltag: data.spieltag.present ? data.spieltag.value : this.spieltag,
+      coachingNote: data.coachingNote.present
+          ? data.coachingNote.value
+          : this.coachingNote,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -396,6 +436,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           ..write('awayTeamName: $awayTeamName, ')
           ..write('liga: $liga, ')
           ..write('spieltag: $spieltag, ')
+          ..write('coachingNote: $coachingNote, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -411,6 +452,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     awayTeamName,
     liga,
     spieltag,
+    coachingNote,
     createdAt,
   );
   @override
@@ -425,6 +467,7 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           other.awayTeamName == this.awayTeamName &&
           other.liga == this.liga &&
           other.spieltag == this.spieltag &&
+          other.coachingNote == this.coachingNote &&
           other.createdAt == this.createdAt);
 }
 
@@ -437,6 +480,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
   final Value<String> awayTeamName;
   final Value<String?> liga;
   final Value<String?> spieltag;
+  final Value<String?> coachingNote;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const GamesCompanion({
@@ -448,6 +492,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     this.awayTeamName = const Value.absent(),
     this.liga = const Value.absent(),
     this.spieltag = const Value.absent(),
+    this.coachingNote = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -460,6 +505,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     this.awayTeamName = const Value.absent(),
     this.liga = const Value.absent(),
     this.spieltag = const Value.absent(),
+    this.coachingNote = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -474,6 +520,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     Expression<String>? awayTeamName,
     Expression<String>? liga,
     Expression<String>? spieltag,
+    Expression<String>? coachingNote,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -486,6 +533,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
       if (awayTeamName != null) 'away_team_name': awayTeamName,
       if (liga != null) 'liga': liga,
       if (spieltag != null) 'spieltag': spieltag,
+      if (coachingNote != null) 'coaching_note': coachingNote,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -500,6 +548,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     Value<String>? awayTeamName,
     Value<String?>? liga,
     Value<String?>? spieltag,
+    Value<String?>? coachingNote,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -512,6 +561,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
       awayTeamName: awayTeamName ?? this.awayTeamName,
       liga: liga ?? this.liga,
       spieltag: spieltag ?? this.spieltag,
+      coachingNote: coachingNote ?? this.coachingNote,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -544,6 +594,9 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     if (spieltag.present) {
       map['spieltag'] = Variable<String>(spieltag.value);
     }
+    if (coachingNote.present) {
+      map['coaching_note'] = Variable<String>(coachingNote.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -564,6 +617,7 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
           ..write('awayTeamName: $awayTeamName, ')
           ..write('liga: $liga, ')
           ..write('spieltag: $spieltag, ')
+          ..write('coachingNote: $coachingNote, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2506,6 +2560,7 @@ typedef $$GamesTableCreateCompanionBuilder =
       Value<String> awayTeamName,
       Value<String?> liga,
       Value<String?> spieltag,
+      Value<String?> coachingNote,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -2519,6 +2574,7 @@ typedef $$GamesTableUpdateCompanionBuilder =
       Value<String> awayTeamName,
       Value<String?> liga,
       Value<String?> spieltag,
+      Value<String?> coachingNote,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2629,6 +2685,11 @@ class $$GamesTableFilterComposer extends Composer<_$AppDatabase, $GamesTable> {
 
   ColumnFilters<String> get spieltag => $composableBuilder(
     column: $table.spieltag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coachingNote => $composableBuilder(
+    column: $table.coachingNote,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2762,6 +2823,11 @@ class $$GamesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get coachingNote => $composableBuilder(
+    column: $table.coachingNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2806,6 +2872,11 @@ class $$GamesTableAnnotationComposer
 
   GeneratedColumn<String> get spieltag =>
       $composableBuilder(column: $table.spieltag, builder: (column) => column);
+
+  GeneratedColumn<String> get coachingNote => $composableBuilder(
+    column: $table.coachingNote,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -2926,6 +2997,7 @@ class $$GamesTableTableManager
                 Value<String> awayTeamName = const Value.absent(),
                 Value<String?> liga = const Value.absent(),
                 Value<String?> spieltag = const Value.absent(),
+                Value<String?> coachingNote = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GamesCompanion(
@@ -2937,6 +3009,7 @@ class $$GamesTableTableManager
                 awayTeamName: awayTeamName,
                 liga: liga,
                 spieltag: spieltag,
+                coachingNote: coachingNote,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -2950,6 +3023,7 @@ class $$GamesTableTableManager
                 Value<String> awayTeamName = const Value.absent(),
                 Value<String?> liga = const Value.absent(),
                 Value<String?> spieltag = const Value.absent(),
+                Value<String?> coachingNote = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => GamesCompanion.insert(
@@ -2961,6 +3035,7 @@ class $$GamesTableTableManager
                 awayTeamName: awayTeamName,
                 liga: liga,
                 spieltag: spieltag,
+                coachingNote: coachingNote,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
