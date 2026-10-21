@@ -77,6 +77,7 @@ Key design decisions:
 | `13_timer_phases_tests.md` | Timer phases test cases — US-210/211 (31 TCs) |
 | `14_heatmap_kde_tests.md` | Heatmap KDE test cases — US-401 (10 TCs) |
 | `15_spiel_beenden_tests.md` | End game test cases — US-212 (13 TCs) |
+| `18_live_ereignisliste_tests.md` | Live side panel event list test cases — US-213 (10 TCs) |
 
 ### src/lib/ structure
 

@@ -222,3 +222,31 @@
 - [x] Bestehende Szenen können weiterhin bearbeitet werden (US-209), inkl. Szenen- und Coaching-Notizen
 - [x] In der Spielliste wird ein abgeschlossenes Spiel als „Beendet" gekennzeichnet
 - [x] Tap auf ein abgeschlossenes Spiel in der Spielliste öffnet direkt die Nachbereitung (Review) statt des Live-Screens
+
+---
+
+### US-213 · Ereignisliste im Live-Seitenpanel
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** im Seitenpanel des Live-Screens so viele erfasste Ereignisse sehen, wie mein Bildschirm Platz bietet, und diese sicher antippen können,  
+**damit** ich auch während des Spiels den Überblick über alle Szenen behalte und unter Zeitdruck nicht versehentlich das falsche Ereignis lösche.
+
+**Akzeptanzkriterien:**
+
+*Länge der Liste*
+- [x] Das Seitenpanel „Letzte Ereignisse" zeigt alle Ereignisse des Spiels — nicht mehr nur die letzten 5
+- [x] Die Liste füllt die gesamte verfügbare Höhe des Panels; die Anzahl sichtbarer Zeilen ergibt sich aus der Bildschirmhöhe
+- [x] Passen nicht alle Ereignisse in das Panel, ist die Liste vertikal scrollbar; Überschrift „Letzte Ereignisse" und Trennlinie bleiben dabei fest stehen
+- [x] Das neueste Ereignis steht oben; ein neu gespeichertes Ereignis erscheint sofort oben in der Liste
+- [x] Ohne Ereignisse zeigt das Panel nur Überschrift und Trennlinie (kein Fehler, kein Platzhalter-Layoutbruch)
+
+*Zeilengröße / Fehltipp-Schutz*
+- [x] Jede Zeile hat eine Mindesthöhe von 44 dp (bisher ca. 18 dp)
+- [x] Zwischen den Zeilen trennt eine dezente Linie, damit die Zeilen optisch klar unterscheidbar sind
+- [x] Schriftgröße von Zeitstempel und Ereignistyp steigt von 12 auf 14
+- [x] Der Lösch-Button hat eine Tippfläche von mindestens 44 × 44 dp (Icon 22 dp), auch wenn das Icon selbst kleiner wirkt
+- [x] Die Panelbreite (200 dp) bleibt unverändert; lange Ereignistypen werden weiterhin mit „…" gekürzt
+
+*Bestehendes Verhalten bleibt erhalten*
+- [x] Der Lösch-Button entfernt das Ereignis wie bisher; die Liste aktualisiert sich sofort
+- [x] Im abgeschlossenen Spiel (US-212) bleibt die Liste sichtbar

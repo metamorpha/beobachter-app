@@ -212,21 +212,27 @@ Nachbearbeitungs-Screen
 │                                              │                              │
 │                                              │   Letzte Ereignisse          │
 │          SPIELFELD-SKETCH                    │   ───────────────────        │
-│          (tappable, Draufsicht)              │   43' Fußvergehen  Freistoß  │
-│                                              │   38' Handspiel    Weiter    │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   31' Abseits      Abseits   │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   ───────────────────        │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │                              │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │                              │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │                              │
-│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │                              │
-│                                              │                              │
+│          (tappable, Draufsicht)              │   43:12  Fußvergehen    🗑   │
+│                                              │   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄     │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   38:40  Handspiel      🗑   │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄     │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   31:05  Abseits        🗑   │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄     │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │   …  (weitere Zeilen bis     │
+│   ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·            │       Panelende, danach      │
+│                                              │       scrollbar ↕)           │
 │                    ✕ (Ereignismarker)        │                              │
 │                                              │                              │
 └──────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
 **Interaktion:** Tap auf beliebige Stelle des Spielfelds → Ereignisformular öffnet sich als Side Panel (rechts), Spielfeld bleibt sichtbar.
+
+**Ereignisliste im Seitenpanel (US-213):**
+- Liste zeigt alle Ereignisse, neuestes oben, und füllt die volle Panelhöhe — Anzahl sichtbarer Zeilen hängt von der Bildschirmhöhe ab
+- Mehr Ereignisse als Platz → Liste scrollt; Überschrift „Letzte Ereignisse" + Trennlinie bleiben fix
+- Zeilen min. 44 dp hoch, Schrift 14, dezente Trennlinie zwischen Zeilen — minimiert Fehltipps unter Zeitdruck
+- Lösch-Button (🗑) mit Tippfläche ≥ 44 × 44 dp, Icon 22 dp
 
 ---
 
