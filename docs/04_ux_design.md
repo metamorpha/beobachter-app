@@ -311,6 +311,73 @@ Nachbearbeitungs-Screen
 
 ---
 
+### Screen 3b — Torentscheidung & Spielstand (US-214)
+
+**Flow 6 — Tor erfassen:**
+
+```
+Feldtipp (Tor-Position)
+  → Typ „Torentsch." antippen          (Entscheidung „Tor" automatisch vorausgewählt)
+  → Torschützen-Team [Heim]/[Gast]     (Pflicht für Spielstand)
+  → optional: Nummer (Kader-Chip / #)
+  → optional: [⚽ Eigentor]
+  → Vorschau-Zeile prüfen
+  → Speichern                          → Kopfzeile zeigt neuen Spielstand (kurz hervorgehoben)
+```
+
+Minimaler Pfad: **4 Taps** (Feld → Torentsch. → Team → Speichern).
+
+**Kopfzeile Live-Screen:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ◀              FC Musterstadt – SV Beispiel            ☰     │
+│                         2 : 1                                 │
+│                [ 1. HZ   23:41   ■ ]                          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Ereignisformular, Typ Torentscheidung:**
+
+```
+┌ 🕐 23:41   Ereignis erfassen                      ✕ ┐
+│ EREIGNISTYP                                          │
+│ [Fußverg.] [Handspiel] … [Torentsch. ✓] [Sonstiges]  │
+│ ──────────────────────────────────────────────────── │
+│ TOR                                                  │
+│ Torschütze  [Heim ✓] [Gast]  [ # ]  #7  #9✓  #11 …   │
+│             [ ⚽ Eigentor ]                           │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │  Tor für HEIM · #9  →  2 : 1                     │ │
+│ └──────────────────────────────────────────────────┘ │
+│ ──────────────────────────────────────────────────── │
+│ ENTSCHEIDUNG   … [Tor ✓] …                           │
+│ … Karte · Bewertung · Notiz wie bisher …             │
+│ [            ✓ Speichern            ]                │
+└──────────────────────────────────────────────────────┘
+```
+
+**Vorschau-Zeile (Zustände):**
+
+| Zustand | Text | Farbe |
+|---------|------|-------|
+| Tor zählt | „Tor für HEIM · #9 → 2 : 1" | grün |
+| Eigentor | „Eigentor #4 (Heim) → Tor für GAST · 1 : 2" | grün |
+| Entscheidung ≠ Tor | „Tor aberkannt – Spielstand bleibt 1 : 1" | grau |
+| Entscheidung = Tor, kein Team | „Team wählen, damit das Tor zählt" | orange |
+
+**UX-Entscheidungen:**
+- Spielstand ist abgeleitet (aus Ereignissen berechnet), nie separat gespeichert — kann nicht auseinanderlaufen; Undo/Löschen/Bearbeiten wirken automatisch
+- Zählt nur bei Entscheidung „Tor" — aberkannte Tore (Abseits, Foul) bleiben als Szene erfasst, ändern aber den Stand nicht
+- Eigentor: Team/Nummer beschreiben den Spieler, der den Ball ins eigene Tor lenkt (so wie man es auf dem Platz sieht); die Gutschrift an den Gegner macht die App
+- Vorschau-Zeile macht die Gutschrift vor dem Speichern sichtbar — verhindert vertauschte Teams, besonders bei Eigentoren
+- Speichern ohne Team erlaubt (orange Hinweis statt Blockade) — kein Zeitdruck-Hindernis
+- Spielstand-Highlight (~0,6 s) beim Wechsel dient als periphere Bestätigung
+- Seitenpanel: gezählte Tore als „⚽ Tor 2:1" (Stand nach dem Tor), aberkannte als „Torentsch."
+- Torschütze wird nicht als Spieler-Rolle gespeichert → erscheint nicht im Foul-Ranking
+
+---
+
 ### Screen 4 — Szenenliste (Nachbearbeitung)
 
 ```

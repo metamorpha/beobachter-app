@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/event.dart';
 import '../../../domain/entities/event_player.dart';
+import '../../../domain/entities/score.dart';
 import '../../../domain/enums/assessment.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/event_type.dart';
@@ -51,6 +52,9 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   late TeamSide? _foulerTeam;
   late int? _fouledNumber;
   late TeamSide? _fouledTeam;
+  late TeamSide? _scorerTeam;
+  late int? _scorerNumber;
+  late bool _ownGoal;
 
   // Zeitstempel wird beim Öffnen eingefroren (UX-Spec: Tap-Zeitpunkt, nicht Save-Zeitpunkt)
   late final int _elapsedMs;
@@ -58,6 +62,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   late final TextEditingController _noteCtrl;
   late final TextEditingController _customCtrl;
+  late final TextEditingController _scorerCtrl;
 
   bool get _isEditMode => widget.initialEvent != null;
   bool get _canSave => _type != null && !_saving;
@@ -95,6 +100,12 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     _foulerNumber = fouler?.jerseyNumber;
     _fouledTeam = fouled?.team;
     _fouledNumber = fouled?.jerseyNumber;
+
+    _scorerTeam = e?.goalScorerTeam;
+    _scorerNumber = e?.goalScorerNumber;
+    _ownGoal = e?.ownGoal ?? false;
+    _scorerCtrl =
+        TextEditingController(text: _scorerNumber?.toString() ?? '');
 
     if (_isEditMode) {
       _elapsedMs = e!.elapsedMs;
@@ -198,9 +209,12 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                 onTap: () => setState(() {
                   _type = sel ? null : t;
                   if (!sel) {
-                    _decision = null;
+                    // Torentscheidung: „Tor" vorausgewählt (US-214)
+                    _decision =
+                        t == EventType.goalDecision ? RefDecision.goal : null;
                     _card = null;
                   }
+                  _clearScorer();
                 }),
               );
             }).toList(),
@@ -237,6 +251,12 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           _playerRow(PlayerRole.fouler),
           const SizedBox(height: 6),
           _playerRow(PlayerRole.fouled),
+        ],
+        if (_type == EventType.goalDecision) ...[
+          _divider(),
+          _sectionLabel('Tor'),
+          const SizedBox(height: 6),
+          _goalSection(),
         ],
         _divider(),
         _sectionLabel('Entscheidung'),
@@ -331,18 +351,49 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   }
 
   Widget _playerRow(PlayerRole role) {
-    final selectedTeam = role == PlayerRole.fouler ? _foulerTeam : _fouledTeam;
-    final selectedNumber =
-        role == PlayerRole.fouler ? _foulerNumber : _fouledNumber;
+    final isFouler = role == PlayerRole.fouler;
+    return _teamNumberRow(
+      label: role.label,
+      team: isFouler ? _foulerTeam : _fouledTeam,
+      number: isFouler ? _foulerNumber : _fouledNumber,
+      onTeamChanged: (t) => setState(() {
+        if (isFouler) {
+          _foulerTeam = t;
+          _foulerNumber = null;
+        } else {
+          _fouledTeam = t;
+          _fouledNumber = null;
+        }
+      }),
+      onNumberChanged: (n) => setState(() {
+        if (isFouler) {
+          _foulerNumber = n;
+        } else {
+          _fouledNumber = n;
+        }
+      }),
+    );
+  }
 
+  /// Team-Auswahl + Rückennummer (Freitext und Kader-Chips) — gemeinsam für
+  /// Fouler, Gefoulter und Torschütze.
+  Widget _teamNumberRow({
+    required String label,
+    required TeamSide? team,
+    required int? number,
+    required ValueChanged<TeamSide?> onTeamChanged,
+    required ValueChanged<int?> onNumberChanged,
+    TextEditingController? numberController,
+    String? keyPrefix,
+  }) {
     final homeAsync = ref.watch(homeSquadProvider(widget.gameId));
     final awayAsync = ref.watch(awaySquadProvider(widget.gameId));
     final homeNumbers = homeAsync.valueOrNull ?? [];
     final awayNumbers = awayAsync.valueOrNull ?? [];
 
-    final squadNumbers = selectedTeam == TeamSide.home
+    final squadNumbers = team == TeamSide.home
         ? homeNumbers
-        : selectedTeam == TeamSide.away
+        : team == TeamSide.away
             ? awayNumbers
             : <int>[];
 
@@ -351,17 +402,19 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
         SizedBox(
           width: 54,
           child: Text(
-            role.label,
+            label,
             style: const TextStyle(color: Colors.white54, fontSize: 11),
           ),
         ),
-        _teamToggle(TeamSide.home, role, selectedTeam),
+        _teamToggle(TeamSide.home, team, onTeamChanged, keyPrefix),
         const SizedBox(width: 4),
-        _teamToggle(TeamSide.away, role, selectedTeam),
+        _teamToggle(TeamSide.away, team, onTeamChanged, keyPrefix),
         const SizedBox(width: 6),
         SizedBox(
           width: 42,
           child: TextField(
+            key: keyPrefix != null ? Key('${keyPrefix}_number') : null,
+            controller: numberController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: '#',
@@ -373,16 +426,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
             style: const TextStyle(color: Colors.white, fontSize: 12),
-            onChanged: (v) {
-              final n = int.tryParse(v);
-              setState(() {
-                if (role == PlayerRole.fouler) {
-                  _foulerNumber = n;
-                } else {
-                  _fouledNumber = n;
-                }
-              });
-            },
+            onChanged: (v) => onNumberChanged(int.tryParse(v)),
           ),
         ),
         if (squadNumbers.isNotEmpty) ...[
@@ -392,20 +436,17 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: squadNumbers.map((n) {
-                  final isSel = selectedNumber == n;
+                  final isSel = number == n;
                   final teamColor =
-                      selectedTeam == TeamSide.home ? Colors.blue : Colors.red;
+                      team == TeamSide.home ? Colors.blue : Colors.red;
                   return Padding(
                     padding: const EdgeInsets.only(right: 4),
                     child: GestureDetector(
-                      onTap: () => setState(() {
+                      onTap: () {
                         final newVal = isSel ? null : n;
-                        if (role == PlayerRole.fouler) {
-                          _foulerNumber = newVal;
-                        } else {
-                          _fouledNumber = newVal;
-                        }
-                      }),
+                        numberController?.text = newVal?.toString() ?? '';
+                        onNumberChanged(newVal);
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4.5),
@@ -435,19 +476,13 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     );
   }
 
-  Widget _teamToggle(TeamSide side, PlayerRole role, TeamSide? selected) {
+  Widget _teamToggle(TeamSide side, TeamSide? selected,
+      ValueChanged<TeamSide?> onChanged, String? keyPrefix) {
     final isSelected = selected == side;
     final color = side == TeamSide.home ? Colors.blue : Colors.red;
     return GestureDetector(
-      onTap: () => setState(() {
-        if (role == PlayerRole.fouler) {
-          _foulerTeam = isSelected ? null : side;
-          _foulerNumber = null;
-        } else {
-          _fouledTeam = isSelected ? null : side;
-          _fouledNumber = null;
-        }
-      }),
+      key: keyPrefix != null ? Key('${keyPrefix}_team_${side.name}') : null,
+      onTap: () => onChanged(isSelected ? null : side),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
@@ -458,6 +493,94 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           side.label,
           style: const TextStyle(color: Colors.white, fontSize: 11),
         ),
+      ),
+    );
+  }
+
+  // ── Tor-Abschnitt (US-214) ──────────────────────────────────────────────────
+
+  void _clearScorer() {
+    _scorerTeam = null;
+    _scorerNumber = null;
+    _ownGoal = false;
+    _scorerCtrl.clear();
+  }
+
+  Widget _goalSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _teamNumberRow(
+          label: 'Torschütze',
+          keyPrefix: 'scorer',
+          team: _scorerTeam,
+          number: _scorerNumber,
+          numberController: _scorerCtrl,
+          onTeamChanged: (t) => setState(() {
+            _scorerTeam = t;
+            _scorerNumber = null;
+            _scorerCtrl.clear();
+          }),
+          onNumberChanged: (n) => setState(() => _scorerNumber = n),
+        ),
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.only(left: 54),
+          child: _SelectChip(
+            key: const Key('toggle_own_goal'),
+            label: '⚽ Eigentor',
+            selected: _ownGoal,
+            selectedColor: Colors.deepOrange.shade700,
+            onTap: () => setState(() => _ownGoal = !_ownGoal),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _goalPreview(),
+      ],
+    );
+  }
+
+  /// Zeigt vor dem Speichern, wem das Tor gutgeschrieben wird.
+  Widget _goalPreview() {
+    // Im Edit-Modus den bisherigen Beitrag dieses Ereignisses herausrechnen
+    final events = ref.watch(eventsProvider(widget.gameId)).valueOrNull ?? [];
+    final base = Score.fromEvents(
+        events.where((e) => e.id != widget.initialEvent?.id).toList());
+
+    final scorer = _scorerTeam;
+    final String text;
+    final Color color;
+    if (_decision != RefDecision.goal) {
+      text = 'Tor aberkannt – Spielstand bleibt ${base.label}';
+      color = Colors.white38;
+    } else if (scorer == null) {
+      text = 'Team wählen, damit das Tor zählt';
+      color = Colors.orange.shade300;
+    } else {
+      final forTeam = _ownGoal ? scorer.opponent : scorer;
+      final after = base.plus(forTeam).label;
+      final nr = _scorerNumber != null ? '#$_scorerNumber ' : '';
+      text = _ownGoal
+          ? 'Eigentor $nr(${scorer.label}) → Tor für '
+              '${forTeam.label.toUpperCase()} · $after'
+          : 'Tor für ${forTeam.label.toUpperCase()}'
+              '${_scorerNumber != null ? ' · #$_scorerNumber' : ''} → $after';
+      color = Colors.green.shade300;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        text,
+        key: const Key('goal_preview'),
+        style: TextStyle(
+            color: color, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -563,15 +686,31 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     final customLabel =
         _type == EventType.custom ? (_customCtrl.text.isEmpty ? null : _customCtrl.text) : null;
 
+    final isGoal = _type == EventType.goalDecision;
+
     if (_isEditMode) {
-      final updated = widget.initialEvent!.copyWith(
-        type: _type,
+      // Explizit aufgebaut statt copyWith, damit Felder auch auf null
+      // zurückgesetzt werden können (z. B. Torschütze entfernt).
+      final initial = widget.initialEvent!;
+      final updated = Event(
+        id: initial.id,
+        gameId: initial.gameId,
+        elapsedMs: initial.elapsedMs,
+        gamePhase: initial.gamePhase,
+        type: _type!,
         customTypeLabel: customLabel,
+        locationX: initial.locationX,
+        locationY: initial.locationY,
         refDecision: _decision,
         card: _card,
         assessment: _assessment,
         sceneNote: sceneNote,
         coachingFlag: _coachingFlag,
+        coachingNote: initial.coachingNote,
+        goalScorerTeam: isGoal ? _scorerTeam : null,
+        goalScorerNumber: isGoal ? _scorerNumber : null,
+        ownGoal: isGoal && _ownGoal,
+        createdAt: initial.createdAt,
       );
       await repo.updateEvent(updated, players);
       widget.onSaved(updated);
@@ -591,6 +730,9 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           assessment: _assessment,
           sceneNote: sceneNote,
           coachingFlag: _coachingFlag,
+          goalScorerTeam: isGoal ? _scorerTeam : null,
+          goalScorerNumber: isGoal ? _scorerNumber : null,
+          ownGoal: isGoal && _ownGoal,
           createdAt: DateTime.now(),
         ),
         players,
@@ -603,6 +745,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   void dispose() {
     _noteCtrl.dispose();
     _customCtrl.dispose();
+    _scorerCtrl.dispose();
     super.dispose();
   }
 }

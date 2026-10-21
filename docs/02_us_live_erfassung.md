@@ -250,3 +250,46 @@
 *Bestehendes Verhalten bleibt erhalten*
 - [x] Der Lösch-Button entfernt das Ereignis wie bisher; die Liste aktualisiert sich sofort
 - [x] Im abgeschlossenen Spiel (US-212) bleibt die Liste sichtbar
+
+---
+
+### US-214 · Spielstand und Torschütze
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** bei einer Torentscheidung den Torschützen (inkl. Eigentor) erfassen und den aktuellen Spielstand jederzeit unter den Mannschaftsnamen sehen,  
+**damit** ich den Spielverlauf ohne eigene Strichliste im Blick behalte.
+
+**Akzeptanzkriterien:**
+
+*Zählregel*
+- [x] Ein Ereignis zählt für den Spielstand genau dann, wenn Typ = **Torentscheidung**, Entscheidung = **Tor** und ein Torschützen-Team gewählt ist
+- [x] Ohne Eigentor wird das Tor dem Team des Torschützen gutgeschrieben, bei **Eigentor** dem gegnerischen Team
+- [x] Torentscheidungen mit anderer Entscheidung (z. B. Indir. FS wegen Abseits) gelten als aberkannt und ändern den Spielstand nicht
+- [x] Bestehende Torentscheidungen ohne Torschützen-Team (vor diesem Feature erfasst) zählen nicht und verursachen keinen Fehler
+
+*Erfassung im Ereignisformular*
+- [x] Bei Typ Torentscheidung erscheint ein Abschnitt **„Tor"** an der Stelle, an der bei Vergehen der Abschnitt „Spieler" steht
+- [x] Beim Wählen von Torentscheidung ist die Entscheidung **„Tor"** vorausgewählt; sie kann abgewählt oder durch eine andere ersetzt werden
+- [x] Torschütze: Team-Auswahl Heim/Gast, dann Rückennummer per Kader-Chip oder Zahleneingabe — Bedienung identisch zu Fouler/Gefoulter
+- [x] Die Rückennummer ist optional; für den Spielstand genügt das Team
+- [x] Ein Schalter **„Eigentor"** kennzeichnet das Tor als Eigentor; Team und Nummer bezeichnen dabei den Spieler, der das Tor verursacht hat
+- [x] Eine Vorschau-Zeile zeigt vor dem Speichern das Ergebnis:
+  - Tor zählt: „Tor für HEIM · #9 → 2 : 1"
+  - Eigentor: „Eigentor #4 (Heim) → Tor für GAST · 1 : 2"
+  - Entscheidung ≠ Tor: „Tor aberkannt – Spielstand bleibt 1 : 1" (grau)
+  - Entscheidung = Tor, aber kein Team: „Team wählen, damit das Tor zählt" (orange)
+- [x] Speichern ist auch ohne Torschützen-Team möglich (kein Blockieren unter Zeitdruck)
+- [x] Wechselt der Typ von Torentscheidung zu einem anderen Typ, werden Torschütze und Eigentor verworfen
+
+*Spielstand im Live-Screen*
+- [x] Unter den Mannschaftsnamen in der Kopfzeile steht der aktuelle Spielstand im Format „2 : 1" (groß, fett, gleich breite Ziffern)
+- [x] Ohne gezählte Tore zeigt die Kopfzeile „0 : 0"
+- [x] Der Spielstand aktualisiert sich sofort nach Speichern, Bearbeiten, Löschen und Rückgängig-Machen eines Ereignisses *(Hinweis: Eine Undo-SnackBar existiert im Code aktuell nicht — Rückgängig entspricht dem Löschen und ist damit abgedeckt)*
+- [x] Ändert sich der Spielstand, wird er kurz (ca. 0,6 s) hervorgehoben
+- [x] Im Seitenpanel „Letzte Ereignisse" zeigt ein gezähltes Tor „⚽ Tor 2:1" (Spielstand nach diesem Tor) statt „Torentsch."; aberkannte Tore behalten „Torentsch."
+
+*Bearbeiten & Persistenz*
+- [x] Beim nachträglichen Bearbeiten (US-209) sind Torschützen-Team, Nummer und Eigentor vorausgefüllt; Änderungen wirken sich sofort auf den Spielstand aus
+- [x] Torschützen-Team, Nummer und Eigentor werden lokal gespeichert und überleben einen App-Neustart
+- [x] Die DB-Migration (Schema v4 → v5) erhält alle bestehenden Spiele und Ereignisse
+- [x] Torschützen erscheinen nicht im Spieler-Ranking der Statistik

@@ -784,6 +784,43 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _goalScorerTeamMeta = const VerificationMeta(
+    'goalScorerTeam',
+  );
+  @override
+  late final GeneratedColumn<String> goalScorerTeam = GeneratedColumn<String>(
+    'goal_scorer_team',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _goalScorerNumberMeta = const VerificationMeta(
+    'goalScorerNumber',
+  );
+  @override
+  late final GeneratedColumn<int> goalScorerNumber = GeneratedColumn<int>(
+    'goal_scorer_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ownGoalMeta = const VerificationMeta(
+    'ownGoal',
+  );
+  @override
+  late final GeneratedColumn<bool> ownGoal = GeneratedColumn<bool>(
+    'own_goal',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("own_goal" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -811,6 +848,9 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
     sceneNote,
     coachingFlag,
     coachingNote,
+    goalScorerTeam,
+    goalScorerNumber,
+    ownGoal,
     createdAt,
   ];
   @override
@@ -930,6 +970,30 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
         ),
       );
     }
+    if (data.containsKey('goal_scorer_team')) {
+      context.handle(
+        _goalScorerTeamMeta,
+        goalScorerTeam.isAcceptableOrUnknown(
+          data['goal_scorer_team']!,
+          _goalScorerTeamMeta,
+        ),
+      );
+    }
+    if (data.containsKey('goal_scorer_number')) {
+      context.handle(
+        _goalScorerNumberMeta,
+        goalScorerNumber.isAcceptableOrUnknown(
+          data['goal_scorer_number']!,
+          _goalScorerNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('own_goal')) {
+      context.handle(
+        _ownGoalMeta,
+        ownGoal.isAcceptableOrUnknown(data['own_goal']!, _ownGoalMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1003,6 +1067,18 @@ class $EventsTable extends Events with TableInfo<$EventsTable, EventRow> {
         DriftSqlType.string,
         data['${effectivePrefix}coaching_note'],
       ),
+      goalScorerTeam: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}goal_scorer_team'],
+      ),
+      goalScorerNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_scorer_number'],
+      ),
+      ownGoal: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}own_goal'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1031,6 +1107,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
   final String? sceneNote;
   final bool coachingFlag;
   final String? coachingNote;
+  final String? goalScorerTeam;
+  final int? goalScorerNumber;
+  final bool ownGoal;
   final DateTime createdAt;
   const EventRow({
     required this.id,
@@ -1047,6 +1126,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     this.sceneNote,
     required this.coachingFlag,
     this.coachingNote,
+    this.goalScorerTeam,
+    this.goalScorerNumber,
+    required this.ownGoal,
     required this.createdAt,
   });
   @override
@@ -1078,6 +1160,13 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     if (!nullToAbsent || coachingNote != null) {
       map['coaching_note'] = Variable<String>(coachingNote);
     }
+    if (!nullToAbsent || goalScorerTeam != null) {
+      map['goal_scorer_team'] = Variable<String>(goalScorerTeam);
+    }
+    if (!nullToAbsent || goalScorerNumber != null) {
+      map['goal_scorer_number'] = Variable<int>(goalScorerNumber);
+    }
+    map['own_goal'] = Variable<bool>(ownGoal);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1108,6 +1197,13 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       coachingNote: coachingNote == null && nullToAbsent
           ? const Value.absent()
           : Value(coachingNote),
+      goalScorerTeam: goalScorerTeam == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalScorerTeam),
+      goalScorerNumber: goalScorerNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalScorerNumber),
+      ownGoal: Value(ownGoal),
       createdAt: Value(createdAt),
     );
   }
@@ -1132,6 +1228,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       sceneNote: serializer.fromJson<String?>(json['sceneNote']),
       coachingFlag: serializer.fromJson<bool>(json['coachingFlag']),
       coachingNote: serializer.fromJson<String?>(json['coachingNote']),
+      goalScorerTeam: serializer.fromJson<String?>(json['goalScorerTeam']),
+      goalScorerNumber: serializer.fromJson<int?>(json['goalScorerNumber']),
+      ownGoal: serializer.fromJson<bool>(json['ownGoal']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1153,6 +1252,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       'sceneNote': serializer.toJson<String?>(sceneNote),
       'coachingFlag': serializer.toJson<bool>(coachingFlag),
       'coachingNote': serializer.toJson<String?>(coachingNote),
+      'goalScorerTeam': serializer.toJson<String?>(goalScorerTeam),
+      'goalScorerNumber': serializer.toJson<int?>(goalScorerNumber),
+      'ownGoal': serializer.toJson<bool>(ownGoal),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1172,6 +1274,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     Value<String?> sceneNote = const Value.absent(),
     bool? coachingFlag,
     Value<String?> coachingNote = const Value.absent(),
+    Value<String?> goalScorerTeam = const Value.absent(),
+    Value<int?> goalScorerNumber = const Value.absent(),
+    bool? ownGoal,
     DateTime? createdAt,
   }) => EventRow(
     id: id ?? this.id,
@@ -1190,6 +1295,13 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     sceneNote: sceneNote.present ? sceneNote.value : this.sceneNote,
     coachingFlag: coachingFlag ?? this.coachingFlag,
     coachingNote: coachingNote.present ? coachingNote.value : this.coachingNote,
+    goalScorerTeam: goalScorerTeam.present
+        ? goalScorerTeam.value
+        : this.goalScorerTeam,
+    goalScorerNumber: goalScorerNumber.present
+        ? goalScorerNumber.value
+        : this.goalScorerNumber,
+    ownGoal: ownGoal ?? this.ownGoal,
     createdAt: createdAt ?? this.createdAt,
   );
   EventRow copyWithCompanion(EventsCompanion data) {
@@ -1218,6 +1330,13 @@ class EventRow extends DataClass implements Insertable<EventRow> {
       coachingNote: data.coachingNote.present
           ? data.coachingNote.value
           : this.coachingNote,
+      goalScorerTeam: data.goalScorerTeam.present
+          ? data.goalScorerTeam.value
+          : this.goalScorerTeam,
+      goalScorerNumber: data.goalScorerNumber.present
+          ? data.goalScorerNumber.value
+          : this.goalScorerNumber,
+      ownGoal: data.ownGoal.present ? data.ownGoal.value : this.ownGoal,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1239,6 +1358,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
           ..write('sceneNote: $sceneNote, ')
           ..write('coachingFlag: $coachingFlag, ')
           ..write('coachingNote: $coachingNote, ')
+          ..write('goalScorerTeam: $goalScorerTeam, ')
+          ..write('goalScorerNumber: $goalScorerNumber, ')
+          ..write('ownGoal: $ownGoal, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1260,6 +1382,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
     sceneNote,
     coachingFlag,
     coachingNote,
+    goalScorerTeam,
+    goalScorerNumber,
+    ownGoal,
     createdAt,
   );
   @override
@@ -1280,6 +1405,9 @@ class EventRow extends DataClass implements Insertable<EventRow> {
           other.sceneNote == this.sceneNote &&
           other.coachingFlag == this.coachingFlag &&
           other.coachingNote == this.coachingNote &&
+          other.goalScorerTeam == this.goalScorerTeam &&
+          other.goalScorerNumber == this.goalScorerNumber &&
+          other.ownGoal == this.ownGoal &&
           other.createdAt == this.createdAt);
 }
 
@@ -1298,6 +1426,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
   final Value<String?> sceneNote;
   final Value<bool> coachingFlag;
   final Value<String?> coachingNote;
+  final Value<String?> goalScorerTeam;
+  final Value<int?> goalScorerNumber;
+  final Value<bool> ownGoal;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const EventsCompanion({
@@ -1315,6 +1446,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     this.sceneNote = const Value.absent(),
     this.coachingFlag = const Value.absent(),
     this.coachingNote = const Value.absent(),
+    this.goalScorerTeam = const Value.absent(),
+    this.goalScorerNumber = const Value.absent(),
+    this.ownGoal = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1333,6 +1467,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     this.sceneNote = const Value.absent(),
     this.coachingFlag = const Value.absent(),
     this.coachingNote = const Value.absent(),
+    this.goalScorerTeam = const Value.absent(),
+    this.goalScorerNumber = const Value.absent(),
+    this.ownGoal = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1357,6 +1494,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     Expression<String>? sceneNote,
     Expression<bool>? coachingFlag,
     Expression<String>? coachingNote,
+    Expression<String>? goalScorerTeam,
+    Expression<int>? goalScorerNumber,
+    Expression<bool>? ownGoal,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1375,6 +1515,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
       if (sceneNote != null) 'scene_note': sceneNote,
       if (coachingFlag != null) 'coaching_flag': coachingFlag,
       if (coachingNote != null) 'coaching_note': coachingNote,
+      if (goalScorerTeam != null) 'goal_scorer_team': goalScorerTeam,
+      if (goalScorerNumber != null) 'goal_scorer_number': goalScorerNumber,
+      if (ownGoal != null) 'own_goal': ownGoal,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1395,6 +1538,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     Value<String?>? sceneNote,
     Value<bool>? coachingFlag,
     Value<String?>? coachingNote,
+    Value<String?>? goalScorerTeam,
+    Value<int?>? goalScorerNumber,
+    Value<bool>? ownGoal,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -1413,6 +1559,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
       sceneNote: sceneNote ?? this.sceneNote,
       coachingFlag: coachingFlag ?? this.coachingFlag,
       coachingNote: coachingNote ?? this.coachingNote,
+      goalScorerTeam: goalScorerTeam ?? this.goalScorerTeam,
+      goalScorerNumber: goalScorerNumber ?? this.goalScorerNumber,
+      ownGoal: ownGoal ?? this.ownGoal,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1463,6 +1612,15 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
     if (coachingNote.present) {
       map['coaching_note'] = Variable<String>(coachingNote.value);
     }
+    if (goalScorerTeam.present) {
+      map['goal_scorer_team'] = Variable<String>(goalScorerTeam.value);
+    }
+    if (goalScorerNumber.present) {
+      map['goal_scorer_number'] = Variable<int>(goalScorerNumber.value);
+    }
+    if (ownGoal.present) {
+      map['own_goal'] = Variable<bool>(ownGoal.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1489,6 +1647,9 @@ class EventsCompanion extends UpdateCompanion<EventRow> {
           ..write('sceneNote: $sceneNote, ')
           ..write('coachingFlag: $coachingFlag, ')
           ..write('coachingNote: $coachingNote, ')
+          ..write('goalScorerTeam: $goalScorerTeam, ')
+          ..write('goalScorerNumber: $goalScorerNumber, ')
+          ..write('ownGoal: $ownGoal, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3158,6 +3319,9 @@ typedef $$EventsTableCreateCompanionBuilder =
       Value<String?> sceneNote,
       Value<bool> coachingFlag,
       Value<String?> coachingNote,
+      Value<String?> goalScorerTeam,
+      Value<int?> goalScorerNumber,
+      Value<bool> ownGoal,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -3177,6 +3341,9 @@ typedef $$EventsTableUpdateCompanionBuilder =
       Value<String?> sceneNote,
       Value<bool> coachingFlag,
       Value<String?> coachingNote,
+      Value<String?> goalScorerTeam,
+      Value<int?> goalScorerNumber,
+      Value<bool> ownGoal,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -3292,6 +3459,21 @@ class $$EventsTableFilterComposer
 
   ColumnFilters<String> get coachingNote => $composableBuilder(
     column: $table.coachingNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get goalScorerTeam => $composableBuilder(
+    column: $table.goalScorerTeam,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get goalScorerNumber => $composableBuilder(
+    column: $table.goalScorerNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get ownGoal => $composableBuilder(
+    column: $table.ownGoal,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3423,6 +3605,21 @@ class $$EventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get goalScorerTeam => $composableBuilder(
+    column: $table.goalScorerTeam,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get goalScorerNumber => $composableBuilder(
+    column: $table.goalScorerNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get ownGoal => $composableBuilder(
+    column: $table.ownGoal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3509,6 +3706,19 @@ class $$EventsTableAnnotationComposer
     column: $table.coachingNote,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get goalScorerTeam => $composableBuilder(
+    column: $table.goalScorerTeam,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get goalScorerNumber => $composableBuilder(
+    column: $table.goalScorerNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get ownGoal =>
+      $composableBuilder(column: $table.ownGoal, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -3604,6 +3814,9 @@ class $$EventsTableTableManager
                 Value<String?> sceneNote = const Value.absent(),
                 Value<bool> coachingFlag = const Value.absent(),
                 Value<String?> coachingNote = const Value.absent(),
+                Value<String?> goalScorerTeam = const Value.absent(),
+                Value<int?> goalScorerNumber = const Value.absent(),
+                Value<bool> ownGoal = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EventsCompanion(
@@ -3621,6 +3834,9 @@ class $$EventsTableTableManager
                 sceneNote: sceneNote,
                 coachingFlag: coachingFlag,
                 coachingNote: coachingNote,
+                goalScorerTeam: goalScorerTeam,
+                goalScorerNumber: goalScorerNumber,
+                ownGoal: ownGoal,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -3640,6 +3856,9 @@ class $$EventsTableTableManager
                 Value<String?> sceneNote = const Value.absent(),
                 Value<bool> coachingFlag = const Value.absent(),
                 Value<String?> coachingNote = const Value.absent(),
+                Value<String?> goalScorerTeam = const Value.absent(),
+                Value<int?> goalScorerNumber = const Value.absent(),
+                Value<bool> ownGoal = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => EventsCompanion.insert(
@@ -3657,6 +3876,9 @@ class $$EventsTableTableManager
                 sceneNote: sceneNote,
                 coachingFlag: coachingFlag,
                 coachingNote: coachingNote,
+                goalScorerTeam: goalScorerTeam,
+                goalScorerNumber: goalScorerNumber,
+                ownGoal: ownGoal,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

@@ -78,6 +78,7 @@ Key design decisions:
 | `14_heatmap_kde_tests.md` | Heatmap KDE test cases — US-401 (10 TCs) |
 | `15_spiel_beenden_tests.md` | End game test cases — US-212 (13 TCs) |
 | `18_live_ereignisliste_tests.md` | Live side panel event list test cases — US-213 (10 TCs) |
+| `19_spielstand_tests.md` | Score & goal scorer test cases — US-214 (19 TCs) |
 
 ### src/lib/ structure
 
@@ -148,8 +149,13 @@ Event {
   sceneNote: String?
   coachingFlag: bool
   coachingNote: String?
+  goalScorerTeam: TeamSide?  // only for goalDecision (US-214)
+  goalScorerNumber: int?
+  ownGoal: bool             // goal credited to opponent of goalScorerTeam
 }
 ```
+
+**Score** (`domain/entities/score.dart`) is always derived from events, never stored: an event counts iff `type == goalDecision && refDecision == goal && goalScorerTeam != null` (see `Event.goalForTeam`). DB schema is v5.
 
 ## Implementation Status
 

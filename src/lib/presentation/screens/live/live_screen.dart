@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/game.dart';
+import '../../../domain/entities/score.dart';
 import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../../providers/providers.dart';
@@ -40,11 +41,19 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
       appBar: AppBar(
         backgroundColor: Colors.green.shade900,
         foregroundColor: Colors.white,
-        title: Text(
-          '${widget.game.homeTeamName.isEmpty ? 'Heim' : widget.game.homeTeamName}'
-          ' – '
-          '${widget.game.awayTeamName.isEmpty ? 'Gast' : widget.game.awayTeamName}',
-          style: const TextStyle(fontSize: 16),
+        toolbarHeight: 76,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${widget.game.homeTeamName.isEmpty ? 'Heim' : widget.game.homeTeamName}'
+              ' – '
+              '${widget.game.awayTeamName.isEmpty ? 'Gast' : widget.game.awayTeamName}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 2),
+            _ScoreDisplay(score: ref.watch(scoreProvider(widget.game.id))),
+          ],
         ),
         centerTitle: true,
         actions: [
@@ -124,6 +133,7 @@ class _RecentEvents extends ConsumerWidget {
     final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? [];
     // Neuestes zuerst; Liste füllt die Panelhöhe und scrollt (US-213)
     final recent = events.reversed.toList();
+    final goalScores = Score.runningByEventId(events);
 
     return Container(
       color: const Color(0xFF212121),
@@ -148,6 +158,7 @@ class _RecentEvents extends ConsumerWidget {
                   const Divider(height: 1, color: Colors.white10),
               itemBuilder: (_, i) {
                 final e = recent[i];
+                final goalScore = goalScores[e.id];
                 return ConstrainedBox(
                   key: Key('recent_event_${e.id}'),
                   // Mindesthöhe 44 dp gegen Fehltipps (US-213)
@@ -165,7 +176,10 @@ class _RecentEvents extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          e.type.label,
+                          // Gezähltes Tor mit Spielstand danach (US-214)
+                          goalScore != null
+                              ? '⚽ Tor ${goalScore.shortLabel}'
+                              : e.type.label,
                           style: const TextStyle(
                               color: Colors.white, fontSize: 14),
                           overflow: TextOverflow.ellipsis,
@@ -193,6 +207,64 @@ class _RecentEvents extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Spielstand unter den Mannschaftsnamen; leuchtet bei Änderung kurz auf (US-214).
+class _ScoreDisplay extends StatefulWidget {
+  final Score score;
+
+  const _ScoreDisplay({required this.score});
+
+  @override
+  State<_ScoreDisplay> createState() => _ScoreDisplayState();
+}
+
+class _ScoreDisplayState extends State<_ScoreDisplay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _highlight = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(_ScoreDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score != widget.score) _highlight.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _highlight.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _highlight,
+      builder: (_, _) {
+        final t = Curves.easeOut.transform(_highlight.value);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.5 * (1 - t)),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            widget.score.label,
+            key: const Key('live_score'),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.1,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+        );
+      },
     );
   }
 }

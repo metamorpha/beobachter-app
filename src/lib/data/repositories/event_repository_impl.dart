@@ -160,6 +160,9 @@ class EventRepositoryImpl implements EventRepository {
         sceneNote: Value(e.sceneNote),
         coachingFlag: Value(e.coachingFlag),
         coachingNote: Value(e.coachingNote),
+        goalScorerTeam: Value(e.goalScorerTeam?.name),
+        goalScorerNumber: Value(e.goalScorerNumber),
+        ownGoal: Value(e.ownGoal),
         createdAt: Value(e.createdAt),
       );
 
@@ -182,6 +185,11 @@ class EventRepositoryImpl implements EventRepository {
         sceneNote: row.sceneNote,
         coachingFlag: row.coachingFlag,
         coachingNote: row.coachingNote,
+        goalScorerTeam: row.goalScorerTeam != null
+            ? TeamSide.values.byName(row.goalScorerTeam!)
+            : null,
+        goalScorerNumber: row.goalScorerNumber,
+        ownGoal: row.ownGoal,
         createdAt: row.createdAt,
       );
 

@@ -21,6 +21,9 @@ class Events extends Table {
   BoolColumn get coachingFlag =>
       boolean().withDefault(const Constant(false))();
   TextColumn get coachingNote => text().nullable()();
+  TextColumn get goalScorerTeam => text().nullable()();
+  IntColumn get goalScorerNumber => integer().nullable()();
+  BoolColumn get ownGoal => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

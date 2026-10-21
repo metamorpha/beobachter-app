@@ -8,6 +8,7 @@ import '../../data/repositories/timer_repository_impl.dart';
 import '../../domain/entities/event.dart';
 import '../../domain/entities/event_player.dart';
 import '../../domain/entities/game.dart';
+import '../../domain/entities/score.dart';
 import '../../domain/entities/timer_state.dart';
 import '../../domain/enums/assessment.dart';
 import '../../domain/enums/event_type.dart';
@@ -52,6 +53,12 @@ final gamesProvider = FutureProvider<List<Game>>((ref) {
 final eventsProvider =
     FutureProvider.family<List<Event>, String>((ref, gameId) {
   return ref.watch(eventRepositoryProvider).getEvents(gameId);
+});
+
+/// Aktueller Spielstand — abgeleitet aus den Ereignissen (US-214).
+final scoreProvider = Provider.family<Score, String>((ref, gameId) {
+  final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? const [];
+  return Score.fromEvents(events);
 });
 
 final eventCountProvider =

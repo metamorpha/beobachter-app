@@ -8,4 +8,6 @@ extension TeamSideLabel on TeamSide {
     TeamSide.home => 'Heim',
     TeamSide.away => 'Gast',
   };
+
+  TeamSide get opponent => this == TeamSide.home ? TeamSide.away : TeamSide.home;
 }
