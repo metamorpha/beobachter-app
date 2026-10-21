@@ -266,6 +266,23 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
       _awayNumbers = importResult.awayNumbers;
       _importWarnings = importResult.warnings;
     });
+
+    // Spieldaten sofort persistieren — Aufstellungen werden oben bereits via
+    // saveSquad gespeichert; ohne diesen updateGame-Aufruf gingen Teamnamen,
+    // Ort, Liga usw. beim Zurücknavigieren ohne "Spiel starten" verloren.
+    final importedGame = Game(
+      id: widget.game.id,
+      date: importResult.date ?? widget.game.date,
+      kickoffTime: widget.game.kickoffTime,
+      location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+      homeTeamName: _homeCtrl.text.trim(),
+      awayTeamName: _awayCtrl.text.trim(),
+      liga: _ligaCtrl.text.trim().isEmpty ? null : _ligaCtrl.text.trim(),
+      spieltag: _spieltagCtrl.text.trim().isEmpty ? null : _spieltagCtrl.text.trim(),
+      createdAt: widget.game.createdAt,
+    );
+    await ref.read(gameRepositoryProvider).updateGame(importedGame);
+    ref.invalidate(gamesProvider);
   }
 
   Future<void> _addNumber(TeamSide team, int number) async {

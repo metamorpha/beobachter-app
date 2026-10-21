@@ -88,7 +88,9 @@ class TimerService {
     // Ein abgeschlossenes Spiel kann nicht erneut gestartet werden (US-212).
     if (_state.phase.istAbgeschlossen) return;
     if (startTimer) {
-      _state = _state.withPhase(phase).start();
+      final offset = phase.phasenStartMs;
+      final phased = _state.withPhase(phase);
+      _state = (offset != null ? phased.withElapsedMs(offset) : phased).start();
       _startTicker();
     } else {
       _ticker?.cancel();

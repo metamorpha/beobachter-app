@@ -105,6 +105,36 @@ void main() {
     });
   });
 
+  group('Spielphasen — Phasen-Start-Offset (TC-1309 / TC-1319 / TC-1322)', () {
+    test('TC-1309: startZweiteHalbzeit() setzt elapsedMs auf 45:00', () async {
+      await service.startGame();
+      await Future.delayed(const Duration(milliseconds: 50));
+      await service.setHalbzeit();
+      await service.startZweiteHalbzeit();
+      expect(service.current.elapsedMs, 45 * 60 * 1000);
+    });
+
+    test('TC-1319: startVerlaengerung() setzt elapsedMs auf 90:00', () async {
+      await service.startGame();
+      await service.setHalbzeit();
+      await service.startZweiteHalbzeit();
+      await service.setAbpfiff();
+      await service.startVerlaengerung();
+      expect(service.current.elapsedMs, 90 * 60 * 1000);
+    });
+
+    test('TC-1322: startZweiteVerlaengerung() setzt elapsedMs auf 105:00', () async {
+      await service.startGame();
+      await service.setHalbzeit();
+      await service.startZweiteHalbzeit();
+      await service.setAbpfiff();
+      await service.startVerlaengerung();
+      await service.setHalbzeitVerlaengerung();
+      await service.startZweiteVerlaengerung();
+      expect(service.current.elapsedMs, 105 * 60 * 1000);
+    });
+  });
+
   group('Spielphasen — elapsedMs Kontinuität', () {
     test('elapsedMs nach Halbzeit und 2. HZ Start ist größer als 45 Min', () async {
       // Simuliere Timer, der 50 ms gelaufen ist

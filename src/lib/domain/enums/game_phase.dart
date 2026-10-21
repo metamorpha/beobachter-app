@@ -68,6 +68,22 @@ extension GamePhaseX on GamePhase {
     }
   }
 
+  /// Kanonischer elapsedMs-Startwert für diese Phase (null = kein Reset).
+  int? get phasenStartMs {
+    switch (this) {
+      case GamePhase.ersteHalbzeit:
+        return 0;
+      case GamePhase.zweiteHalbzeit:
+        return 45 * 60 * 1000;
+      case GamePhase.verlaengerungErsteHalbzeit:
+        return 90 * 60 * 1000;
+      case GamePhase.verlaengerungZweiteHalbzeit:
+        return 105 * 60 * 1000;
+      default:
+        return null;
+    }
+  }
+
   /// Nachspielzeit-Phase, die nach Erreichen der Schwelle folgt.
   GamePhase? get nachspielzeitPhase {
     switch (this) {

@@ -45,6 +45,14 @@ class TimerState {
         phase: phase,
       );
 
+  TimerState withElapsedMs(int ms) => TimerState(
+        gameId: gameId,
+        isRunning: isRunning,
+        startTimestamp: startTimestamp,
+        elapsedMs: ms,
+        phase: phase,
+      );
+
   TimerState withPhase(GamePhase newPhase) => TimerState(
         gameId: gameId,
         isRunning: isRunning,
