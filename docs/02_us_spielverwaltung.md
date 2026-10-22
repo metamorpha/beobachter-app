@@ -58,7 +58,7 @@
 **Akzeptanzkriterien:**
 - [x] Die Startseite zeigt eine Liste aller gespeicherten Spiele (absteigend nach Datum)
 - [x] Pro Spiel werden angezeigt: Datum, Teams, Anzahl erfasster Ereignisse
-- [x] Ein Tap auf ein Spiel öffnet die Nachbearbeitungsansicht (Epic 3)
+- [x] Ein Tap auf ein Spiel öffnet die Nachbearbeitungsansicht (Epic 3) — Ausnahme: laufende Spiele öffnen den Live-Screen (US-109)
 - [x] Spiele bleiben dauerhaft gespeichert bis ich sie manuell lösche
 
 ---
@@ -133,3 +133,20 @@
 - [x] Nach dem Minimieren und Wiederherstellen aus dem Dock nimmt das Fenster wieder die volle Bildschirmgröße ein
 - [x] Windows, iOS und Android sind von dieser Änderung nicht betroffen (keine Regression)
 - [x] Das Verhalten tritt ohne Nutzeraktion ein — kein zusätzlicher Schritt beim App-Start erforderlich
+
+---
+
+### US-109 · Laufendes Spiel aus der Spielliste fortsetzen
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** mit einem Tap auf ein laufendes Spiel in der Spielliste direkt zurück in die Live-Erfassung kommen,  
+**damit** ich nach einem versehentlichen „Zurück" sofort weiter erfassen kann, ohne über die Bearbeitung und „Spiel starten" zu gehen.
+
+**Akzeptanzkriterien:**
+- [x] Ein Spiel gilt als **laufend**, wenn die Spieluhr gestartet wurde und das Spiel noch nicht über „Spiel beenden" abgeschlossen ist. Dazu gehören auch Halbzeitpause, Nachspielzeit, Verlängerung und die Zeit nach dem Abpfiff
+- [x] Ein Tap auf ein laufendes Spiel öffnet direkt den Live-Screen
+- [x] Spielstand, Phase und Uhr sind dort unverändert: Eine laufende Uhr läuft weiter, eine angehaltene bleibt angehalten
+- [x] Nicht gestartete und abgeschlossene Spiele verhalten sich wie bisher (US-104)
+- [x] Laufende Spiele tragen in der Liste ein grünes Badge „Läuft", analog zum Badge „Beendet"
+- [x] Die Nachbearbeitung eines laufenden Spiels bleibt über den Live-Screen erreichbar wie bisher. Die Liste bietet dafür keinen zusätzlichen Weg
+

@@ -6,6 +6,7 @@ import '../../../domain/entities/game.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../../providers/providers.dart';
 import '../game_setup/game_setup_screen.dart';
+import '../live/live_screen.dart';
 import '../review/review_screen.dart';
 
 class GameListScreen extends ConsumerWidget {
@@ -82,8 +83,9 @@ class _GameTile extends ConsumerWidget {
         ? ' · ${countAsync.value} Ereignisse'
         : '';
 
-    final abgeschlossen = ref.watch(gamePhaseProvider(game.id)).valueOrNull ==
-        GamePhase.abgeschlossen;
+    final phase = ref.watch(gamePhaseProvider(game.id)).valueOrNull;
+    final abgeschlossen = phase == GamePhase.abgeschlossen;
+    final laeuft = phase?.istLaufend ?? false;
 
     return ListTile(
       key: Key('game_tile_${game.id}'),
@@ -98,23 +100,18 @@ class _GameTile extends ConsumerWidget {
             ),
           ),
           if (abgeschlossen)
-            Container(
+            _badge(
               key: Key('badge_beendet_${game.id}'),
-              margin: const EdgeInsets.only(left: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Beendet',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blueGrey.shade800,
-                ),
-              ),
+              label: 'Beendet',
+              background: Colors.blueGrey.shade100,
+              foreground: Colors.blueGrey.shade800,
+            ),
+          if (laeuft)
+            _badge(
+              key: Key('badge_laeuft_${game.id}'),
+              label: 'Läuft',
+              background: Colors.green.shade100,
+              foreground: Colors.green.shade800,
             ),
         ],
       ),
@@ -123,7 +120,7 @@ class _GameTile extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => _openGame(context),
+            onTap: () => _openGame(context, laeuft: laeuft),
             child: const Icon(Icons.chevron_right),
           ),
           IconButton(
@@ -133,14 +130,42 @@ class _GameTile extends ConsumerWidget {
           ),
         ],
       ),
-      onTap: () => _openGame(context),
+      onTap: () => _openGame(context, laeuft: laeuft),
     );
   }
 
-  void _openGame(BuildContext context) {
+  Widget _badge({
+    required Key key,
+    required String label,
+    required Color background,
+    required Color foreground,
+  }) =>
+      Container(
+        key: key,
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: foreground,
+          ),
+        ),
+      );
+
+  /// Laufende Spiele direkt in die Live-Erfassung (US-109), sonst Nachbereitung.
+  void _openGame(BuildContext context, {required bool laeuft}) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ReviewScreen(game: game)),
+      MaterialPageRoute(
+        builder: (_) =>
+            laeuft ? LiveScreen(game: game) : ReviewScreen(game: game),
+      ),
     );
   }
 

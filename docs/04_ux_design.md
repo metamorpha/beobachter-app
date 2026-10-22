@@ -466,6 +466,43 @@ Mit Verlängerung kommt rechts eine Spaltengruppe „Verl." (H | G) hinzu.
 
 ---
 
+### Spielliste — Laufendes Spiel fortsetzen (US-109)
+
+```
+┌──────────────────────────────────────────────────┐
+│ Beobachter                                       │
+├──────────────────────────────────────────────────┤
+│ ⚽ FC A – SV B   [Läuft]          ›   🗑          │  ← Tap → Live-Screen
+│    22.10.2026 · 14 Ereignisse                    │
+│ ⚽ TuS C – VfL D [Beendet]        ›   🗑          │  ← Tap → Nachbereitung
+│    15.10.2026 · 31 Ereignisse                    │
+│ ⚽ SC E – FC F                    ›   🗑          │  ← Tap → Nachbereitung
+│    29.10.2026 · 0 Ereignisse                     │
+└──────────────────────────────────────────────────┘
+```
+
+**Flow:**
+```
+Live-Screen ──[Zurück]──► Spielliste ──[Tap auf „Läuft"-Spiel]──► Live-Screen
+                                                                   (Uhr, Phase, Spielstand unverändert)
+```
+
+**Zuordnung Phase → Ziel:**
+
+| Phase | Badge | Tap öffnet |
+|-------|-------|------------|
+| keine / `bereit` | — | Nachbereitung |
+| 1. HZ … Verlängerung, inkl. Pausen, Nachspielzeit und `beendet`/`beendetVerlaengerung` | „Läuft" (grün) | Live-Screen |
+| `abgeschlossen` | „Beendet" (grau) | Nachbereitung |
+
+**UX-Entscheidungen:**
+- Ein Tap, kein Zwischendialog — nach einem versehentlichen „Zurück" zählt jede Sekunde
+- Das Badge „Läuft" zeigt vor dem Tippen, wohin der Tap führt; Form und Größe wie „Beendet", Farbe grün
+- Auch nach dem Abpfiff (vor „Spiel beenden") gilt das Spiel als laufend, weil „Verlängerung" und „Spiel beenden" nur im Live-Screen erreichbar sind
+- Die Uhr wird beim Öffnen nicht angefasst: Der Timer ist zeitstempelbasiert und rechnet die verstrichene Zeit selbst nach
+
+---
+
 ## Interaktions-Spezifikationen
 
 ### Spielfeld-Tap → Ereignisformular
@@ -624,7 +661,7 @@ Mit Verlängerung kommt rechts eine Spaltengruppe „Verl." (H | G) hinzu.
 - „Verlängerung starten" erscheint erst nach regulärem Abpfiff — kein versehentlicher Tap während des Spiels
 - „Spiel beenden" ist irreversibel und verlangt daher eine Bestätigung — nach dem Abpfiff ist die Zeitkritik des Live-Betriebs vorbei, der Dialog stört nicht (US-212)
 - Im abgeschlossenen Spiel öffnet ein Feldtipp kein Ereignisformular mehr; die Nachbereitung (Szenen bearbeiten, Coaching-Notizen, Statistik) bleibt unverändert nutzbar
-- In der Spielliste trägt ein abgeschlossenes Spiel ein „Beendet"-Badge; der Tap führt (wie bei allen Spielen) zur Nachbereitung
+- In der Spielliste trägt ein abgeschlossenes Spiel ein „Beendet"-Badge; der Tap führt zur Nachbereitung (laufende Spiele: siehe US-109)
 - Phasen-Button mindestens **120×48 pt** — sicher tappbar auch mit ablenktem Blick
 - Automatischer NS-Wechsel läuft unhörbar/visuell (Anzeige wechselt, kein Dialog, kein Ton)
 

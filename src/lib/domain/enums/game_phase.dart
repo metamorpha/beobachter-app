@@ -52,6 +52,11 @@ extension GamePhaseX on GamePhase {
   /// Endgültig beendetes Spiel: keine Phasen-Übergänge, keine neue Erfassung.
   bool get istAbgeschlossen => this == GamePhase.abgeschlossen;
 
+  /// Gestartet, aber noch nicht über „Spiel beenden" abgeschlossen — inkl.
+  /// Pausen, Nachspielzeit, Verlängerung und Abpfiff (US-109).
+  bool get istLaufend =>
+      this != GamePhase.bereit && this != GamePhase.abgeschlossen;
+
   /// MS-Schwelle, ab der diese Phase automatisch in die Nachspielzeit wechselt.
   int? get nachspielzeitSchwelle {
     switch (this) {
