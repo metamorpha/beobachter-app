@@ -431,6 +431,39 @@ Minimaler Pfad: **4 Taps** (Feld → Torentsch. → Team → Speichern).
 - Einzelereignisse bleiben als weiche gelbe Flecken sichtbar (Mindest-Deckkraft), damit auch spärlich belegte Bereiche lesbar sind.
 - Grüner Rasen und vereinfachte Feldlinien (Außenlinie, Mittellinie) bleiben als Untergrund bzw. durchscheinendes Overlay erhalten.
 
+### Screen 5b — Vergehen pro Team und Halbzeit (US-404)
+
+Rechte Spalte des Statistik-Tabs, unterhalb des Spieler-Rankings:
+
+```
+┌──────────────────────────────┐
+│ SPIELER-RANKING              │
+│  1. [H] #7              5×   │   ← scrollbar, füllt Resthöhe
+│  2. [G] #3              4×   │
+│  …                           │
+├──────────────────────────────┤
+│ VERGEHEN PRO TEAM            │   ← feste Höhe, nicht scrollbar
+│               1. HZ   2. HZ  │
+│               H   G   H   G  │
+│ Fußvergehen   3   1   2   4  │
+│ Oberkörperv.  0   2   1   1  │
+│ Andere        1   0   0   2  │
+│ ──────────────────────────── │
+│ Summe         4   3   3   7  │
+└──────────────────────────────┘
+```
+
+Mit Verlängerung kommt rechts eine Spaltengruppe „Verl." (H | G) hinzu.
+
+**UX-Entscheidungen:**
+- Spaltenköpfe „H"/„G" in Teamfarbe (Heim blau, Gast rot) — konsistent mit dem Spieler-Ranking
+- Zahlen rechtsbündig, Summenzeile fett und durch Trennlinie abgesetzt
+- Nullwerte werden als „0" angezeigt (nicht leer), damit die Tabelle auf einen Blick vollständig lesbar ist
+- Die Tabelle ist reine Anzeige ohne Interaktion; Filterung bleibt der Szenenliste vorbehalten
+- „Andere" = Handspiel, Unsportlichkeit, Tätlichkeit, Sonstiges. Abseits, Vorteil und Torentscheidung sind keine Vergehen im Sinne der Tabelle
+
+**Auswirkung auf das Ereignisformular:** Ein Tap auf „H"/„G" beim Fouler bzw. Gefoulten wird jetzt auch ohne Rückennummer gespeichert. Die Bedienung selbst ändert sich nicht.
+
 ---
 
 ## Interaktions-Spezifikationen

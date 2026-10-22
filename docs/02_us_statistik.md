@@ -46,3 +46,23 @@
 - [x] Liste der Rückennummern sortiert nach Häufigkeit der Ereignisbeteiligung — nur Täter (Fouler), gefoulte Spieler werden nicht gezählt
 - [ ] Team-Filter (Heimteam / Gastteam)
 - [ ] Ereignistyp-Filter
+
+---
+
+### US-404 · Vergehen pro Team und Halbzeit
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** auf der Statistikseite sehen, wie viele Fuß- und Oberkörpervergehen sowie andere Vergehen jedes Team pro Halbzeit verschuldet hat,  
+**damit** ich die Spielcharakteristik und die Linie des Schiedsrichters im Coaching-Gespräch einordnen kann.
+
+**Akzeptanzkriterien:**
+- [ ] Kompakte Tabelle „Vergehen pro Team" unterhalb des Spieler-Rankings
+- [ ] Zeilen: Fußvergehen · Oberkörpervergehen · Andere · Summe
+- [ ] „Andere" umfasst Handspiel, Unsportlichkeit, Tätlichkeit und Sonstiges; Abseits, Vorteil und Torentscheidung werden nicht gezählt
+- [ ] Spalten: 1. HZ (Heim | Gast) · 2. HZ (Heim | Gast)
+- [ ] Nachspielzeit zählt zur jeweiligen Halbzeit
+- [ ] Spalte „Verl." (Heim | Gast) erscheint nur, wenn Ereignisse in der Verlängerung erfasst wurden (inkl. deren Nachspielzeit)
+- [ ] Team-Zuordnung über das Team des Täters (Fouler); Ereignisse ohne Täter-Team werden nicht gezählt
+- [ ] Im Ereignisformular wird das Täter-/Gefoulten-Team auch **ohne Rückennummer** gespeichert (DB-Schema v6, Rückennummer optional)
+- [ ] Spieler-Ranking (US-403) ignoriert Einträge ohne Rückennummer
+- [ ] Leere Zellen zeigen „0"; Tabelle aktualisiert sich nach Bearbeiten oder Löschen einer Szene
