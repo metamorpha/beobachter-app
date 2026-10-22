@@ -81,6 +81,7 @@ Key design decisions:
 | `19_spielstand_tests.md` | Score & goal scorer test cases — US-214 (19 TCs) |
 | `20_team_vergehen_tests.md` | Fouls per team & half test cases — US-404 (13 TCs) |
 | `21_spiel_fortsetzen_tests.md` | Resume running game from game list — US-109 (8 TCs) |
+| `22_aufstellung_live_tests.md` | Edit squads during live game — US-110 (9 TCs) |
 
 ### src/lib/ structure
 
@@ -100,7 +101,7 @@ core/
 presentation/
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog
 ```
 
 ## Commands
@@ -117,7 +118,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (204 tests, all green)
+# Run tests (213 tests, all green)
 flutter test
 
 # Run app (simulator or device)
@@ -173,6 +174,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | CSV-Import (US-105) | Done — `PresskBerichtCsvParser` + `file_picker`; DB schema v2 (liga, spieltag) |
 | Vergehen pro Team (US-404) | Done — `TeamFouls` + `teamFoulsProvider`; DB schema v6 (`event_players.jersey_number` nullable) |
 | Laufendes Spiel fortsetzen (US-109) | Done — Tap in der Spielliste öffnet bei `GamePhase.istLaufend` den Live-Screen; Badge „Läuft" |
+| Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
 
 ## Development Pipeline
 

@@ -503,6 +503,41 @@ Live-Screen ──[Zurück]──► Spielliste ──[Tap auf „Läuft"-Spiel]
 
 ---
 
+### Live-Screen — Aufstellung korrigieren (US-110)
+
+Kopfzeile des Live-Screens, rechts: `[👥 Aufstellung]  [☰ Szenen]`
+
+```
+┌───────────────────────────────────────────────────────────┐
+│  Aufstellung                                              │
+│                                                           │
+│  HEIM (blau)                    GAST (rot)                │
+│  [ Rückennr. 1–99 ]  [+]        [ Rückennr. 1–99 ]  [+]   │
+│  (#1 ✕)(#4 ✕)(#7 ✕)(#9 ✕)       (#1 ✕)(#3 ✕)(#10 ✕)       │
+│  (#14 ✕)(#23 ✕)                 (#17 ✕)                   │
+│                                                           │
+│                                              [ Fertig ]   │
+└───────────────────────────────────────────────────────────┘
+```
+
+**Flow:**
+```
+Live-Screen ──[👥]──► Dialog „Aufstellung" ──[Nummer + Enter/„+"]──► Chip erscheint (sofort gespeichert)
+                                           ──[✕ an Chip]─────────► Chip verschwindet (sofort gespeichert)
+                                           ──[Fertig]────────────► Live-Screen (Uhr lief weiter)
+```
+
+**UX-Entscheidungen:**
+- Dialog statt eigener Seite: Live-Screen und Uhr bleiben im Hintergrund sichtbar, Rückkehr mit einem Tap
+- Beide Teams nebeneinander — kein Team-Umschalter, weniger Taps
+- Enter fügt die Nummer hinzu und leert das Feld; der Fokus bleibt im Feld, sodass mehrere Nummern hintereinander eingetippt werden können
+- Sofort speichern, kein „Abbrechen": Es gibt nichts zu verwerfen, und ein vergessenes „Speichern" kann keine Nummern kosten
+- Ungültige Eingaben (außerhalb 1–99, keine Zahl) und Duplikate werden still ignoriert — keine Fehlermeldung im Zeitdruck
+- Entfernen einer Nummer ändert keine erfassten Szenen; die Nummer steht dort als Wert, nicht als Verweis
+- Eingabe und Chips sind dasselbe Widget wie im Bearbeiten-Bildschirm (Screen „Spiel anlegen")
+
+---
+
 ## Interaktions-Spezifikationen
 
 ### Spielfeld-Tap → Ereignisformular

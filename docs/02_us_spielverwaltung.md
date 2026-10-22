@@ -150,3 +150,21 @@
 - [x] Laufende Spiele tragen in der Liste ein grünes Badge „Läuft", analog zum Badge „Beendet"
 - [x] Die Nachbearbeitung eines laufenden Spiels bleibt über den Live-Screen erreichbar wie bisher. Die Liste bietet dafür keinen zusätzlichen Weg
 
+---
+
+### US-110 · Aufstellung während des Spiels korrigieren
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** im Live-Screen die Aufstellungen beider Teams ergänzen und korrigieren,  
+**damit** ich eingewechselte oder vergessene Spieler sofort als Kader-Chip im Ereignisformular habe, ohne den Live-Screen zu verlassen.
+
+**Akzeptanzkriterien:**
+- [x] In der Kopfzeile des Live-Screens gibt es einen Button „Aufstellung" (Personen-Icon) neben „Szenen"
+- [x] Der Button öffnet einen Dialog mit beiden Teams nebeneinander (Heim blau, Gast rot)
+- [x] Pro Team: Eingabefeld für eine Rückennummer (1–99), hinzufügen per „+" oder Enter. Bestehende Nummern stehen als Chips mit ✕ zum Entfernen da
+- [x] Doppelte Nummern werden ignoriert, die Chips sind aufsteigend sortiert
+- [x] Jede Änderung wird sofort gespeichert. „Fertig" schließt den Dialog, es gibt kein „Abbrechen"
+- [x] Die Spieluhr läuft unbeeinflusst weiter, solange der Dialog offen ist
+- [x] Nach dem Schließen zeigt das Ereignisformular die neuen Nummern als Kader-Chips
+- [x] Bereits erfasste Szenen bleiben unverändert, auch wenn eine Nummer entfernt wird
+- [x] Der Button ist auch im abgeschlossenen Spiel verfügbar

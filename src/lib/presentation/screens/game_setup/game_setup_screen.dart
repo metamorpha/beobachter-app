@@ -8,6 +8,7 @@ import '../../../core/pressebericht_csv_parser.dart';
 import '../../../domain/entities/game.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
+import '../../widgets/squad_input.dart';
 import '../live/live_screen.dart';
 
 class GameSetupScreen extends ConsumerStatefulWidget {
@@ -115,7 +116,7 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
             ),
             const SizedBox(height: 24),
             _SectionTitle('Aufstellung Heim'),
-            _SquadInput(
+            SquadInput(
               numbers: _homeNumbers,
               teamColor: Colors.blue,
               onAdd: (n) => _addNumber(TeamSide.home, n),
@@ -123,7 +124,7 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
             ),
             const SizedBox(height: 16),
             _SectionTitle('Aufstellung Gast'),
-            _SquadInput(
+            SquadInput(
               numbers: _awayNumbers,
               teamColor: Colors.red,
               onAdd: (n) => _addNumber(TeamSide.away, n),
@@ -415,79 +416,4 @@ class _SectionTitle extends StatelessWidget {
         child: Text(text,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       );
-}
-
-class _SquadInput extends StatefulWidget {
-  final List<int> numbers;
-  final Color teamColor;
-  final void Function(int) onAdd;
-  final void Function(int) onRemove;
-
-  const _SquadInput({
-    required this.numbers,
-    required this.teamColor,
-    required this.onAdd,
-    required this.onRemove,
-  });
-
-  @override
-  State<_SquadInput> createState() => _SquadInputState();
-}
-
-class _SquadInputState extends State<_SquadInput> {
-  final _ctrl = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _ctrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Rückennummer (1–99)',
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () {
-                final n = int.tryParse(_ctrl.text);
-                if (n != null && n >= 1 && n <= 99) {
-                  widget.onAdd(n);
-                  _ctrl.clear();
-                }
-              },
-              child: const Text('+ Hinzufügen'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: widget.numbers
-              .map((n) => Chip(
-                    label: Text('#$n',
-                        style: const TextStyle(color: Colors.white)),
-                    backgroundColor: widget.teamColor,
-                    deleteIconColor: Colors.white70,
-                    onDeleted: () => widget.onRemove(n),
-                  ))
-              .toList(),
-        ),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
 }

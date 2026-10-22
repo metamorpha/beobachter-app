@@ -7,6 +7,7 @@ import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../../providers/providers.dart';
 import '../../widgets/pitch_canvas.dart';
+import '../../widgets/squad_edit_dialog.dart';
 import '../../widgets/timer_display.dart';
 import '../review/review_screen.dart';
 import 'event_form_panel.dart';
@@ -57,6 +58,12 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            key: const Key('btn_aufstellung'),
+            icon: const Icon(Icons.groups),
+            tooltip: 'Aufstellung',
+            onPressed: () => SquadEditDialog.show(context, widget.game.id),
+          ),
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Szenen',
