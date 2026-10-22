@@ -15,6 +15,7 @@ import 'package:beobachter_app/domain/entities/score.dart';
 import 'package:beobachter_app/domain/entities/timer_state.dart';
 import 'package:beobachter_app/domain/enums/event_type.dart';
 import 'package:beobachter_app/domain/enums/game_phase.dart';
+import 'package:beobachter_app/domain/enums/player_role.dart';
 import 'package:beobachter_app/domain/enums/ref_decision.dart';
 import 'package:beobachter_app/domain/enums/team_side.dart';
 import 'package:beobachter_app/domain/repositories/event_repository.dart';
@@ -467,6 +468,36 @@ void main() {
       final ranking =
           await container.read(playerRankingProvider(_gameId).future);
       expect(ranking, isEmpty);
+    });
+
+    test('US-403: Spieler-Ranking zählt nur Täter, nicht Gefoulte', () async {
+      EventPlayer player(String id, String eventId, PlayerRole role,
+              TeamSide team, int number) =>
+          EventPlayer(
+              id: id,
+              eventId: eventId,
+              role: role,
+              team: team,
+              jerseyNumber: number);
+
+      await repo.createEvent(_goal('e1'), [
+        player('p1', 'e1', PlayerRole.fouler, TeamSide.home, 4),
+        player('p2', 'e1', PlayerRole.fouled, TeamSide.away, 10),
+      ]);
+      await repo.createEvent(_goal('e2'), [
+        player('p3', 'e2', PlayerRole.fouler, TeamSide.home, 4),
+        player('p4', 'e2', PlayerRole.fouled, TeamSide.away, 10),
+      ]);
+      final container = ProviderContainer(
+          overrides: [eventRepositoryProvider.overrideWithValue(repo)]);
+      addTearDown(container.dispose);
+
+      final ranking =
+          await container.read(playerRankingProvider(_gameId).future);
+      expect(ranking, hasLength(1));
+      expect(ranking.single.team, TeamSide.home);
+      expect(ranking.single.number, 4);
+      expect(ranking.single.count, 2);
     });
   });
 

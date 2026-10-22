@@ -43,6 +43,6 @@
 **damit** ich auffällige Spieler im Coaching-Gespräch gezielt ansprechen kann.
 
 **Akzeptanzkriterien:**
-- [x] Liste der Rückennummern sortiert nach Häufigkeit der Ereignisbeteiligung (Fouler + Gefoulter)
+- [x] Liste der Rückennummern sortiert nach Häufigkeit der Ereignisbeteiligung — nur Täter (Fouler), gefoulte Spieler werden nicht gezählt
 - [ ] Team-Filter (Heimteam / Gastteam)
 - [ ] Ereignistyp-Filter

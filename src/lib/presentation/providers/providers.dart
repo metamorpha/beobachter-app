@@ -13,6 +13,7 @@ import '../../domain/entities/timer_state.dart';
 import '../../domain/enums/assessment.dart';
 import '../../domain/enums/event_type.dart';
 import '../../domain/enums/game_phase.dart';
+import '../../domain/enums/player_role.dart';
 import '../../domain/enums/team_side.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../../domain/repositories/game_repository.dart';
@@ -110,13 +111,14 @@ final gamePhaseProvider =
 // ── Player Ranking ────────────────────────────────────────────────────────────
 
 /// Gibt eine sortierte Liste von (TeamSide, Rückennummer, Anzahl) zurück.
+/// Gezählt werden nur Täter (Fouler), keine gefoulten Spieler.
 final playerRankingProvider = FutureProvider.family<
     List<({TeamSide team, int number, int count})>, String>(
   (ref, gameId) async {
     final players =
         await ref.watch(eventRepositoryProvider).getPlayersForGame(gameId);
     final freq = <String, ({TeamSide team, int number, int count})>{};
-    for (final p in players) {
+    for (final p in players.where((p) => p.role == PlayerRole.fouler)) {
       final key = '${p.team.name}-${p.jerseyNumber}';
       final prev = freq[key];
       freq[key] = (
