@@ -9,6 +9,7 @@ import '../../domain/entities/event.dart';
 import '../../domain/entities/event_player.dart';
 import '../../domain/entities/game.dart';
 import '../../domain/entities/score.dart';
+import '../../domain/entities/team_fouls.dart';
 import '../../domain/entities/timer_state.dart';
 import '../../domain/enums/assessment.dart';
 import '../../domain/enums/event_type.dart';
@@ -111,7 +112,8 @@ final gamePhaseProvider =
 // ── Player Ranking ────────────────────────────────────────────────────────────
 
 /// Gibt eine sortierte Liste von (TeamSide, Rückennummer, Anzahl) zurück.
-/// Gezählt werden nur Täter (Fouler), keine gefoulten Spieler.
+/// Gezählt werden nur Täter (Fouler), keine gefoulten Spieler, und nur
+/// Einträge mit Rückennummer (US-404).
 final playerRankingProvider = FutureProvider.family<
     List<({TeamSide team, int number, int count})>, String>(
   (ref, gameId) async {
@@ -119,11 +121,13 @@ final playerRankingProvider = FutureProvider.family<
         await ref.watch(eventRepositoryProvider).getPlayersForGame(gameId);
     final freq = <String, ({TeamSide team, int number, int count})>{};
     for (final p in players.where((p) => p.role == PlayerRole.fouler)) {
-      final key = '${p.team.name}-${p.jerseyNumber}';
+      final number = p.jerseyNumber;
+      if (number == null) continue;
+      final key = '${p.team.name}-$number';
       final prev = freq[key];
       freq[key] = (
         team: p.team,
-        number: p.jerseyNumber,
+        number: number,
         count: (prev?.count ?? 0) + 1,
       );
     }
@@ -132,6 +136,18 @@ final playerRankingProvider = FutureProvider.family<
     return list;
   },
 );
+
+// ── Vergehen pro Team (US-404) ────────────────────────────────────────────────
+
+/// Vergehen pro Team und Halbzeit. Hängt an [eventsProvider], damit die
+/// Tabelle nach Bearbeiten oder Löschen einer Szene neu berechnet wird.
+final teamFoulsProvider =
+    FutureProvider.family<TeamFouls, String>((ref, gameId) async {
+  final events = await ref.watch(eventsProvider(gameId).future);
+  final players =
+      await ref.watch(eventRepositoryProvider).getPlayersForGame(gameId);
+  return TeamFouls.fromEvents(events, players);
+});
 
 // ── Scene Filter ──────────────────────────────────────────────────────────────
 

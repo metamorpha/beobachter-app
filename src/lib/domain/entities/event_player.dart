@@ -6,13 +6,15 @@ class EventPlayer {
   final String eventId;
   final PlayerRole role;
   final TeamSide team;
-  final int jerseyNumber;
+
+  /// Rückennummer — optional, das Team wird auch ohne Nummer erfasst (US-404).
+  final int? jerseyNumber;
 
   const EventPlayer({
     required this.id,
     required this.eventId,
     required this.role,
     required this.team,
-    required this.jerseyNumber,
+    this.jerseyNumber,
   });
 }

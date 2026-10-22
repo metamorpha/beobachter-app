@@ -529,11 +529,21 @@ void main() {
         VALUES ('alt', 'g1', 600000, 'goalDecision', 0.5, 0.1, 'goal',
           1751328000);
       ''');
+      // v6-Migration baut event_players neu auf (US-404)
+      raw.execute('''
+        CREATE TABLE event_players (
+          id TEXT NOT NULL PRIMARY KEY,
+          event_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          team TEXT NOT NULL,
+          jersey_number INTEGER NOT NULL
+        );
+      ''');
       raw.execute('PRAGMA user_version = 4;');
     }));
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 5);
+    expect(db.schemaVersion, 6);
     final rows = await db.select(db.events).get();
     expect(rows, hasLength(1));
     expect(rows.single.id, 'alt');

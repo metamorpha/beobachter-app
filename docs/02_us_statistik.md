@@ -56,13 +56,13 @@
 **damit** ich die Spielcharakteristik und die Linie des Schiedsrichters im Coaching-Gespräch einordnen kann.
 
 **Akzeptanzkriterien:**
-- [ ] Kompakte Tabelle „Vergehen pro Team" unterhalb des Spieler-Rankings
-- [ ] Zeilen: Fußvergehen · Oberkörpervergehen · Andere · Summe
-- [ ] „Andere" umfasst Handspiel, Unsportlichkeit, Tätlichkeit und Sonstiges; Abseits, Vorteil und Torentscheidung werden nicht gezählt
-- [ ] Spalten: 1. HZ (Heim | Gast) · 2. HZ (Heim | Gast)
-- [ ] Nachspielzeit zählt zur jeweiligen Halbzeit
-- [ ] Spalte „Verl." (Heim | Gast) erscheint nur, wenn Ereignisse in der Verlängerung erfasst wurden (inkl. deren Nachspielzeit)
-- [ ] Team-Zuordnung über das Team des Täters (Fouler); Ereignisse ohne Täter-Team werden nicht gezählt
-- [ ] Im Ereignisformular wird das Täter-/Gefoulten-Team auch **ohne Rückennummer** gespeichert (DB-Schema v6, Rückennummer optional)
-- [ ] Spieler-Ranking (US-403) ignoriert Einträge ohne Rückennummer
-- [ ] Leere Zellen zeigen „0"; Tabelle aktualisiert sich nach Bearbeiten oder Löschen einer Szene
+- [x] Kompakte Tabelle „Vergehen pro Team" unterhalb des Spieler-Rankings
+- [x] Zeilen: Fußvergehen · Oberkörpervergehen · Andere · Summe
+- [x] „Andere" umfasst Handspiel, Unsportlichkeit, Tätlichkeit und Sonstiges; Abseits, Vorteil und Torentscheidung werden nicht gezählt
+- [x] Spalten: 1. HZ (Heim | Gast) · 2. HZ (Heim | Gast)
+- [x] Nachspielzeit zählt zur jeweiligen Halbzeit
+- [x] Spalte „Verl." (Heim | Gast) erscheint nur, wenn Ereignisse in der Verlängerung erfasst wurden (inkl. deren Nachspielzeit)
+- [x] Team-Zuordnung über das Team des Täters (Fouler); Ereignisse ohne Täter-Team werden nicht gezählt
+- [x] Im Ereignisformular wird das Täter-/Gefoulten-Team auch **ohne Rückennummer** gespeichert (DB-Schema v6, Rückennummer optional)
+- [x] Spieler-Ranking (US-403) ignoriert Einträge ohne Rückennummer
+- [x] Leere Zellen zeigen „0"; Tabelle aktualisiert sich nach Bearbeiten oder Löschen einer Szene

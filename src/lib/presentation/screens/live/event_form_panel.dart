@@ -354,6 +354,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     final isFouler = role == PlayerRole.fouler;
     return _teamNumberRow(
       label: role.label,
+      keyPrefix: role.name,
       team: isFouler ? _foulerTeam : _fouledTeam,
       number: isFouler ? _foulerNumber : _fouledNumber,
       onTeamChanged: (t) => setState(() {
@@ -662,22 +663,23 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     setState(() => _saving = true);
 
     final players = <EventPlayer>[];
-    if (_foulerTeam != null && _foulerNumber != null) {
+    // Team wird auch ohne Rückennummer gespeichert (US-404)
+    if (_foulerTeam != null) {
       players.add(EventPlayer(
         id: '',
         eventId: '',
         role: PlayerRole.fouler,
         team: _foulerTeam!,
-        jerseyNumber: _foulerNumber!,
+        jerseyNumber: _foulerNumber,
       ));
     }
-    if (_fouledTeam != null && _fouledNumber != null) {
+    if (_fouledTeam != null) {
       players.add(EventPlayer(
         id: '',
         eventId: '',
         role: PlayerRole.fouled,
         team: _fouledTeam!,
-        jerseyNumber: _fouledNumber!,
+        jerseyNumber: _fouledNumber,
       ));
     }
 

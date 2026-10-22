@@ -1711,9 +1711,9 @@ class $EventPlayersTable extends EventPlayers
   late final GeneratedColumn<int> jerseyNumber = GeneratedColumn<int>(
     'jersey_number',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   @override
   List<GeneratedColumn> get $columns => [id, eventId, role, team, jerseyNumber];
@@ -1766,8 +1766,6 @@ class $EventPlayersTable extends EventPlayers
           _jerseyNumberMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_jerseyNumberMeta);
     }
     return context;
   }
@@ -1797,7 +1795,7 @@ class $EventPlayersTable extends EventPlayers
       jerseyNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}jersey_number'],
-      )!,
+      ),
     );
   }
 
@@ -1812,13 +1810,13 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
   final String eventId;
   final String role;
   final String team;
-  final int jerseyNumber;
+  final int? jerseyNumber;
   const EventPlayerRow({
     required this.id,
     required this.eventId,
     required this.role,
     required this.team,
-    required this.jerseyNumber,
+    this.jerseyNumber,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1827,7 +1825,9 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
     map['event_id'] = Variable<String>(eventId);
     map['role'] = Variable<String>(role);
     map['team'] = Variable<String>(team);
-    map['jersey_number'] = Variable<int>(jerseyNumber);
+    if (!nullToAbsent || jerseyNumber != null) {
+      map['jersey_number'] = Variable<int>(jerseyNumber);
+    }
     return map;
   }
 
@@ -1837,7 +1837,9 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
       eventId: Value(eventId),
       role: Value(role),
       team: Value(team),
-      jerseyNumber: Value(jerseyNumber),
+      jerseyNumber: jerseyNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(jerseyNumber),
     );
   }
 
@@ -1851,7 +1853,7 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
       eventId: serializer.fromJson<String>(json['eventId']),
       role: serializer.fromJson<String>(json['role']),
       team: serializer.fromJson<String>(json['team']),
-      jerseyNumber: serializer.fromJson<int>(json['jerseyNumber']),
+      jerseyNumber: serializer.fromJson<int?>(json['jerseyNumber']),
     );
   }
   @override
@@ -1862,7 +1864,7 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
       'eventId': serializer.toJson<String>(eventId),
       'role': serializer.toJson<String>(role),
       'team': serializer.toJson<String>(team),
-      'jerseyNumber': serializer.toJson<int>(jerseyNumber),
+      'jerseyNumber': serializer.toJson<int?>(jerseyNumber),
     };
   }
 
@@ -1871,13 +1873,13 @@ class EventPlayerRow extends DataClass implements Insertable<EventPlayerRow> {
     String? eventId,
     String? role,
     String? team,
-    int? jerseyNumber,
+    Value<int?> jerseyNumber = const Value.absent(),
   }) => EventPlayerRow(
     id: id ?? this.id,
     eventId: eventId ?? this.eventId,
     role: role ?? this.role,
     team: team ?? this.team,
-    jerseyNumber: jerseyNumber ?? this.jerseyNumber,
+    jerseyNumber: jerseyNumber.present ? jerseyNumber.value : this.jerseyNumber,
   );
   EventPlayerRow copyWithCompanion(EventPlayersCompanion data) {
     return EventPlayerRow(
@@ -1921,7 +1923,7 @@ class EventPlayersCompanion extends UpdateCompanion<EventPlayerRow> {
   final Value<String> eventId;
   final Value<String> role;
   final Value<String> team;
-  final Value<int> jerseyNumber;
+  final Value<int?> jerseyNumber;
   final Value<int> rowid;
   const EventPlayersCompanion({
     this.id = const Value.absent(),
@@ -1936,13 +1938,12 @@ class EventPlayersCompanion extends UpdateCompanion<EventPlayerRow> {
     required String eventId,
     required String role,
     required String team,
-    required int jerseyNumber,
+    this.jerseyNumber = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        eventId = Value(eventId),
        role = Value(role),
-       team = Value(team),
-       jerseyNumber = Value(jerseyNumber);
+       team = Value(team);
   static Insertable<EventPlayerRow> custom({
     Expression<String>? id,
     Expression<String>? eventId,
@@ -1966,7 +1967,7 @@ class EventPlayersCompanion extends UpdateCompanion<EventPlayerRow> {
     Value<String>? eventId,
     Value<String>? role,
     Value<String>? team,
-    Value<int>? jerseyNumber,
+    Value<int?>? jerseyNumber,
     Value<int>? rowid,
   }) {
     return EventPlayersCompanion(
@@ -3972,7 +3973,7 @@ typedef $$EventPlayersTableCreateCompanionBuilder =
       required String eventId,
       required String role,
       required String team,
-      required int jerseyNumber,
+      Value<int?> jerseyNumber,
       Value<int> rowid,
     });
 typedef $$EventPlayersTableUpdateCompanionBuilder =
@@ -3981,7 +3982,7 @@ typedef $$EventPlayersTableUpdateCompanionBuilder =
       Value<String> eventId,
       Value<String> role,
       Value<String> team,
-      Value<int> jerseyNumber,
+      Value<int?> jerseyNumber,
       Value<int> rowid,
     });
 
@@ -4193,7 +4194,7 @@ class $$EventPlayersTableTableManager
                 Value<String> eventId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 Value<String> team = const Value.absent(),
-                Value<int> jerseyNumber = const Value.absent(),
+                Value<int?> jerseyNumber = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EventPlayersCompanion(
                 id: id,
@@ -4209,7 +4210,7 @@ class $$EventPlayersTableTableManager
                 required String eventId,
                 required String role,
                 required String team,
-                required int jerseyNumber,
+                Value<int?> jerseyNumber = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EventPlayersCompanion.insert(
                 id: id,

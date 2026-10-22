@@ -18,7 +18,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -39,6 +39,11 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(events, events.goalScorerTeam);
             await m.addColumn(events, events.goalScorerNumber);
             await m.addColumn(events, events.ownGoal);
+          }
+          if (from < 6) {
+            // jersey_number wird nullable — SQLite erfordert Neuaufbau der Tabelle
+            // ignore: experimental_member_use
+            await m.alterTable(TableMigration(eventPlayers));
           }
         },
         beforeOpen: (details) async {

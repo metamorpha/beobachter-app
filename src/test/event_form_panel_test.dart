@@ -482,4 +482,61 @@ void main() {
       expect(savedEvent?.coachingFlag, isFalse);
     });
   });
+
+  group('US-404: Team ohne Rückennummer', () {
+    testWidgets('TC-4050: Täter-Team ohne Rückennummer wird gespeichert',
+        (tester) async {
+      final eventRepo = _FakeEventRepository();
+
+      await tester.pumpWidget(_buildPanelApp(
+        timerRepo: _FakeTimerRepository(),
+        eventRepo: eventRepo,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('event_type_footFoul')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('fouler_team_away')));
+      await tester.tap(find.byKey(const Key('fouler_team_away')));
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('btn_save_event')));
+      await tester.tap(find.byKey(const Key('btn_save_event')));
+      await tester.pump();
+
+      final fouler = eventRepo.lastPlayers
+          .where((p) => p.role == PlayerRole.fouler)
+          .single;
+      expect(fouler.team, TeamSide.away);
+      expect(fouler.jerseyNumber, isNull);
+    });
+
+    testWidgets('TC-4050: Team ohne Nummer ist beim erneuten Öffnen gewählt',
+        (tester) async {
+      final eventRepo = _FakeEventRepository();
+
+      await tester.pumpWidget(_buildPanelApp(
+        timerRepo: _FakeTimerRepository(),
+        eventRepo: eventRepo,
+        initialEvent: _existingEvent(),
+        initialPlayers: const [
+          EventPlayer(
+            id: 'ep-1',
+            eventId: 'e-existing',
+            role: PlayerRole.fouler,
+            team: TeamSide.away,
+          ),
+        ],
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('btn_save_event')));
+      await tester.pump();
+
+      final fouler = eventRepo.lastPlayers
+          .where((p) => p.role == PlayerRole.fouler)
+          .single;
+      expect(fouler.team, TeamSide.away);
+      expect(fouler.jerseyNumber, isNull);
+    });
+  });
 }

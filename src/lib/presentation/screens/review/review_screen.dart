@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/event.dart';
 import '../../../domain/entities/game.dart';
+import '../../../domain/entities/team_fouls.dart';
 import '../../../domain/enums/assessment.dart';
 import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/event_type.dart';
@@ -738,6 +739,11 @@ class _StatsTab extends ConsumerWidget {
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Expanded(child: _PlayerRanking(gameId: gameId)),
+                  const SizedBox(height: 16),
+                  const Text('Vergehen pro Team',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  _TeamFoulsTable(gameId: gameId),
                 ],
               ),
             ),
@@ -870,6 +876,93 @@ class _PlayerRanking extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('Fehler: $e',
+          style: const TextStyle(color: Colors.red, fontSize: 12)),
+    );
+  }
+}
+
+/// Kompakte Tabelle „Vergehen pro Team" (US-404): Kategorien × Halbzeit/Team.
+class _TeamFoulsTable extends ConsumerWidget {
+  final String gameId;
+
+  const _TeamFoulsTable({required this.gameId});
+
+  static const _cellWidth = 30.0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final foulsAsync = ref.watch(teamFoulsProvider(gameId));
+
+    return foulsAsync.when(
+      data: (fouls) {
+        final periods = fouls.periods;
+
+        Widget row(String label, int Function(FoulPeriod, TeamSide) value,
+            {bool bold = false}) {
+          final style = TextStyle(
+              fontSize: 12,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Expanded(child: Text(label, style: style)),
+                for (final period in periods)
+                  for (final team in TeamSide.values)
+                    SizedBox(
+                      width: _cellWidth,
+                      child: Text('${value(period, team)}',
+                          textAlign: TextAlign.right, style: style),
+                    ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Spacer(),
+                for (final period in periods)
+                  SizedBox(
+                    width: _cellWidth * 2,
+                    child: Text(period.label,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                            fontSize: 11, color: Colors.grey)),
+                  ),
+              ],
+            ),
+            Row(
+              children: [
+                const Spacer(),
+                for (final _ in periods)
+                  for (final team in TeamSide.values)
+                    SizedBox(
+                      width: _cellWidth,
+                      child: Text(team == TeamSide.home ? 'H' : 'G',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: team == TeamSide.home
+                                  ? Colors.blue
+                                  : Colors.red)),
+                    ),
+              ],
+            ),
+            for (final category in FoulCategory.values)
+              row(category.label,
+                  (period, team) => fouls.count(period, team, category)),
+            const Divider(height: 8),
+            row('Summe', fouls.total, bold: true),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
       error: (e, _) => Text('Fehler: $e',
           style: const TextStyle(color: Colors.red, fontSize: 12)),
     );

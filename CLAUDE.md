@@ -79,6 +79,7 @@ Key design decisions:
 | `15_spiel_beenden_tests.md` | End game test cases — US-212 (13 TCs) |
 | `18_live_ereignisliste_tests.md` | Live side panel event list test cases — US-213 (10 TCs) |
 | `19_spielstand_tests.md` | Score & goal scorer test cases — US-214 (19 TCs) |
+| `20_team_vergehen_tests.md` | Fouls per team & half test cases — US-404 (13 TCs) |
 
 ### src/lib/ structure
 
@@ -115,7 +116,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (119 tests, all green)
+# Run tests (196 tests, all green)
 flutter test
 
 # Run app (simulator or device)
@@ -155,7 +156,7 @@ Event {
 }
 ```
 
-**Score** (`domain/entities/score.dart`) is always derived from events, never stored: an event counts iff `type == goalDecision && refDecision == goal && goalScorerTeam != null` (see `Event.goalForTeam`). DB schema is v5.
+**Score** (`domain/entities/score.dart`) is always derived from events, never stored: an event counts iff `type == goalDecision && refDecision == goal && goalScorerTeam != null` (see `Event.goalForTeam`). DB schema is v6.
 
 ## Implementation Status
 
@@ -169,6 +170,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Scene edit post-game (US-209) | Done — edit icon opens `EventFormPanel` as dialog with `initialEvent` |
 | Indirect free kick in decisions | Done — `RefDecision.indirectFreeKick` ("Indir. FS") |
 | CSV-Import (US-105) | Done — `PresskBerichtCsvParser` + `file_picker`; DB schema v2 (liga, spieltag) |
+| Vergehen pro Team (US-404) | Done — `TeamFouls` + `teamFoulsProvider`; DB schema v6 (`event_players.jersey_number` nullable) |
 
 ## Development Pipeline
 
