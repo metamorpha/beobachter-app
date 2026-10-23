@@ -64,6 +64,7 @@ Key design decisions:
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–305) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
+| `02_us_ui_redesign.md` | User stories — Epic 6: UI-Modernisierung (US-601–606) |
 | `03_ux_review.md` | UX feedback and decisions |
 | `04_ux_design.md` | Wireframes, user flows, UX principles |
 | `05_arch_review.md` | Architecture feasibility review |
@@ -82,6 +83,8 @@ Key design decisions:
 | `20_team_vergehen_tests.md` | Fouls per team & half test cases — US-404 (13 TCs) |
 | `21_spiel_fortsetzen_tests.md` | Resume running game from game list — US-109 (8 TCs) |
 | `22_aufstellung_live_tests.md` | Edit squads during live game — US-110 (9 TCs) |
+| `23_ui_redesign_plan.md` | UI redesign plan — theme, reachability, motion (presentation layer only) |
+| `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
 
 ### src/lib/ structure
 

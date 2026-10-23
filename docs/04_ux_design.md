@@ -724,3 +724,141 @@ Die UI ist ausschließlich für **Tablet-Querformat in fester Größe** gestalte
 - **Kein Vollbild im F11-Sinne** — das Windows-Titlelbar bleibt sichtbar (native Tablet-UX auf Surface); nur die Fenstergröße ist fixiert
 - **Kein explizites Nutzer-Feedback** — das Verhalten ist erwartungskonform und braucht keinen Toast oder Dialog
 - Bei Tap auf Spielfeld während laufender Uhr: aktuelle Zeit wird sofort als Zeitstempel des Ereignisses eingefroren
+---
+
+## UI-Redesign — Epic 6 (US-601 – US-606)
+
+> Ersetzt die visuellen Vorgaben der früheren Abschnitte. Flows, Navigation, Felder und Verhalten bleiben unverändert.
+> Plan und Begründungen: [`23_ui_redesign_plan.md`](23_ui_redesign_plan.md).
+
+### Grundsätze
+
+| Thema | Vorgabe |
+|---|---|
+| Theme | **Ein helles Theme für alle Screens** (Außeneinsatz bei Tageslicht). Kein Dark Theme. |
+| Schrift | Inter, gebündelt. Ziffern für Uhr, Spielstand und Rückennummern gleich breit. |
+| Größen | Fließtext ≥ 14 pt, Beschriftungen ≥ 12 pt. Tippflächen ≥ 48 dp, im Live-Screen ≥ 56 dp, Primäraktionen ≥ 64 dp. |
+| Kontrast | Text ≥ 4,5:1 zum Hintergrund. |
+| Daumenzonen | Zeitkritische Aktionen an der linken bzw. rechten Kante unten. Oben nur Anzeige. |
+| Rückmeldung | Nur visuell. Keine Vibration, kein Ton. |
+
+### Farben mit fester Bedeutung
+
+| Token | Bedeutung | Wert |
+|---|---|---|
+| `primary` | Markenfarbe, Start-Aktionen | Dunkelgrün `#1B6B3A` |
+| `home` / `away` | Heim / Gast | Blau `#1D4ED8` / Rot `#C2261D` |
+| `correct` / `wrong` | Bewertung korrekt / falsch | Grün `#15803D` / Rot `#B91C1C` |
+| `yellowCard` · `yellowRedCard` · `redCard` | Karten | `#FACC15` · `#EA580C` · `#B91C1C` |
+| `coaching` | Coaching-Stern | Amber `#F59E0B` |
+| `phaseStart` · `phasePause` · `phaseStop` · `phaseFinish` | Phasen-Buttons | Grün · Orange `#C2410C` · Rot · Schiefer `#334155` |
+| `pitch` | Spielfeld | Rasengrün mit Streifen |
+
+### Wireframe — Live-Screen (ersetzt Screen 1)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  FC Heim              2 : 1              SV Gast        ● 2. HZ   67:12  │  Anzeige, keine Buttons
+├────────────────────────────────────────────────┬─────────────────────────┤
+│                                                │ LETZTE EREIGNISSE       │
+│                                                │ 67:12  Fußvergehen   🗑 │  Zeilen ≥ 56 dp
+│               S P I E L F E L D                │ 61:03  ⚽ Tor 2:1    🗑 │
+│        Rasenstreifen · Marker in Typ-Farbe     │ 54:40  Abseits       🗑 │
+│                                                │                         │
+├────────────────────────────────────────────────┤                         │
+│ [ ■  Abpfiff      ] [👥 Aufstellung] [≡ Szenen] │                         │
+└────────────────────────────────────────────────┴─────────────────────────┘
+  linker Daumen                                     rechter Daumen
+```
+
+- Phasen-Button **≥ 160 × 64 dp** (ersetzt die frühere Vorgabe 120 × 48 pt). Bei zwei Buttons nach dem Abpfiff („Verlängerung", „Spiel beenden") stehen beide nebeneinander in der Aktionsleiste.
+- Ein pulsierender Punkt vor der Phase zeigt eine laufende Uhr. In Pausen ist der Punkt statisch.
+- „Aufstellung" und „Szenen" sind beschriftete Tonal-Buttons (≥ 56 dp).
+
+### Wireframe — Ereignisformular (ersetzt Screen 2/3)
+
+```
+┌──────────────────────────────┐
+│ ⏱ 67:12  Ereignis erfassen ✕ │
+├──────────────────────────────┤
+│ EREIGNISTYP                  │
+│ [Fuß    ][Oberk.  ][Hand    ]│  Kacheln ≥ 56 dp, Icon + Label
+│ [Unspor.][Tätl.   ][Abseits ]│
+│ [Vorteil][Tor     ][Sonst.  ]│
+├──────────────────────────────┤
+│ SPIELER                      │
+│ Täter     [Heim|Gast] # 7 9 …│  Umschalter ≥ 56 dp, Chips ≥ 48 × 48
+│ Gefoult   [Heim|Gast] # 4 5 …│
+│ ENTSCHEIDUNG                 │
+│ [FS ][IFS][11m][Vort.]…      │  Raster ≥ 56 dp
+│ KARTE  [Gelb][G-R][Rot]   ☆  │
+│ BEWERTUNG                    │
+│ [✓ Erwartbar][✓ Komplex]     │  ≥ 64 dp, ✓/✗ zusätzlich zur Farbe
+│ [✗ Erwartbar][✗ Komplex]     │
+│ + Notiz                      │
+├──────────────────────────────┤
+│ [       ■ Speichern        ] │  fix unten, ≥ 64 dp
+└──────────────────────────────┘
+```
+
+### Wireframe — Spielliste
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Beobachter                                                   │
+├──────────────────────────────────────────────────────────────┤
+│ ┌───────────────────────────┐ ┌───────────────────────────┐  │
+│ │ ⚽ FC Heim                 │ │ ⚽ TuS A                    │  │
+│ │    SV Gast         ● Läuft│ │    SC B           Beendet │  │
+│ │ 23.10.2026 · 12 Ereignisse│ │ 16.10.2026 · 31 Ereign.   │  │
+│ │                     🗑    │ │                     🗑    │  │
+│ └───────────────────────────┘ └───────────────────────────┘  │
+│                                          [ + Neues Spiel ]   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Wireframe — Spiel-Setup
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ← Spiel einrichten                                           │
+├──────────────────────────────────────────────────────────────┤
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ ⬆ Aus Pressebericht importieren                          │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ SPIELDATEN                    │ AUFSTELLUNG HEIM             │
+│ [Heimmannschaft      ]        │ [Rückennummer] [+]           │
+│ [Gastmannschaft      ]        │ #1 #4 #7 …                   │
+│ [Liga] [Spieltag]             │ AUFSTELLUNG GAST             │
+│ [Spielort            ]        │ [Rückennummer] [+]           │
+├──────────────────────────────────────────────────────────────┤
+│                                       [ ▶ Spiel starten ]    │  fix sichtbar
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Wireframe — Statistik (ersetzt Screen 5)
+
+```
+┌──────────────────────────────┬───────────────────────────────┐
+│ HEATMAP                      │ ZEITACHSE                     │
+│ (KDE wie bisher)             │  ▆  ▃  █  ▂  ▅  ▇             │
+│                              │ 0' 15' 30' 45' 60' 75'        │
+├──────────────────────────────┼───────────────────────────────┤
+│ SPIELER-RANKING              │ VERGEHEN PRO TEAM             │
+│ 1. [H] #7   4×               │ (Tabelle wie bisher)          │
+└──────────────────────────────┴───────────────────────────────┘
+```
+
+### Interaktions-Spezifikationen
+
+| Moment | Verhalten |
+|---|---|
+| Seitenwechsel | Überblenden, ca. 350 ms |
+| Formular öffnen / schließen | Gleitet von rechts ein bzw. aus, ca. 250 ms; das Spielfeld wird weich abgedunkelt |
+| Tap aufs Spielfeld | Sofortiger Ring an der Tap-Stelle; neuer Marker erscheint mit kurzer Einblend-Animation |
+| Auswahl (Typ, Entscheidung, Bewertung, Nummer) | Farbwechsel und kurze Größenanimation, 150 ms |
+| Speichern | Kurzes Häkchen auf dem Button, dann schließt das Panel |
+| Phasenwechsel | Farbe und Beschriftung des Buttons wechseln animiert |
+| Statistik öffnen | Balken der Zeitachse wachsen hoch |
+| „Bewegung reduzieren" aktiv | Alle Animationen entfallen |
+| Grundregel | Eine laufende Animation blockiert nie einen Tap |

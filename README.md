@@ -36,7 +36,7 @@ Als Schiedsrichterbeobachter hat man während eines Spiels keine Hand frei, kein
 - **Schiedsrichterentscheidung** als Raster: Freistoß, indirekter Freistoß, Strafstoß, Vorteil, Weiterspielen, Karten, Eckstoß, Abstoß, Einwurf, Tor …
 - **Bewertung** im 2×2-Raster: *korrekt / falsch* × *erwartbar / komplex*
 - Optionale **Szenennotiz**
-- **Speichern mit einem Tap**, danach 5 Sekunden lang **„Rückgängig"** möglich
+- **Speichern mit einem Tap**, versehentlich erfasste Ereignisse lassen sich im Seitenpanel direkt löschen
 - **Spielstand & Torschützen** (inkl. Eigentor) werden aus den Torentscheidungen abgeleitet und unter den Teamnamen angezeigt
 - **Seitenpanel** mit den zuletzt erfassten Ereignissen, Aufstellung jederzeit im Spiel korrigierbar
 
@@ -194,7 +194,7 @@ Die Anforderungen sind in fünf Epics gegliedert. Die vollständigen Stories mit
 | US-205 | **Karte als Attribut erfassen** (Gelb, Gelb-Rot, Rot) | ✅ |
 | US-206 | **Ereignis bewerten**: Entscheidung korrekt/falsch, Szene erwartbar/komplex | ✅ |
 | US-207 | **Szenennotiz hinzufügen** (optional, Freitext) | ✅ |
-| US-208 | **Ereignis speichern** mit einem Tap, inkl. Rückgängig | ✅ |
+| US-208 | **Ereignis speichern** mit einem Tap | ✅ |
 | US-209 | **Ereignis nachträglich bearbeiten** | ✅ |
 | US-210 | **Spieluhr mit Halbzeiten und Nachspielzeit** (`45+X`, `90+X`) | ✅ |
 | US-211 | **Verlängerung starten und verwalten** (2 × 15 Min.) | ✅ |
