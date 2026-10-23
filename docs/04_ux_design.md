@@ -367,7 +367,7 @@ Minimaler Pfad: **4 Taps** (Feld → Torentsch. → Team → Speichern).
 | Entscheidung = Tor, kein Team | „Team wählen, damit das Tor zählt" | orange |
 
 **UX-Entscheidungen:**
-- Spielstand ist abgeleitet (aus Ereignissen berechnet), nie separat gespeichert — kann nicht auseinanderlaufen; Undo/Löschen/Bearbeiten wirken automatisch
+- Spielstand ist abgeleitet (aus Ereignissen berechnet), nie separat gespeichert — kann nicht auseinanderlaufen; Löschen/Bearbeiten wirken automatisch
 - Zählt nur bei Entscheidung „Tor" — aberkannte Tore (Abseits, Foul) bleiben als Szene erfasst, ändern aber den Stand nicht
 - Eigentor: Team/Nummer beschreiben den Spieler, der den Ball ins eigene Tor lenkt (so wie man es auf dem Platz sieht); die Gutschrift an den Gegner macht die App
 - Vorschau-Zeile macht die Gutschrift vor dem Speichern sichtbar — verhindert vertauschte Teams, besonders bei Eigentoren

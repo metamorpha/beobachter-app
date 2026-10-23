@@ -111,4 +111,4 @@ Das UX-Design impliziert folgende Entitäten. Alle sind vollständig abgedeckt �
 |---|-------|---------|
 | A1 | Flutter oder .NET MAUI? (Dart vs. C#) | Gesamte Technologiewahl |
 | A2 | Soll die App mehrsprachig sein (DE/EN)? | i18n-Infrastruktur |
-| A3 | Soll es eine Undo-Funktion für versehentlich gespeicherte Events geben? | Event-Lifecycle |
+| A3 | Soll es eine Undo-Funktion für versehentlich gespeicherte Events geben? | Event-Lifecycle — **Entschieden 2026-10-23: nein**, Korrektur über das Lösch-Icon in „Letzte Ereignisse" (siehe `06_architecture.md`) |

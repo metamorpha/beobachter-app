@@ -208,9 +208,11 @@ Event-Zeitstempel:
 
 Dieser Ansatz funktioniert korrekt nach App-Neustart oder Hintergrundwechsel, da die DB den Startzeitpunkt kennt.
 
-### Undo nach Speichern
+### Korrektur nach Speichern (kein Undo)
 
-Nach jedem gespeicherten Event zeigt die App einen `SnackBar` mit „Rückgängig"-Button (5-Sekunden-Fenster). Bei Tap: `EventRepository.deleteEvent(event.id)`. Danach ist der Event endgültig gelöscht. Kein komplexer Undo-Stack.
+Es gibt kein Rückgängig nach dem Speichern. Ein versehentlich erfasstes Ereignis löscht der Beobachter über das Lösch-Icon in „Letzte Ereignisse" im Live-Seitenpanel (US-213): `EventRepository.deleteEvent(event.id)`. Inhaltliche Fehler korrigiert er nachträglich über „Bearbeiten" (US-209).
+
+*Entscheidung 2026-10-23 (offene Frage A3 aus `05_arch_review.md`): Eine Undo-SnackBar war hier ursprünglich geplant, wurde aber nie implementiert. Das Lösch-Icon deckt denselben Fall mit einem Tap ab, ohne zusätzliche Elemente auf dem Live-Screen.*
 
 ---
 
@@ -230,7 +232,7 @@ abstract class EventRepository {
   Future<List<Event>> getEvents(String gameId);
   Future<Event?> getEvent(String id);
   Future<void> updateEvent(Event event, List<EventPlayer> players);
-  Future<void> deleteEvent(String id);         // für Undo
+  Future<void> deleteEvent(String id);         // Löschen in „Letzte Ereignisse"
 }
 
 abstract class SquadRepository {
@@ -342,7 +344,7 @@ classDiagram
 │  │  ○ Spieluhr stoppen  │   │    ├─ Entscheidung wählen    │ │
 │  │  ○ Spiel öffnen      │   │    ├─ Bewertung wählen       │ │
 │  └──────────────────────┘   │    └─ Speichern              │ │
-│                              │  ○ Ereignis rückgängig      │ │
+│                              │  ○ Ereignis löschen         │ │
 │  ┌──────────────────────┐   └──────────────────────────────┘ │
 │  │   Nachbearbeitung    │   ┌──────────────────────────────┐ │
 │  │                      │   │        Statistik             │ │
@@ -380,10 +382,10 @@ Beobachter    LiveScreen      TimerService    EventForm      EventRepository    
     │               │              │               │                │─ INSERT ─────▶│
     │               │              │               │                │◀─ ok ─────────│
     │               │              │               │◀─ Event(id) ───│              │
-    │               │◀─ close() + showUndo(id) ────│                │              │
+    │               │◀─ close() ───────────────────│                │              │
     │               │               │              │                │              │
-    │  [optional: Tap "Rückgängig" innerhalb 5s]   │                │              │
-    │─ Rückgängig ──▶│               │              │                │              │
+    │  [optional: Lösch-Icon in „Letzte Ereignisse"]│                │              │
+    │─ Löschen ─────▶│               │              │                │              │
     │               │────────────────────────────────── deleteEvent(id) ───────────▶│
     │               │               │              │                │◀─ ok ─────────│
     │               │               │              │                │              │

@@ -81,19 +81,9 @@ elapsedMs += (now - startTimestamp)
 
 Der UI-Ticker (`Timer.periodic(1s)`) aktualisiert nur die Anzeige — kein Datenverlust bei App-Hintergrund.
 
-### Undo-Mechanismus
+### Korrektur statt Undo
 
-Nach jedem gespeicherten Event erscheint ein `SnackBar` mit 5-Sekunden-Fenster:
-
-```dart
-ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-  duration: Duration(seconds: 5),
-  action: SnackBarAction(
-    label: 'Rückgängig',
-    onPressed: () => eventRepository.deleteEvent(eventId),
-  ),
-));
-```
+Es gibt keine Undo-SnackBar (sie war hier früher beschrieben, wurde aber nie implementiert). Versehentlich gespeicherte Ereignisse löscht man über das Lösch-Icon in „Letzte Ereignisse" (`_RecentEvents` im `LiveScreen`), das `eventRepository.deleteEvent(id)` aufruft. Nach dem Speichern zeigt der Live-Screen lediglich den Hinweis „Ereignis gespeichert" (US-603). Entscheidung siehe `06_architecture.md`, Abschnitt „Korrektur nach Speichern".
 
 ### SQLite Foreign Keys
 
@@ -274,4 +264,4 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 
 ### Golden-Tests
 
-`test/golden/screens_golden_test.dart` rendert acht Screens mit echter Inter-Schrift und Material Icons bei 1280 × 800 und echten Schatten (`debugDisableShadows = false`). Neu erzeugen: `flutter test --update-goldens --tags golden`. Referenzbilder stammen von macOS; auf anderen Plattformen können Schriftdetails abweichen.
+`test/golden/screens_golden_test.dart` rendert acht Screens mit echter Inter-Schrift und Material Icons bei 1280 × 800 und echten Schatten (`debugDisableShadows = false`). Neu erzeugen: `flutter test --update-goldens --tags golden`. Referenzbilder stammen von macOS und werden nur dort erzeugt und geprüft; auf anderen Plattformen (z. B. Windows für Surface) werden die Golden-Tests mit Begründung übersprungen, weil die Schriftdarstellung minimal abweicht.

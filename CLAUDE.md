@@ -43,7 +43,7 @@ Key design decisions:
 - **Coordinates**: Stored as normalized floats (0.0–1.0), resolution-independent.
 - **Drift DataClassNames**: All Drift tables use `@DataClassName('XxxRow')` to avoid name conflicts with domain entities (`GameRow`, `EventRow`, etc.).
 - **Cascade deletes**: `PRAGMA foreign_keys = ON` set in `MigrationStrategy.beforeOpen`.
-- **Undo**: 5-second SnackBar after each saved event calls `deleteEvent()`.
+- **Korrektur statt Undo**: Es gibt kein Rückgängig nach dem Speichern. Versehentlich erfasste Ereignisse löscht man über das Lösch-Icon in „Letzte Ereignisse" (US-213), was `deleteEvent()` aufruft. (Entscheidung 2026-10-23; frühere Doku beschrieb eine Undo-SnackBar, die nie implementiert war.)
 
 ## Repository Structure
 
@@ -125,7 +125,8 @@ flutter analyze
 # Run tests (252 tests incl. 8 golden, all green)
 flutter test
 
-# Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen)
+# Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
+# auf anderen Plattformen werden die Golden-Tests übersprungen
 flutter test --update-goldens --tags golden
 
 # Run app (simulator or device)
