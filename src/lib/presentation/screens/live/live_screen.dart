@@ -30,11 +30,15 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
   double? _tapY;
   bool _formVisible = false;
 
+  /// Zählt Speichervorgänge; jeder neue Wert startet die Bestätigung (US-603).
+  int _savedCount = 0;
+
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsProvider(widget.game.id));
     final events = eventsAsync.valueOrNull ?? [];
-    final abgeschlossen = ref
+    final abgeschlossen =
+        ref
             .watch(timerStateProvider(widget.game.id))
             .valueOrNull
             ?.phase
@@ -58,22 +62,38 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.m, AppSpacing.m, AppSpacing.s, AppSpacing.m),
+                AppSpacing.m,
+                AppSpacing.m,
+                AppSpacing.s,
+                AppSpacing.m,
+              ),
               child: Column(
                 children: [
                   Expanded(
-                    child: PitchCanvas(
-                      events: events,
-                      dimmed: _formVisible,
-                      onTap: (x, y) {
-                        // Abgeschlossenes Spiel: keine neue Erfassung (US-212)
-                        if (_formVisible || abgeschlossen) return;
-                        setState(() {
-                          _tapX = x;
-                          _tapY = y;
-                          _formVisible = true;
-                        });
-                      },
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        PitchCanvas(
+                          events: events,
+                          dimmed: _formVisible,
+                          onTap: (x, y) {
+                            // Abgeschlossenes Spiel: keine neue Erfassung (US-212)
+                            if (_formVisible || abgeschlossen) return;
+                            setState(() {
+                              _tapX = x;
+                              _tapY = y;
+                              _formVisible = true;
+                            });
+                          },
+                        ),
+                        if (_savedCount > 0 && !AppMotion.reduced(context))
+                          Positioned(
+                            top: AppSpacing.l,
+                            left: 0,
+                            right: 0,
+                            child: _SavedToast(key: ValueKey(_savedCount)),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.m),
@@ -89,7 +109,11 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             curve: AppMotion.curve,
             width: panelWidth,
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s, AppSpacing.m, AppSpacing.m, AppSpacing.m),
+              AppSpacing.s,
+              AppSpacing.m,
+              AppSpacing.m,
+              AppSpacing.m,
+            ),
             child: Card(
               elevation: _formVisible ? 3 : 0,
               shadowColor: Colors.black26,
@@ -101,8 +125,9 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                   opacity: anim,
                   child: SlideTransition(
                     position: Tween(
-                            begin: const Offset(0.12, 0), end: Offset.zero)
-                        .animate(anim),
+                      begin: const Offset(0.12, 0),
+                      end: Offset.zero,
+                    ).animate(anim),
                     child: child,
                   ),
                 ),
@@ -114,7 +139,10 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                         locationY: _tapY!,
                         onClose: () => setState(() => _formVisible = false),
                         onSaved: (event) {
-                          setState(() => _formVisible = false);
+                          setState(() {
+                            _formVisible = false;
+                            _savedCount++;
+                          });
                           ref.invalidate(eventsProvider(widget.game.id));
                         },
                       )
@@ -126,6 +154,66 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Kurze Bestätigung nach dem Speichern: blendet ein, steht kurz, blendet aus.
+class _SavedToast extends StatelessWidget {
+  const _SavedToast({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 1400),
+        builder: (context, t, child) {
+          // 0–15 %: einblenden, bis 75 %: stehen, danach ausblenden
+          final opacity = t < 0.15
+              ? t / 0.15
+              : t < 0.75
+              ? 1.0
+              : (1 - t) / 0.25;
+          final dy = t < 0.15 ? (1 - t / 0.15) * -8 : 0.0;
+          return Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.translate(offset: Offset(0, dy), child: child),
+          );
+        },
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.l,
+              vertical: AppSpacing.s + 2,
+            ),
+            decoration: BoxDecoration(
+              color: context.scheme.inverseSurface,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              boxShadow: const [
+                BoxShadow(color: Color(0x33000000), blurRadius: 12),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: 20,
+                  color: context.colors.correct,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                Text(
+                  'Ereignis gespeichert',
+                  style: context.text.labelLarge?.copyWith(
+                    color: context.scheme.onInverseSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -158,8 +246,9 @@ class _Scoreboard extends ConsumerWidget {
                     child: Text(
                       '$home – $away',
                       overflow: TextOverflow.ellipsis,
-                      style: context.text.titleMedium
-                          ?.copyWith(color: context.scheme.onSurfaceVariant),
+                      style: context.text.titleMedium?.copyWith(
+                        color: context.scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s),
@@ -188,10 +277,10 @@ class _TeamDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
 }
 
 /// Aktionsleiste unten links: Phasen-Button, Aufstellung, Szenen (US-602).
@@ -202,38 +291,40 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      // Auf schmalen Flächen (Formular offen, kleine Tablets) nur Icons
-      final compact = constraints.maxWidth < 620;
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: AppSpacing.s,
-          runSpacing: AppSpacing.s,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            PhaseActions(gameId: game.id),
-            _NavButton(
-              key: const Key('btn_aufstellung'),
-              icon: Icons.groups_rounded,
-              label: 'Aufstellung',
-              compact: compact,
-              onPressed: () => SquadEditDialog.show(context, game.id),
-            ),
-            _NavButton(
-              key: const Key('btn_szenen'),
-              icon: Icons.view_list_rounded,
-              label: 'Szenen',
-              compact: compact,
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ReviewScreen(game: game)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Auf schmalen Flächen (Formular offen, kleine Tablets) nur Icons
+        final compact = constraints.maxWidth < 620;
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: AppSpacing.s,
+            runSpacing: AppSpacing.s,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              PhaseActions(gameId: game.id),
+              _NavButton(
+                key: const Key('btn_aufstellung'),
+                icon: Icons.groups_rounded,
+                label: 'Aufstellung',
+                compact: compact,
+                onPressed: () => SquadEditDialog.show(context, game.id),
               ),
-            ),
-          ],
-        ),
-      );
-    });
+              _NavButton(
+                key: const Key('btn_szenen'),
+                icon: Icons.view_list_rounded,
+                label: 'Szenen',
+                compact: compact,
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ReviewScreen(game: game)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -256,7 +347,8 @@ class _NavButton extends StatelessWidget {
     final style = FilledButton.styleFrom(
       minimumSize: const Size(AppSizes.liveTap + 8, AppSizes.primaryAction),
       padding: EdgeInsets.symmetric(
-          horizontal: compact ? AppSpacing.m : AppSpacing.l + 4),
+        horizontal: compact ? AppSpacing.m : AppSpacing.l + 4,
+      ),
       backgroundColor: context.scheme.surface,
       foregroundColor: context.scheme.onSurface,
       side: BorderSide(color: context.scheme.outlineVariant),
@@ -265,7 +357,10 @@ class _NavButton extends StatelessWidget {
       message: label,
       child: compact
           ? FilledButton(
-              style: style, onPressed: onPressed, child: Icon(icon, size: 26))
+              style: style,
+              onPressed: onPressed,
+              child: Icon(icon, size: 26),
+            )
           : FilledButton.icon(
               style: style,
               onPressed: onPressed,
@@ -293,16 +388,25 @@ class _RecentEvents extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.l, AppSpacing.l, AppSpacing.l, AppSpacing.s),
+            AppSpacing.l,
+            AppSpacing.l,
+            AppSpacing.l,
+            AppSpacing.s,
+          ),
           child: Row(
             children: [
-              Icon(Icons.history_rounded,
-                  size: 20, color: context.scheme.onSurfaceVariant),
+              Icon(
+                Icons.history_rounded,
+                size: 20,
+                color: context.scheme.onSurfaceVariant,
+              ),
               const SizedBox(width: AppSpacing.s),
               Flexible(
-                child: Text('Letzte Ereignisse',
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.titleSmall),
+                child: Text(
+                  'Letzte Ereignisse',
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.titleSmall,
+                ),
               ),
             ],
           ),
@@ -312,8 +416,10 @@ class _RecentEvents extends ConsumerWidget {
           child: recent.isEmpty
               ? _EmptyEvents(
                   child: ListView(
-                      key: const Key('recent_events_list'),
-                      children: const []))
+                    key: const Key('recent_events_list'),
+                    children: const [],
+                  ),
+                )
               : ListView.separated(
                   key: const Key('recent_events_list'),
                   padding: EdgeInsets.zero,
@@ -326,8 +432,9 @@ class _RecentEvents extends ConsumerWidget {
                     return ConstrainedBox(
                       key: Key('recent_event_${e.id}'),
                       // Mindesthöhe 56 dp gegen Fehltipps (US-213, US-602)
-                      constraints:
-                          const BoxConstraints(minHeight: AppSizes.liveTap),
+                      constraints: const BoxConstraints(
+                        minHeight: AppSizes.liveTap,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.only(left: AppSpacing.l),
                         child: Row(
@@ -341,7 +448,7 @@ class _RecentEvents extends ConsumerWidget {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   fontFeatures: const [
-                                    FontFeature.tabularFigures()
+                                    FontFeature.tabularFigures(),
                                   ],
                                 ),
                               ),
@@ -350,10 +457,12 @@ class _RecentEvents extends ConsumerWidget {
                               width: 10,
                               height: 10,
                               margin: const EdgeInsets.only(
-                                  right: AppSpacing.s + 2),
+                                right: AppSpacing.s + 2,
+                              ),
                               decoration: BoxDecoration(
-                                  color: e.type.color,
-                                  shape: BoxShape.circle),
+                                color: e.type.color,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             Expanded(
                               child: Text(
@@ -370,12 +479,15 @@ class _RecentEvents extends ConsumerWidget {
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.delete_outline,
-                                  color: context.scheme.onSurfaceVariant,
-                                  size: 22),
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: context.scheme.onSurfaceVariant,
+                                size: 22,
+                              ),
                               constraints: const BoxConstraints(
-                                  minWidth: AppSizes.tap,
-                                  minHeight: AppSizes.tap),
+                                minWidth: AppSizes.tap,
+                                minHeight: AppSizes.tap,
+                              ),
                               tooltip: 'Löschen',
                               onPressed: () async {
                                 await ref
@@ -413,8 +525,9 @@ class _EmptyEvents extends StatelessWidget {
             child: Text(
               'Aufs Spielfeld tippen,\num ein Ereignis zu erfassen.',
               textAlign: TextAlign.center,
-              style: context.text.bodyMedium
-                  ?.copyWith(color: context.scheme.onSurfaceVariant),
+              style: context.text.bodyMedium?.copyWith(
+                color: context.scheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),

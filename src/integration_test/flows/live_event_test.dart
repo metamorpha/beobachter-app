@@ -32,7 +32,7 @@ void main() {
     await tester.tap(find.byKey(const Key('pitch_canvas')));
     await tester.pumpAndSettle();
 
-    final saveBtn = tester.widget<ElevatedButton>(
+    final saveBtn = tester.widget<FilledButton>(
       find.byKey(const Key('btn_save_event')),
     );
     expect(saveBtn.onPressed, isNull);
@@ -48,7 +48,7 @@ void main() {
     await tester.tap(find.byKey(const Key('event_type_footFoul')));
     await tester.pumpAndSettle();
 
-    final saveBtn = tester.widget<ElevatedButton>(
+    final saveBtn = tester.widget<FilledButton>(
       find.byKey(const Key('btn_save_event')),
     );
     expect(saveBtn.onPressed, isNotNull);

@@ -23,6 +23,9 @@ class SelectTile extends StatefulWidget {
   final double? width;
   final bool dense;
 
+  /// Icon links neben dem Label statt darüber.
+  final bool horizontal;
+
   const SelectTile({
     super.key,
     required this.label,
@@ -34,6 +37,7 @@ class SelectTile extends StatefulWidget {
     this.minHeight = AppSizes.liveTap,
     this.width,
     this.dense = false,
+    this.horizontal = false,
   });
 
   @override
@@ -57,16 +61,15 @@ class _SelectTileState extends State<SelectTile> {
     final fg = widget.selected
         ? AppColors.onColor(accent)
         : (widget.unselectedColor != null
-            ? AppColors.onColor(widget.unselectedColor!)
-            : scheme.onSurface);
+              ? AppColors.onColor(widget.unselectedColor!)
+              : scheme.onSurface);
     final border = widget.selected
         ? accent
         : (widget.unselectedColor != null
-            ? Colors.transparent
-            : scheme.outlineVariant);
+              ? Colors.transparent
+              : scheme.outlineVariant);
     final duration = AppMotion.of(context, AppMotion.fast);
-    final iconColor =
-        widget.selected || widget.unselectedColor != null ? fg : accent;
+    final iconColor = widget.selected ? fg : accent;
 
     final labelText = Text(
       widget.label,
@@ -123,6 +126,22 @@ class _SelectTileState extends State<SelectTile> {
                   widthFactor: 1,
                   child: widget.icon == null
                       ? labelText
+                      : widget.horizontal
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(widget.icon, size: 22, color: iconColor),
+                            const SizedBox(width: AppSpacing.s),
+                            // Ein Wort wie „Oberkörperverg." nicht
+                            // mitten im Wort umbrechen, lieber verkleinern
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: labelText,
+                              ),
+                            ),
+                          ],
+                        )
                       : Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [

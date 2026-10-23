@@ -213,7 +213,7 @@ void main() {
 
       // Speichern-Button inaktiv (onPressed == null)
       final btn = tester
-          .widget<ElevatedButton>(find.byKey(const Key('btn_save_event')));
+          .widget<FilledButton>(find.byKey(const Key('btn_save_event')));
       expect(btn.onPressed, isNull);
     });
 
@@ -277,7 +277,7 @@ void main() {
 
       // Speichern-Button aktiv
       final btn = tester
-          .widget<ElevatedButton>(find.byKey(const Key('btn_save_event')));
+          .widget<FilledButton>(find.byKey(const Key('btn_save_event')));
       expect(btn.onPressed, isNotNull);
     });
 
@@ -329,7 +329,8 @@ void main() {
       expect(find.byIcon(Icons.star_outline_rounded), findsOneWidget);
       expect(find.byIcon(Icons.star_rounded), findsNothing);
 
-      // Tap → gefüllt
+      // Tap → gefüllt (seit US-603 größere Felder: Stern ggf. erst scrollen)
+      await tester.ensureVisible(find.byIcon(Icons.star_outline_rounded));
       await tester.tap(find.byIcon(Icons.star_outline_rounded));
       await tester.pump();
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
@@ -403,7 +404,7 @@ void main() {
 
       // Im Edit-Modus ist footFoul bereits ausgewählt → Save aktiv
       final btn = tester
-          .widget<ElevatedButton>(find.byKey(const Key('btn_save_event')));
+          .widget<FilledButton>(find.byKey(const Key('btn_save_event')));
       expect(btn.onPressed, isNotNull);
 
       // Speichern: Spieler müssen aus initialPlayers übernommen worden sein

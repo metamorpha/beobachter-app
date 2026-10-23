@@ -12,7 +12,13 @@ import '../../../domain/enums/player_role.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_motion.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/event_type_style.dart';
 import '../../widgets/assessment_grid.dart';
+import '../../widgets/section_header.dart';
+import '../../widgets/select_tile.dart';
 
 class EventFormPanel extends ConsumerStatefulWidget {
   final String gameId;
@@ -126,8 +132,8 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey.shade900,
+    return ColoredBox(
+      color: context.scheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -135,12 +141,17 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           _buildTypeSection(),
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 150),
+              duration: AppMotion.of(context, AppMotion.fast),
               child: _type == null
                   ? const _EmptyHint(key: ValueKey('empty'))
                   : SingleChildScrollView(
                       key: const ValueKey('fields'),
-                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 4),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.l,
+                        0,
+                        AppSpacing.l,
+                        AppSpacing.s,
+                      ),
                       child: _buildFields(),
                     ),
             ),
@@ -153,35 +164,63 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.grey.shade800,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.l,
+        AppSpacing.xs,
+        AppSpacing.xs,
+        AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.scheme.outlineVariant),
+        ),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.schedule, size: 13, color: Colors.white38),
-          const SizedBox(width: 4),
-          Text(
-            _elapsedLabel,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 13,
-              fontFeatures: [FontFeature.tabularFigures()],
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s + 2,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: context.scheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(AppRadius.s),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 16,
+                  color: context.scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  _elapsedLabel,
+                  style: context.text.labelLarge?.copyWith(
+                    color: context.scheme.onSurface,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.m),
           Expanded(
             child: Text(
               _isEditMode ? 'Ereignis bearbeiten' : 'Ereignis erfassen',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              overflow: TextOverflow.ellipsis,
+              style: context.text.titleMedium,
             ),
           ),
-          GestureDetector(
+          IconButton(
             key: const Key('btn_close_event_form'),
-            onTap: widget.onClose,
-            child: const Icon(Icons.close, color: Colors.white54, size: 20),
+            onPressed: widget.onClose,
+            tooltip: 'Schließen',
+            icon: Icon(
+              Icons.close_rounded,
+              color: context.scheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -190,28 +229,37 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   Widget _buildTypeSection() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.l,
+        AppSpacing.m,
+        AppSpacing.l,
+        AppSpacing.s,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('Ereignistyp'),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          const SectionHeader('Ereignistyp'),
+          const SizedBox(height: AppSpacing.s),
+          _Grid(
+            minTileWidth: 140,
+            maxColumns: 5,
             children: EventType.values.map((t) {
               final sel = _type == t;
-              return _SelectChip(
+              return SelectTile(
                 key: Key('event_type_${t.name}'),
                 label: t.label,
+                icon: t.icon,
+                horizontal: true,
+                dense: true,
                 selected: sel,
-                selectedColor: Colors.green.shade700,
+                color: context.scheme.primary,
                 onTap: () => setState(() {
                   _type = sel ? null : t;
                   if (!sel) {
                     // Torentscheidung: „Tor" vorausgewählt (US-214)
-                    _decision =
-                        t == EventType.goalDecision ? RefDecision.goal : null;
+                    _decision = t == EventType.goalDecision
+                        ? RefDecision.goal
+                        : null;
                     _card = null;
                   }
                   _clearScorer();
@@ -220,19 +268,10 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
             }).toList(),
           ),
           if (_type == EventType.custom) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s),
             TextField(
               controller: _customCtrl,
-              decoration: InputDecoration(
-                hintText: 'Bezeichnung',
-                hintStyle: const TextStyle(color: Colors.white38),
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey.shade800,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: const InputDecoration(hintText: 'Bezeichnung'),
             ),
           ],
         ],
@@ -246,65 +285,54 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
       children: [
         if (_showPlayerSection) ...[
           _divider(),
-          _sectionLabel('Spieler'),
-          const SizedBox(height: 6),
+          const SectionHeader('Spieler'),
+          const SizedBox(height: AppSpacing.s),
           _playerRow(PlayerRole.fouler),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s),
           _playerRow(PlayerRole.fouled),
         ],
         if (_type == EventType.goalDecision) ...[
           _divider(),
-          _sectionLabel('Tor'),
-          const SizedBox(height: 6),
+          const SectionHeader('Tor'),
+          const SizedBox(height: AppSpacing.s),
           _goalSection(),
         ],
         _divider(),
-        _sectionLabel('Entscheidung'),
-        const SizedBox(height: 6),
+        const SectionHeader('Entscheidung'),
+        const SizedBox(height: AppSpacing.s),
         _decisionGrid(),
         _divider(),
         _cardAndCoachingRow(),
         _divider(),
-        _sectionLabel('Bewertung'),
-        const SizedBox(height: 6),
+        const SectionHeader('Bewertung'),
+        const SizedBox(height: AppSpacing.s),
         AssessmentGrid(
           selected: _assessment,
           onChanged: (v) => setState(() => _assessment = v),
         ),
         _divider(),
         _noteToggle(),
-        const SizedBox(height: 4),
       ],
     );
   }
 
-  Widget _divider() => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
-      );
-
-  Widget _sectionLabel(String title) => Text(
-        title.toUpperCase(),
-        style: const TextStyle(
-          color: Colors.white38,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.0,
-        ),
-      );
+  Widget _divider() => const Padding(
+    padding: EdgeInsets.symmetric(vertical: AppSpacing.m),
+    child: Divider(height: 1),
+  );
 
   Widget _decisionGrid() {
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
+    return _Grid(
+      minTileWidth: 76,
+      maxColumns: 6,
       children: RefDecision.values.map((d) {
         final sel = _decision == d;
-        return _SelectChip(
+        return SelectTile(
           key: Key('decision_${d.name}'),
           label: d.label,
+          dense: true,
           selected: sel,
-          selectedColor: Colors.blue.shade700,
-          width: 72,
+          color: context.scheme.inverseSurface,
           onTap: () => setState(() => _decision = sel ? null : d),
         );
       }).toList(),
@@ -312,38 +340,46 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   }
 
   Widget _cardAndCoachingRow() {
+    final colors = context.colors;
     return Row(
       children: [
-        _sectionLabel('Karte'),
-        const SizedBox(width: 8),
+        const SectionHeader('Karte'),
+        const SizedBox(width: AppSpacing.m),
         ...CardType.values.map((c) {
           final sel = _card == c;
-          final color = c == CardType.yellow
-              ? Colors.yellow.shade700
-              : c == CardType.yellowRed
-                  ? Colors.orange.shade700
-                  : Colors.red.shade700;
+          final color = colors.card(c);
           return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: _SelectChip(
+            padding: const EdgeInsets.only(right: AppSpacing.s),
+            child: SelectTile(
               key: Key('card_${c.name}'),
               label: c.label,
+              dense: true,
+              width: 64,
               selected: sel,
-              selectedColor: color,
-              unselectedColor: color.withValues(alpha: 0.25),
+              color: color,
+              unselectedColor: Color.alphaBlend(
+                color.withValues(alpha: 0.18),
+                context.scheme.surface,
+              ),
               onTap: () => setState(() => _card = sel ? null : c),
             ),
           );
         }),
         const Spacer(),
-        _sectionLabel('Coaching'),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () => setState(() => _coachingFlag = !_coachingFlag),
-          child: Icon(
+        const SectionHeader('Coaching'),
+        IconButton(
+          tooltip: 'Für Coaching markieren',
+          onPressed: () => setState(() => _coachingFlag = !_coachingFlag),
+          iconSize: 30,
+          constraints: const BoxConstraints(
+            minWidth: AppSizes.liveTap,
+            minHeight: AppSizes.liveTap,
+          ),
+          icon: Icon(
             _coachingFlag ? Icons.star_rounded : Icons.star_outline_rounded,
-            color: _coachingFlag ? Colors.amber : Colors.white30,
-            size: 22,
+            color: _coachingFlag
+                ? colors.coaching
+                : context.scheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -395,106 +431,102 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     final squadNumbers = team == TeamSide.home
         ? homeNumbers
         : team == TeamSide.away
-            ? awayNumbers
-            : <int>[];
+        ? awayNumbers
+        : <int>[];
+    final teamColor = team != null ? context.colors.team(team) : null;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 54,
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.white54, fontSize: 11),
+        Text(
+          label,
+          style: context.text.labelMedium?.copyWith(
+            color: context.scheme.onSurfaceVariant,
           ),
         ),
-        _teamToggle(TeamSide.home, team, onTeamChanged, keyPrefix),
-        const SizedBox(width: 4),
-        _teamToggle(TeamSide.away, team, onTeamChanged, keyPrefix),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 42,
-          child: TextField(
-            key: keyPrefix != null ? Key('${keyPrefix}_number') : null,
-            controller: numberController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: '#',
-              hintStyle: const TextStyle(color: Colors.white30),
-              isDense: true,
-              filled: true,
-              fillColor: Colors.grey.shade800,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            ),
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-            onChanged: (v) => onNumberChanged(int.tryParse(v)),
-          ),
-        ),
-        if (squadNumbers.isNotEmpty) ...[
-          const SizedBox(width: 6),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: squadNumbers.map((n) {
-                  final isSel = number == n;
-                  final teamColor =
-                      team == TeamSide.home ? Colors.blue : Colors.red;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: GestureDetector(
-                      onTap: () {
-                        final newVal = isSel ? null : n;
-                        numberController?.text = newVal?.toString() ?? '';
-                        onNumberChanged(newVal);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4.5),
-                        decoration: BoxDecoration(
-                          color: isSel
-                              ? teamColor
-                              : teamColor.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(4),
-                          border: isSel
-                              ? Border.all(color: Colors.white, width: 1)
-                              : null,
-                        ),
-                        child: Text(
-                          '#$n',
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          children: [
+            _teamToggle(TeamSide.home, team, onTeamChanged, keyPrefix),
+            const SizedBox(width: AppSpacing.xs),
+            _teamToggle(TeamSide.away, team, onTeamChanged, keyPrefix),
+            const SizedBox(width: AppSpacing.s),
+            SizedBox(
+              width: 60,
+              child: TextField(
+                key: keyPrefix != null ? Key('${keyPrefix}_number') : null,
+                controller: numberController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                decoration: const InputDecoration(
+                  hintText: '#',
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s,
+                    vertical: AppSpacing.l,
+                  ),
+                ),
+                style: context.text.titleMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+                onChanged: (v) => onNumberChanged(int.tryParse(v)),
               ),
             ),
-          ),
-        ],
+            if (squadNumbers.isNotEmpty) ...[
+              const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: _FadeEdge(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(right: AppSpacing.xl),
+                    child: Row(
+                      children: squadNumbers.map((n) {
+                        final isSel = number == n;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.xs),
+                          child: SelectTile(
+                            key: keyPrefix != null
+                                ? Key('${keyPrefix}_chip_$n')
+                                : null,
+                            label: '#$n',
+                            dense: true,
+                            width: AppSizes.tap + 4,
+                            minHeight: AppSizes.liveTap,
+                            selected: isSel,
+                            color: teamColor,
+                            onTap: () {
+                              final newVal = isSel ? null : n;
+                              numberController?.text = newVal?.toString() ?? '';
+                              onNumberChanged(newVal);
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
 
-  Widget _teamToggle(TeamSide side, TeamSide? selected,
-      ValueChanged<TeamSide?> onChanged, String? keyPrefix) {
+  Widget _teamToggle(
+    TeamSide side,
+    TeamSide? selected,
+    ValueChanged<TeamSide?> onChanged,
+    String? keyPrefix,
+  ) {
     final isSelected = selected == side;
-    final color = side == TeamSide.home ? Colors.blue : Colors.red;
-    return GestureDetector(
+    return SelectTile(
       key: keyPrefix != null ? Key('${keyPrefix}_team_${side.name}') : null,
+      label: side.label,
+      dense: true,
+      width: 64,
+      selected: isSelected,
+      color: context.colors.team(side),
       onTap: () => onChanged(isSelected ? null : side),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(
-          side.label,
-          style: const TextStyle(color: Colors.white, fontSize: 11),
-        ),
-      ),
     );
   }
 
@@ -524,18 +556,19 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           }),
           onNumberChanged: (n) => setState(() => _scorerNumber = n),
         ),
-        const SizedBox(height: 6),
-        Padding(
-          padding: const EdgeInsets.only(left: 54),
-          child: _SelectChip(
+        const SizedBox(height: AppSpacing.s),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SelectTile(
             key: const Key('toggle_own_goal'),
             label: '⚽ Eigentor',
+            dense: true,
             selected: _ownGoal,
-            selectedColor: Colors.deepOrange.shade700,
+            color: context.colors.yellowRedCard,
             onTap: () => setState(() => _ownGoal = !_ownGoal),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s),
         _goalPreview(),
       ],
     );
@@ -546,42 +579,64 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     // Im Edit-Modus den bisherigen Beitrag dieses Ereignisses herausrechnen
     final events = ref.watch(eventsProvider(widget.gameId)).valueOrNull ?? [];
     final base = Score.fromEvents(
-        events.where((e) => e.id != widget.initialEvent?.id).toList());
+      events.where((e) => e.id != widget.initialEvent?.id).toList(),
+    );
 
     final scorer = _scorerTeam;
     final String text;
     final Color color;
+    final IconData icon;
     if (_decision != RefDecision.goal) {
       text = 'Tor aberkannt – Spielstand bleibt ${base.label}';
-      color = Colors.white38;
+      color = context.scheme.onSurfaceVariant;
+      icon = Icons.block_rounded;
     } else if (scorer == null) {
       text = 'Team wählen, damit das Tor zählt';
-      color = Colors.orange.shade300;
+      color = context.colors.warning;
+      icon = Icons.info_outline_rounded;
     } else {
       final forTeam = _ownGoal ? scorer.opponent : scorer;
       final after = base.plus(forTeam).label;
       final nr = _scorerNumber != null ? '#$_scorerNumber ' : '';
       text = _ownGoal
           ? 'Eigentor $nr(${scorer.label}) → Tor für '
-              '${forTeam.label.toUpperCase()} · $after'
+                '${forTeam.label.toUpperCase()} · $after'
           : 'Tor für ${forTeam.label.toUpperCase()}'
-              '${_scorerNumber != null ? ' · #$_scorerNumber' : ''} → $after';
-      color = Colors.green.shade300;
+                '${_scorerNumber != null ? ' · #$_scorerNumber' : ''} → $after';
+      color = context.colors.correct;
+      icon = Icons.check_circle_outline_rounded;
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: AppMotion.of(context, AppMotion.fast),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.m,
+        vertical: AppSpacing.s + 2,
       ),
-      child: Text(
-        text,
-        key: const Key('goal_preview'),
-        style: TextStyle(
-            color: color, fontSize: 12, fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          color.withValues(alpha: 0.10),
+          context.scheme.surface,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.m),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Text(
+              text,
+              key: const Key('goal_preview'),
+              style: context.text.bodyMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -590,70 +645,63 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          onTap: () => setState(() => _noteExpanded = !_noteExpanded),
-          borderRadius: BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _noteExpanded ? Icons.expand_less : Icons.add,
-                  color: Colors.white38,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Notiz',
-                  style: TextStyle(color: Colors.white38, fontSize: 11),
-                ),
-              ],
-            ),
+        TextButton.icon(
+          onPressed: () => setState(() => _noteExpanded = !_noteExpanded),
+          style: TextButton.styleFrom(
+            foregroundColor: context.scheme.onSurfaceVariant,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
           ),
+          icon: Icon(
+            _noteExpanded ? Icons.expand_less_rounded : Icons.add_rounded,
+            size: 20,
+          ),
+          label: const Text('Notiz'),
         ),
-        if (_noteExpanded) ...[
-          const SizedBox(height: 6),
-          TextField(
-            controller: _noteCtrl,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Szenennotiz …',
-              hintStyle: const TextStyle(color: Colors.white30),
-              filled: true,
-              fillColor: Colors.grey.shade800,
-              contentPadding: const EdgeInsets.all(10),
-            ),
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ],
+        AnimatedSize(
+          duration: AppMotion.of(context, AppMotion.medium),
+          curve: AppMotion.curve,
+          alignment: Alignment.topCenter,
+          child: _noteExpanded
+              ? Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.s),
+                  child: TextField(
+                    controller: _noteCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: 'Szenennotiz …',
+                    ),
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
       ],
     );
   }
 
   Widget _buildSaveButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          key: const Key('btn_save_event'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                _canSave ? Colors.green.shade600 : Colors.grey.shade700,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          onPressed: _canSave ? _save : null,
-          icon: const Icon(Icons.save_outlined, size: 18),
-          label: Text(
-            _isEditMode ? 'Änderungen speichern' : 'Speichern',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.l,
+        AppSpacing.m,
+        AppSpacing.l,
+        AppSpacing.l,
+      ),
+      decoration: BoxDecoration(
+        color: context.scheme.surface,
+        border: Border(top: BorderSide(color: context.scheme.outlineVariant)),
+      ),
+      child: FilledButton.icon(
+        key: const Key('btn_save_event'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(AppSizes.primaryAction),
+          textStyle: context.text.labelLarge?.copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
           ),
         ),
+        onPressed: _canSave ? _save : null,
+        icon: const Icon(Icons.check_rounded, size: 24),
+        label: Text(_isEditMode ? 'Änderungen speichern' : 'Speichern'),
       ),
     );
   }
@@ -759,70 +807,83 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Typ auswählen, dann speichern',
-        style: TextStyle(color: Colors.white24, fontSize: 12),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.touch_app_outlined,
+            size: 32,
+            color: context.scheme.outline,
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Text(
+            'Typ auswählen, dann speichern',
+            style: context.text.bodyMedium?.copyWith(
+              color: context.scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Wiederverwendbarer selektierbarer Chip ────────────────────────────────────
+// ── Ausblend-Rand als Hinweis auf weitere Rückennummern ──────────────────────
 
-class _SelectChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color selectedColor;
-  final Color? unselectedColor;
-  final VoidCallback onTap;
-  final double? width;
+class _FadeEdge extends StatelessWidget {
+  final Widget child;
 
-  const _SelectChip({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.selectedColor,
-    this.unselectedColor,
-    required this.onTap,
-    this.width,
-  });
+  const _FadeEdge({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected
-        ? selectedColor
-        : (unselectedColor ?? Colors.grey.shade700);
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) => const LinearGradient(
+        colors: [Colors.black, Colors.black, Colors.transparent],
+        stops: [0, 0.88, 1],
+      ).createShader(rect),
+      child: child,
+    );
+  }
+}
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: Material(
-        color: bg,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            width: width,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: selected
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  )
-                : null,
-            alignment: width != null ? Alignment.center : null,
-            child: Text(
-              label,
-              textAlign: width != null ? TextAlign.center : null,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight:
-                    selected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-        ),
-      ),
+// ── Raster mit gleich breiten Kacheln ────────────────────────────────────────
+
+/// Verteilt Kacheln gleich breit auf so viele Spalten, wie die Breite bei
+/// [minTileWidth] zulässt (höchstens [maxColumns]).
+class _Grid extends StatelessWidget {
+  final double minTileWidth;
+  final int maxColumns;
+  final List<Widget> children;
+
+  const _Grid({
+    required this.minTileWidth,
+    required this.maxColumns,
+    required this.children,
+  });
+
+  static const _gap = AppSpacing.s - 2;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final cols = ((w + _gap) / (minTileWidth + _gap)).floor().clamp(
+          1,
+          maxColumns,
+        );
+        final tileW = (w - _gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: _gap,
+          runSpacing: _gap,
+          children: [
+            for (final c in children) SizedBox(width: tileW, child: c),
+          ],
+        );
+      },
     );
   }
 }
