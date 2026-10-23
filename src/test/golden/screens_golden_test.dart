@@ -13,11 +13,13 @@ import 'package:beobachter_app/data/database/app_database.dart';
 import 'package:beobachter_app/domain/entities/event.dart';
 import 'package:beobachter_app/domain/entities/event_player.dart';
 import 'package:beobachter_app/domain/entities/game.dart';
+import 'package:beobachter_app/domain/entities/goal.dart';
 import 'package:beobachter_app/domain/entities/timer_state.dart';
 import 'package:beobachter_app/domain/enums/assessment.dart';
 import 'package:beobachter_app/domain/enums/card_type.dart';
 import 'package:beobachter_app/domain/enums/event_type.dart';
 import 'package:beobachter_app/domain/enums/game_phase.dart';
+import 'package:beobachter_app/domain/enums/goal_kind.dart';
 import 'package:beobachter_app/domain/enums/player_role.dart';
 import 'package:beobachter_app/domain/enums/ref_decision.dart';
 import 'package:beobachter_app/domain/enums/team_side.dart';
@@ -88,7 +90,6 @@ Event _e(
   bool coaching = false,
   String? note,
   GamePhase phase = GamePhase.ersteHalbzeit,
-  TeamSide? scorer,
 }) => Event(
   id: id,
   gameId: 'g1',
@@ -102,7 +103,6 @@ Event _e(
   assessment: assessment,
   coachingFlag: coaching,
   sceneNote: note,
-  goalScorerTeam: scorer,
   createdAt: DateTime(2026, 10, 18),
 );
 
@@ -202,18 +202,6 @@ Future<AppDatabase> _seed(
     ),
     (
       _e(
-        'd',
-        31,
-        EventType.goalDecision,
-        0.93,
-        0.50,
-        decision: RefDecision.goal,
-        scorer: TeamSide.home,
-      ),
-      [],
-    ),
-    (
-      _e(
         'e',
         38,
         EventType.handball,
@@ -252,23 +240,28 @@ Future<AppDatabase> _seed(
       ),
       [p(PlayerRole.fouler, TeamSide.away, 6)],
     ),
-    (
-      _e(
-        'h',
-        67,
-        EventType.goalDecision,
-        0.07,
-        0.47,
-        decision: RefDecision.goal,
-        scorer: TeamSide.away,
-        phase: GamePhase.zweiteHalbzeit,
-      ),
-      [],
-    ),
   ];
   for (final (e, players) in seed) {
     await events.createEvent(e, players);
   }
+  final goals = c.read(goalRepositoryProvider);
+  await goals.createGoal(Goal(
+    id: 'd',
+    gameId: 'g1',
+    elapsedMs: 31 * 60 * 1000 + 17000,
+    team: TeamSide.home,
+    scorerNumber: 9,
+    createdAt: DateTime(2026, 10, 18),
+  ));
+  await goals.createGoal(Goal(
+    id: 'h',
+    gameId: 'g1',
+    elapsedMs: 67 * 60 * 1000 + 17000,
+    gamePhase: GamePhase.zweiteHalbzeit,
+    team: TeamSide.away,
+    kind: GoalKind.penalty,
+    createdAt: DateTime(2026, 10, 18),
+  ));
   await c
       .read(timerRepositoryProvider)
       .saveTimerState(

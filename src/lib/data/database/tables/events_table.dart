@@ -21,6 +21,8 @@ class Events extends Table {
   BoolColumn get coachingFlag =>
       boolean().withDefault(const Constant(false))();
   TextColumn get coachingNote => text().nullable()();
+  // Torschützen-Spalten (v5–v6) — ungenutzt seit v7, nur noch für die
+  // Migration der Torentscheidungen in die Tabelle goals (US-215).
   TextColumn get goalScorerTeam => text().nullable()();
   IntColumn get goalScorerNumber => integer().nullable()();
   BoolColumn get ownGoal => boolean().withDefault(const Constant(false))();

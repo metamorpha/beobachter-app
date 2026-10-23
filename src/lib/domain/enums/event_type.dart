@@ -6,7 +6,6 @@ enum EventType {
   violent,      // Tätlichkeit
   offside,      // Abseits
   advantage,    // Vorteilsbestimmung
-  goalDecision, // Torentscheidung
   custom,       // Sonstiges
 }
 
@@ -19,7 +18,6 @@ extension EventTypeLabel on EventType {
     EventType.violent      => 'Tätlichkeit',
     EventType.offside      => 'Abseits',
     EventType.advantage    => 'Vorteil',
-    EventType.goalDecision => 'Torentsch.',
     EventType.custom       => 'Sonstiges',
   };
 }

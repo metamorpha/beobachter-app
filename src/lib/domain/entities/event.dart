@@ -3,7 +3,6 @@ import '../enums/card_type.dart';
 import '../enums/event_type.dart';
 import '../enums/game_phase.dart';
 import '../enums/ref_decision.dart';
-import '../enums/team_side.dart';
 
 class Event {
   final String id;
@@ -20,15 +19,6 @@ class Event {
   final String? sceneNote;
   final bool coachingFlag;
   final String? coachingNote;
-
-  /// Team des Torschützen (nur bei Torentscheidung, US-214).
-  final TeamSide? goalScorerTeam;
-
-  /// Rückennummer des Torschützen — optional.
-  final int? goalScorerNumber;
-
-  /// Eigentor: Tor zählt für das gegnerische Team von [goalScorerTeam].
-  final bool ownGoal;
 
   final DateTime createdAt;
 
@@ -47,9 +37,6 @@ class Event {
     this.sceneNote,
     this.coachingFlag = false,
     this.coachingNote,
-    this.goalScorerTeam,
-    this.goalScorerNumber,
-    this.ownGoal = false,
     required this.createdAt,
   });
 
@@ -58,18 +45,6 @@ class Event {
 
   /// Spielminute (ganzzahlig) für Sortierung und einfache Anzeige.
   int get minute => elapsedMs ~/ 60000;
-
-  /// Team, dem dieses Ereignis ein Tor gutschreibt — oder null (US-214).
-  /// Zählt nur bei Torentscheidung mit Entscheidung „Tor" und gewähltem Team.
-  TeamSide? get goalForTeam {
-    final scorer = goalScorerTeam;
-    if (type != EventType.goalDecision ||
-        refDecision != RefDecision.goal ||
-        scorer == null) {
-      return null;
-    }
-    return ownGoal ? scorer.opponent : scorer;
-  }
 
   Event copyWith({
     int? elapsedMs,
@@ -100,9 +75,6 @@ class Event {
         sceneNote: sceneNote ?? this.sceneNote,
         coachingFlag: coachingFlag ?? this.coachingFlag,
         coachingNote: coachingNote ?? this.coachingNote,
-        goalScorerTeam: goalScorerTeam,
-        goalScorerNumber: goalScorerNumber,
-        ownGoal: ownGoal,
         createdAt: createdAt,
       );
 }

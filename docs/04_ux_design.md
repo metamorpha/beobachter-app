@@ -862,3 +862,73 @@ Die UI ist ausschließlich für **Tablet-Querformat in fester Größe** gestalte
 | Statistik öffnen | Balken der Zeitachse wachsen hoch |
 | „Bewegung reduzieren" aktiv | Alle Animationen entfallen |
 | Grundregel | Eine laufende Animation blockiert nie einen Tap |
+
+---
+
+## Flow 6 — Tor erfassen (US-215)
+
+Tore werden nicht mehr über das Spielfeld erfasst, sondern über je einen Button pro Team in der Kopfzeile. Das Team steht damit nach dem ersten Tap fest; alle weiteren Angaben sind optional.
+
+```
+Tap „+ Tor" (Heim)                     ← Spielzeit + Phase werden hier eingefroren
+   ↓
+Dialog „Tor für HEIM"
+   ├─ Torart: [Standardtor]* [Eigentor] [Strafstoßtor]
+   ├─ Torschütze: [#] + Kader-Chips
+   │     Standard/Strafstoß → Kader des begünstigten Teams
+   │     Eigentor          → Kader der verteidigenden Mannschaft
+   ├─ Vorschau: „Tor für HEIM · #9 → 2 : 1"
+   └─ [Abbrechen]   [Speichern]        ← schnellster Weg: 2 Taps
+   ↓
+Spielstand in der Kopfzeile leuchtet kurz auf, Tor erscheint oben in „Letzte Ereignisse"
+```
+
+### Wireframe — Kopfzeile mit Tor-Buttons
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ [⚽ + Tor]      ● FC Heim – SV Gast ●      [⚽ + Tor]     ▶ 23:41     │
+│  (Heimfarbe)           2 : 1                (Gastfarbe)   1. Halbzeit │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+- Buttons mindestens 48 dp hoch, Teamfarbe als Füllung, links Heim, rechts Gast — entsprechend der Reihenfolge der Mannschaftsnamen
+- Bei abgeschlossenem Spiel ausgegraut
+
+### Wireframe — Tor-Dialog
+
+```
+┌──────────────────────────────────────────────┐
+│ ● Tor für HEIM                     ⏱ 23:41   │
+│   FC Heim                                    │
+├──────────────────────────────────────────────┤
+│ TORART                                       │
+│ [ Standardtor ] [ Eigentor ] [ Strafstoßtor ]│
+│                                              │
+│ TORSCHÜTZE (HEIM)                 optional   │
+│ [ # ]  #1 #4 #7 #9 #10 #11 …                 │
+│                                              │
+│ ✓ Tor für HEIM · #9 → 2 : 1                  │
+├──────────────────────────────────────────────┤
+│               [ Abbrechen ]  [ ✓ Speichern ] │
+└──────────────────────────────────────────────┘
+```
+
+- Bei **Eigentor** lautet die Überschrift „TORSCHÜTZE (GAST · EIGENTOR)“; Chips in Gastfarbe; eine gewählte Nummer wird beim Wechsel der Torart verworfen
+- Vorschau-Varianten: „Tor für HEIM · #9 (Strafstoß) → 2 : 1“, „Eigentor #4 (Gast) → Tor für HEIM · 2 : 1“
+- Bearbeiten: gleicher Dialog, Titel „Tor bearbeiten“, vorausgefüllt, Zeit unverändert
+
+### „Letzte Ereignisse" mit Toren
+
+```
+│ 52:10  ●  ⚽ 2:1 · #9 · 11m      🗑 │   ← Punkt in Teamfarbe, Tap = bearbeiten
+│ 47:03  ●  Fußvergehen            🗑 │
+│ 23:41  ●  ⚽ 1:1 · ET            🗑 │
+```
+
+- Tore und Ereignisse stehen gemeinsam chronologisch (Phase, dann Zeit), neuestes oben
+- Kennzeichnung: „ET“ = Eigentor, „11m“ = Strafstoßtor
+
+### Nachbereitung — Karte „Tore"
+
+Im Statistik-Dashboard teilt sich die untere Reihe in Spieler-Ranking · **Tore** · Vergehen pro Team. Die Karte listet je Tor Minute, Team-Badge, Spielstand danach, Torschütze und Torart.

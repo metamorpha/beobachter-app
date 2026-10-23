@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/event.dart';
 import '../../../domain/entities/game.dart';
+import '../../../domain/entities/score.dart';
 import '../../../domain/entities/team_fouls.dart';
 import '../../../domain/enums/assessment.dart';
 import '../../../domain/enums/event_type.dart';
+import '../../../domain/enums/goal_kind.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
@@ -1018,6 +1020,11 @@ class _StatsTab extends ConsumerWidget {
           icon: Icons.leaderboard_outlined,
           child: _PlayerRanking(gameId: gameId),
         );
+        final goals = StatCard(
+          title: 'Tore',
+          icon: Icons.sports_soccer,
+          child: _GoalList(gameId: gameId),
+        );
         final fouls = StatCard(
           title: 'Vergehen pro Team',
           icon: Icons.table_chart_outlined,
@@ -1032,7 +1039,8 @@ class _StatsTab extends ConsumerWidget {
               return ListView(
                 padding: const EdgeInsets.all(AppSpacing.l),
                 children: [
-                  for (final c in [heatmap, timeline, ranking, fouls]) ...[
+                  for (final c in [heatmap, timeline, ranking, goals, fouls])
+                    ...[
                     SizedBox(height: 320, child: c),
                     gap,
                   ],
@@ -1061,7 +1069,9 @@ class _StatsTab extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(flex: 3, child: ranking),
+                        Expanded(flex: 2, child: ranking),
+                        gap,
+                        Expanded(flex: 2, child: goals),
                         gap,
                         Expanded(flex: 2, child: fouls),
                       ],
@@ -1269,6 +1279,92 @@ class _PlayerRanking extends ConsumerWidget {
         'Fehler: $e',
         style: TextStyle(color: context.scheme.error, fontSize: 13),
       ),
+    );
+  }
+}
+
+/// Tore mit Minute, Team, Spielstand danach, Torschütze und Torart (US-215).
+class _GoalList extends ConsumerWidget {
+  final String gameId;
+
+  const _GoalList({required this.gameId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? [];
+    if (goals.isEmpty) {
+      return Text(
+        'Keine Tore erfasst.',
+        style: context.text.bodyMedium?.copyWith(
+          color: context.scheme.onSurfaceVariant,
+        ),
+      );
+    }
+    final running = Score.runningByGoalId(goals);
+    // Chronologisch nach Phase, dann Zeit (wie der laufende Spielstand)
+    final sorted = [...goals]..sort((a, b) {
+        final byPhase = a.gamePhase.index.compareTo(b.gamePhase.index);
+        return byPhase != 0 ? byPhase : a.elapsedMs.compareTo(b.elapsedMs);
+      });
+
+    return ListView.separated(
+      key: const Key('stats_goal_list'),
+      itemCount: sorted.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
+      itemBuilder: (_, i) {
+        final g = sorted[i];
+        final teamColor = context.colors.team(g.team);
+        final scorer = [
+          if (g.scorerNumber != null)
+            '#${g.scorerNumber}'
+                '${g.kind == GoalKind.ownGoal ? ' (${g.scorerTeam.label})' : ''}',
+          if (g.kind != GoalKind.regular) g.kind.label,
+        ].join(' · ');
+        return Row(
+          children: [
+            SizedBox(
+              width: 52,
+              child: Text(
+                g.elapsedLabel,
+                style: context.text.bodyMedium?.copyWith(
+                  color: context.scheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: teamColor,
+                borderRadius: BorderRadius.circular(AppRadius.s - 2),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                g.team == TeamSide.home ? 'H' : 'G',
+                style: context.text.labelMedium?.copyWith(
+                  color: AppColors.onColor(teamColor),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s),
+            Text(
+              running[g.id]!.shortLabel,
+              style: context.text.titleMedium?.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.m),
+            Expanded(
+              child: Text(
+                scorer,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.bodyMedium,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
