@@ -8,6 +8,8 @@ import '../../../core/pressebericht_csv_parser.dart';
 import '../../../domain/entities/game.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/squad_input.dart';
 import '../live/live_screen.dart';
 
@@ -54,105 +56,182 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Spiel einrichten'),
-        backgroundColor: Colors.green.shade800,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final gameData = _SetupCard(
+      title: 'Spieldaten',
+      icon: Icons.info_outline_rounded,
+      children: [
+        TextField(
+          key: const Key('tf_home_team'),
+          controller: _homeCtrl,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Heimmannschaft',
+            prefixIcon: Icon(
+              Icons.circle,
+              size: 12,
+              color: context.colors.home,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.m),
+        TextField(
+          key: const Key('tf_away_team'),
+          controller: _awayCtrl,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Gastmannschaft',
+            prefixIcon: Icon(
+              Icons.circle,
+              size: 12,
+              color: context.colors.away,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.m),
+        Row(
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _onImportTap,
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Aus Pressebericht importieren'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: Colors.green.shade700),
-                  foregroundColor: Colors.green.shade700,
-                ),
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: _ligaCtrl,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(labelText: 'Liga (optional)'),
               ),
             ),
-            if (_importWarnings.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _ImportWarningBanner(
-                warnings: _importWarnings,
-                onDismiss: () => setState(() => _importWarnings = []),
-              ),
-            ],
-            const SizedBox(height: 16),
-            _SectionTitle('Spieldaten'),
-            TextField(
-              key: const Key('tf_home_team'),
-              controller: _homeCtrl,
-              decoration: const InputDecoration(labelText: 'Heimmannschaft'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              key: const Key('tf_away_team'),
-              controller: _awayCtrl,
-              decoration: const InputDecoration(labelText: 'Gastmannschaft'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _ligaCtrl,
-              decoration: const InputDecoration(labelText: 'Liga (optional)'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _spieltagCtrl,
-              decoration: const InputDecoration(labelText: 'Spieltag (optional)'),
-              keyboardType: TextInputType.text,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _locationCtrl,
-              decoration: const InputDecoration(labelText: 'Spielort (optional)'),
-            ),
-            const SizedBox(height: 24),
-            _SectionTitle('Aufstellung Heim'),
-            SquadInput(
-              numbers: _homeNumbers,
-              teamColor: Colors.blue,
-              onAdd: (n) => _addNumber(TeamSide.home, n),
-              onRemove: (n) => _removeNumber(TeamSide.home, n),
-            ),
-            const SizedBox(height: 16),
-            _SectionTitle('Aufstellung Gast'),
-            SquadInput(
-              numbers: _awayNumbers,
-              teamColor: Colors.red,
-              onAdd: (n) => _addNumber(TeamSide.away, n),
-              onRemove: (n) => _removeNumber(TeamSide.away, n),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                key: const Key('btn_start_game'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+            const SizedBox(width: AppSpacing.m),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _spieltagCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Spieltag (optional)',
                 ),
-                onPressed: _startGame,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Spiel starten', style: TextStyle(fontSize: 18)),
+                keyboardType: TextInputType.text,
               ),
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.m),
+        TextField(
+          controller: _locationCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Spielort (optional)',
+            prefixIcon: Icon(Icons.place_outlined),
+          ),
+        ),
+      ],
+    );
+
+    final squads = _SetupCard(
+      title: 'Aufstellungen',
+      icon: Icons.groups_outlined,
+      children: [
+        _SectionTitle('Aufstellung Heim', color: context.colors.home),
+        SquadInput(
+          numbers: _homeNumbers,
+          teamColor: context.colors.home,
+          onAdd: (n) => _addNumber(TeamSide.home, n),
+          onRemove: (n) => _removeNumber(TeamSide.home, n),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        _SectionTitle('Aufstellung Gast', color: context.colors.away),
+        SquadInput(
+          numbers: _awayNumbers,
+          teamColor: context.colors.away,
+          onAdd: (n) => _addNumber(TeamSide.away, n),
+          onRemove: (n) => _removeNumber(TeamSide.away, n),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Spiel einrichten')),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ImportCard(onTap: _onImportTap),
+                  if (_importWarnings.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.m),
+                    _ImportWarningBanner(
+                      warnings: _importWarnings,
+                      onDismiss: () => setState(() => _importWarnings = []),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.l),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Querformat: Spieldaten links, Aufstellungen rechts
+                      if (constraints.maxWidth < 840) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            gameData,
+                            const SizedBox(height: AppSpacing.l),
+                            squads,
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: gameData),
+                          const SizedBox(width: AppSpacing.l),
+                          Expanded(child: squads),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Fest sichtbare Startleiste unten rechts (US-604)
+          Container(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.m,
+              AppSpacing.xl,
+              AppSpacing.l,
+            ),
+            decoration: BoxDecoration(
+              color: context.scheme.surface,
+              border: Border(
+                top: BorderSide(color: context.scheme.outlineVariant),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const Key('btn_start_game'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(260, AppSizes.primaryAction),
+                    textStyle: context.text.labelLarge?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  onPressed: _startGame,
+                  icon: const Icon(Icons.play_arrow_rounded, size: 28),
+                  label: const Text('Spiel starten'),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Future<void> _onImportTap() async {
-    final hasData = _homeCtrl.text.isNotEmpty ||
+    final hasData =
+        _homeCtrl.text.isNotEmpty ||
         _awayCtrl.text.isNotEmpty ||
         _homeNumbers.isNotEmpty ||
         _awayNumbers.isNotEmpty;
@@ -163,13 +242,14 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('Daten überschreiben?'),
           content: const Text(
-              'Der Import überschreibt alle vorhandenen Spieldaten. Fortfahren?'),
+            'Der Import überschreibt alle vorhandenen Spieldaten. Fortfahren?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Abbrechen'),
             ),
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Importieren'),
             ),
@@ -201,7 +281,8 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('Falsches Dateiformat'),
           content: const Text(
-              'Bitte eine CSV-Datei aus dem DFB/FLVW-Pressebericht auswählen.'),
+            'Bitte eine CSV-Datei aus dem DFB/FLVW-Pressebericht auswählen.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -245,8 +326,16 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
     }
 
     final repo = ref.read(squadRepositoryProvider);
-    await repo.saveSquad(widget.game.id, TeamSide.home, importResult.homeNumbers);
-    await repo.saveSquad(widget.game.id, TeamSide.away, importResult.awayNumbers);
+    await repo.saveSquad(
+      widget.game.id,
+      TeamSide.home,
+      importResult.homeNumbers,
+    );
+    await repo.saveSquad(
+      widget.game.id,
+      TeamSide.away,
+      importResult.awayNumbers,
+    );
 
     setState(() {
       if (importResult.homeTeamName != null) {
@@ -275,11 +364,15 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
       id: widget.game.id,
       date: importResult.date ?? widget.game.date,
       kickoffTime: widget.game.kickoffTime,
-      location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+      location: _locationCtrl.text.trim().isEmpty
+          ? null
+          : _locationCtrl.text.trim(),
       homeTeamName: _homeCtrl.text.trim(),
       awayTeamName: _awayCtrl.text.trim(),
       liga: _ligaCtrl.text.trim().isEmpty ? null : _ligaCtrl.text.trim(),
-      spieltag: _spieltagCtrl.text.trim().isEmpty ? null : _spieltagCtrl.text.trim(),
+      spieltag: _spieltagCtrl.text.trim().isEmpty
+          ? null
+          : _spieltagCtrl.text.trim(),
       createdAt: widget.game.createdAt,
     );
     await ref.read(gameRepositoryProvider).updateGame(importedGame);
@@ -295,8 +388,11 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
         _awayNumbers = [..._awayNumbers, number]..sort();
       }
     });
-    await repo.saveSquad(widget.game.id, team,
-        team == TeamSide.home ? _homeNumbers : _awayNumbers);
+    await repo.saveSquad(
+      widget.game.id,
+      team,
+      team == TeamSide.home ? _homeNumbers : _awayNumbers,
+    );
   }
 
   Future<void> _removeNumber(TeamSide team, int number) async {
@@ -308,8 +404,11 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
         _awayNumbers = _awayNumbers.where((n) => n != number).toList();
       }
     });
-    await repo.saveSquad(widget.game.id, team,
-        team == TeamSide.home ? _homeNumbers : _awayNumbers);
+    await repo.saveSquad(
+      widget.game.id,
+      team,
+      team == TeamSide.home ? _homeNumbers : _awayNumbers,
+    );
   }
 
   Future<void> _startGame() async {
@@ -323,8 +422,9 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
       homeTeamName: _homeCtrl.text.trim(),
       awayTeamName: _awayCtrl.text.trim(),
       liga: _ligaCtrl.text.trim().isEmpty ? null : _ligaCtrl.text.trim(),
-      spieltag:
-          _spieltagCtrl.text.trim().isEmpty ? null : _spieltagCtrl.text.trim(),
+      spieltag: _spieltagCtrl.text.trim().isEmpty
+          ? null
+          : _spieltagCtrl.text.trim(),
       createdAt: widget.game.createdAt,
     );
     await ref.read(gameRepositoryProvider).updateGame(updatedGame);
@@ -348,6 +448,106 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
   }
 }
 
+class _ImportCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ImportCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: context.scheme.primaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.l),
+        side: BorderSide(color: context.scheme.primary.withValues(alpha: 0.3)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.l),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: context.scheme.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.m),
+                ),
+                child: Icon(
+                  Icons.upload_file_rounded,
+                  color: context.scheme.onPrimary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.l),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Aus Pressebericht importieren',
+                      style: context.text.titleMedium?.copyWith(
+                        color: context.scheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Spieldaten und Aufstellungen aus der CSV-Datei '
+                      'des DFB/FLVW-Presseberichts übernehmen',
+                      style: context.text.bodyMedium?.copyWith(
+                        color: context.scheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.scheme.onPrimaryContainer,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SetupCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _SetupCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 22, color: context.scheme.primary),
+                const SizedBox(width: AppSpacing.s),
+                Text(title, style: context.text.titleLarge),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.l),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ImportWarningBanner extends StatelessWidget {
   final List<String> warnings;
   final VoidCallback onDismiss;
@@ -356,51 +556,59 @@ class _ImportWarningBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.amber.shade50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.amber.shade300),
+    final c = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.warningContainer,
+        borderRadius: BorderRadius.circular(AppRadius.m),
+        border: Border.all(color: c.warning.withValues(alpha: 0.4)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.warning_amber, color: Colors.amber.shade800, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Nicht importiert:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber.shade900,
-                      fontSize: 13,
-                    ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.l,
+        AppSpacing.m,
+        AppSpacing.xs,
+        AppSpacing.m,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: c.warning),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Nicht importiert:',
+                  style: context.text.titleSmall?.copyWith(
+                    color: c.onWarningContainer,
                   ),
-                  Text(
-                    warnings.join(', '),
-                    style: TextStyle(color: Colors.amber.shade900, fontSize: 13),
+                ),
+                Text(
+                  warnings.join(', '),
+                  style: context.text.bodyMedium?.copyWith(
+                    color: c.onWarningContainer,
                   ),
-                  Text(
-                    'Bitte manuell ergänzen.',
-                    style: TextStyle(color: Colors.amber.shade700, fontSize: 12),
+                ),
+                Text(
+                  'Bitte manuell ergänzen.',
+                  style: context.text.bodyMedium?.copyWith(
+                    color: c.onWarningContainer,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 18),
-              onPressed: onDismiss,
-              color: Colors.amber.shade800,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'Hinweis schließen',
+            onPressed: onDismiss,
+            color: c.onWarningContainer,
+          ),
+        ],
       ),
     );
   }
@@ -408,12 +616,22 @@ class _ImportWarningBanner extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String text;
-  const _SectionTitle(this.text);
+  final Color color;
+  const _SectionTitle(this.text, {required this.color});
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      );
+    padding: const EdgeInsets.only(bottom: AppSpacing.s),
+    child: Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Text(text, style: context.text.titleMedium),
+      ],
+    ),
+  );
 }

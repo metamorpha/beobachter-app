@@ -210,7 +210,7 @@ void main() {
       await tester.pumpWidget(_timerDisplayApp(repo));
       await tester.pumpAndSettle();
 
-      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
       expect(find.text('Abgeschlossen'), findsOneWidget);
     });
   });

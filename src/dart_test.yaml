@@ -1,0 +1,3 @@
+tags:
+  golden:
+    description: "Screenshot-Vergleiche der Hauptscreens (Referenzbilder von macOS). Neu erzeugen: flutter test --update-goldens --tags golden"

@@ -43,7 +43,7 @@ Key design decisions:
 - **Coordinates**: Stored as normalized floats (0.0–1.0), resolution-independent.
 - **Drift DataClassNames**: All Drift tables use `@DataClassName('XxxRow')` to avoid name conflicts with domain entities (`GameRow`, `EventRow`, etc.).
 - **Cascade deletes**: `PRAGMA foreign_keys = ON` set in `MigrationStrategy.beforeOpen`.
-- **Undo**: 5-second SnackBar after each saved event calls `deleteEvent()`.
+- **Korrektur statt Undo**: Es gibt kein Rückgängig nach dem Speichern. Versehentlich erfasste Ereignisse löscht man über das Lösch-Icon in „Letzte Ereignisse" (US-213), was `deleteEvent()` aufruft. (Entscheidung 2026-10-23; frühere Doku beschrieb eine Undo-SnackBar, die nie implementiert war.)
 
 ## Repository Structure
 
@@ -64,6 +64,7 @@ Key design decisions:
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–305) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
+| `02_us_ui_redesign.md` | User stories — Epic 6: UI-Modernisierung (US-601–606) |
 | `03_ux_review.md` | UX feedback and decisions |
 | `04_ux_design.md` | Wireframes, user flows, UX principles |
 | `05_arch_review.md` | Architecture feasibility review |
@@ -82,6 +83,8 @@ Key design decisions:
 | `20_team_vergehen_tests.md` | Fouls per team & half test cases — US-404 (13 TCs) |
 | `21_spiel_fortsetzen_tests.md` | Resume running game from game list — US-109 (8 TCs) |
 | `22_aufstellung_live_tests.md` | Edit squads during live game — US-110 (9 TCs) |
+| `23_ui_redesign_plan.md` | UI redesign plan — theme, reachability, motion (presentation layer only) |
+| `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
 
 ### src/lib/ structure
 
@@ -101,7 +104,8 @@ core/
 presentation/
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog
+  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · select_tile · section_header · stat_card
 ```
 
 ## Commands
@@ -118,8 +122,12 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (213 tests, all green)
+# Run tests (252 tests incl. 8 golden, all green)
 flutter test
+
+# Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
+# auf anderen Plattformen werden die Golden-Tests übersprungen
+flutter test --update-goldens --tags golden
 
 # Run app (simulator or device)
 flutter run
@@ -175,6 +183,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Vergehen pro Team (US-404) | Done — `TeamFouls` + `teamFoulsProvider`; DB schema v6 (`event_players.jersey_number` nullable) |
 | Laufendes Spiel fortsetzen (US-109) | Done — Tap in der Spielliste öffnet bei `GamePhase.istLaufend` den Live-Screen; Badge „Läuft" |
 | Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
+| UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` |
 
 ## Development Pipeline
 

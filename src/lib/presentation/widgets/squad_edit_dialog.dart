@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/enums/team_side.dart';
 import '../providers/providers.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import 'squad_input.dart';
 
 /// Aufstellungen beider Teams während des Spiels korrigieren (US-110).
@@ -51,9 +53,11 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
         .read(squadRepositoryProvider)
         .saveSquad(widget.gameId, team, numbers);
     // Kader-Chips im Ereignisformular aktualisieren
-    ref.invalidate(team == TeamSide.home
-        ? homeSquadProvider(widget.gameId)
-        : awaySquadProvider(widget.gameId));
+    ref.invalidate(
+      team == TeamSide.home
+          ? homeSquadProvider(widget.gameId)
+          : awaySquadProvider(widget.gameId),
+    );
   }
 
   void _add(TeamSide team, int number) {
@@ -67,16 +71,23 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
 
   Widget _teamColumn(TeamSide team) {
     final isHome = team == TeamSide.home;
-    final color = isHome ? Colors.blue : Colors.red;
+    final color = context.colors.team(team);
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isHome ? 'Heim' : 'Gast',
-            style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: AppSpacing.s),
+              Text(isHome ? 'Heim' : 'Gast', style: context.text.titleMedium),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.m),
           SquadInput(
             keyPrefix: 'squad_${team.name}',
             numbers: _numbers[team]!,
@@ -92,23 +103,25 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      icon: Icon(Icons.groups_rounded, color: context.scheme.primary),
       title: const Text('Aufstellung'),
       content: SizedBox(
-        width: 640,
+        width: 720,
         child: SingleChildScrollView(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _teamColumn(TeamSide.home),
-              const SizedBox(width: 24),
+              const SizedBox(width: AppSpacing.xl),
               _teamColumn(TeamSide.away),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
+        FilledButton(
           key: const Key('btn_squad_done'),
+          style: FilledButton.styleFrom(minimumSize: const Size(140, 52)),
           onPressed: () => Navigator.pop(context),
           child: const Text('Fertig'),
         ),

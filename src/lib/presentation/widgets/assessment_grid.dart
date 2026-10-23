@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/enums/assessment.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import 'select_tile.dart';
 
 /// 2×2-Grid für die Szenen-Bewertung.
 /// Ein Tap wählt Korrekt/Falsch + Erwartbar/Komplex gleichzeitig.
+/// ✓/✗ machen die Felder auch ohne Farbwahrnehmung unterscheidbar (US-603).
 class AssessmentGrid extends StatelessWidget {
   final Assessment? selected;
   final ValueChanged<Assessment?> onChanged;
@@ -21,52 +25,40 @@ class AssessmentGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            _cell(Assessment.correctExpected, Colors.green.shade700),
-            const SizedBox(width: 4),
-            _cell(Assessment.correctComplex, Colors.green.shade900),
+            _cell(context, Assessment.correctExpected),
+            const SizedBox(width: AppSpacing.s - 2),
+            _cell(context, Assessment.correctComplex),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s - 2),
         Row(
           children: [
-            _cell(Assessment.wrongExpected, Colors.red.shade700),
-            const SizedBox(width: 4),
-            _cell(Assessment.wrongComplex, Colors.red.shade900),
+            _cell(context, Assessment.wrongExpected),
+            const SizedBox(width: AppSpacing.s - 2),
+            _cell(context, Assessment.wrongComplex),
           ],
         ),
       ],
     );
   }
 
-  Widget _cell(Assessment value, Color color) {
+  Widget _cell(BuildContext context, Assessment value) {
     final isSelected = selected == value;
+    final color =
+        value.isCorrect ? context.colors.correct : context.colors.wrong;
     return Expanded(
-      child: GestureDetector(
+      child: SelectTile(
         key: Key('assessment_${value.name}'),
+        label: value.label,
+        icon: value.isCorrect ? Icons.check : Icons.close,
+        horizontal: true,
+        dense: true,
+        minHeight: AppSizes.primaryAction,
+        selected: isSelected,
+        color: color,
+        unselectedColor:
+            Color.alphaBlend(color.withValues(alpha: 0.08), context.scheme.surface),
         onTap: () => onChanged(isSelected ? null : value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          height: 52,
-          decoration: BoxDecoration(
-            color: isSelected ? color : color.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(6),
-            border: isSelected
-                ? Border.all(color: Colors.white, width: 2)
-                : null,
-          ),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            value.label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? Colors.white : Colors.white70,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ),
       ),
     );
   }

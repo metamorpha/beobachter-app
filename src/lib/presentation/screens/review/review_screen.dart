@@ -5,11 +5,16 @@ import '../../../domain/entities/event.dart';
 import '../../../domain/entities/game.dart';
 import '../../../domain/entities/team_fouls.dart';
 import '../../../domain/enums/assessment.dart';
-import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_motion.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/event_type_style.dart';
+import '../../widgets/section_header.dart';
+import '../../widgets/stat_card.dart';
 import '../../widgets/heatmap_canvas.dart';
 import '../game_setup/game_setup_screen.dart';
 import '../live/event_form_panel.dart';
@@ -25,13 +30,10 @@ class ReviewScreen extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.green.shade900,
-          foregroundColor: Colors.white,
           title: Text(
             '${game.homeTeamName.isEmpty ? 'Heim' : game.homeTeamName}'
             ' – '
             '${game.awayTeamName.isEmpty ? 'Gast' : game.awayTeamName}',
-            style: const TextStyle(fontSize: 15),
           ),
           actions: [
             IconButton(
@@ -39,20 +41,36 @@ class ReviewScreen extends ConsumerWidget {
               tooltip: 'Spiel einrichten',
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => GameSetupScreen(game: game)),
+                MaterialPageRoute(builder: (_) => GameSetupScreen(game: game)),
               ),
             ),
+            const SizedBox(width: AppSpacing.s),
           ],
-          bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white54,
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(text: 'Szenen'),
-              Tab(text: 'Coaching'),
-              Tab(text: 'Statistik'),
-            ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(68),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.l,
+                0,
+                AppSpacing.l,
+                AppSpacing.m,
+              ),
+              child: Container(
+                height: 52,
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: context.scheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.m + 2),
+                ),
+                child: const TabBar(
+                  tabs: [
+                    _TabLabel(icon: Icons.view_list_rounded, text: 'Szenen'),
+                    _TabLabel(icon: Icons.forum_outlined, text: 'Coaching'),
+                    _TabLabel(icon: Icons.insights_rounded, text: 'Statistik'),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         body: TabBarView(
@@ -65,6 +83,26 @@ class ReviewScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _TabLabel extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _TabLabel({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Tab(
+    height: 44,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: AppSpacing.s),
+        Text(text),
+      ],
+    ),
+  );
 }
 
 // ── Szenenliste ──────────────────────────────────────────────────────────────
@@ -87,19 +125,25 @@ class _SceneListTab extends ConsumerWidget {
             data: (events) {
               final filtered = filter.apply(events);
               if (filtered.isEmpty) {
-                return Center(
-                  child: Text(
-                    filter.isActive
-                        ? 'Keine Ereignisse für diesen Filter.'
-                        : 'Noch keine Ereignisse erfasst.',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+                return _EmptyMessage(
+                  icon: filter.isActive
+                      ? Icons.filter_alt_off_outlined
+                      : Icons.sports_soccer,
+                  text: filter.isActive
+                      ? 'Keine Ereignisse für diesen Filter.'
+                      : 'Noch keine Ereignisse erfasst.',
                 );
               }
               return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.l,
+                  AppSpacing.l,
+                  AppSpacing.l,
+                  AppSpacing.xl,
+                ),
                 itemCount: filtered.length,
                 separatorBuilder: (context, index) =>
-                    const Divider(height: 1, indent: 16),
+                    const SizedBox(height: AppSpacing.s),
                 itemBuilder: (ctx, i) =>
                     _SceneTile(event: filtered[i], gameId: gameId),
               );
@@ -113,6 +157,32 @@ class _SceneListTab extends ConsumerWidget {
   }
 }
 
+class _EmptyMessage extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _EmptyMessage({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 40, color: context.scheme.outline),
+          const SizedBox(height: AppSpacing.m),
+          Text(
+            text,
+            style: context.text.bodyLarge?.copyWith(
+              color: context.scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FilterBar extends ConsumerWidget {
   final String gameId;
 
@@ -122,77 +192,94 @@ class _FilterBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(sceneFilterProvider(gameId));
     final notifier = ref.read(sceneFilterProvider(gameId).notifier);
+    final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? const [];
+    int countOf(EventType t) => events.where((e) => e.type == t).length;
 
     return Container(
-      color: Colors.grey.shade100,
+      decoration: BoxDecoration(
+        color: context.scheme.surface,
+        border: Border(
+          bottom: BorderSide(color: context.scheme.outlineVariant),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // EventType-Chips (horizontal scrollbar)
           SizedBox(
-            height: 40,
+            height: 48,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
               children: [
                 _FilterChip(
                   label: 'Alle',
                   selected: filter.eventType == null,
-                  onTap: () => notifier.state =
-                      filter.copyWith(clearEventType: true),
+                  onTap: () =>
+                      notifier.state = filter.copyWith(clearEventType: true),
                 ),
-                const SizedBox(width: 4),
-                ...EventType.values.map((t) => Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: _FilterChip(
-                        label: t.label,
-                        selected: filter.eventType == t,
-                        onTap: () => notifier.state = filter.eventType == t
-                            ? filter.copyWith(clearEventType: true)
-                            : filter.copyWith(eventType: t),
-                      ),
-                    )),
+                const SizedBox(width: AppSpacing.s),
+                ...EventType.values.map(
+                  (t) => Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.s),
+                    child: _FilterChip(
+                      label: t.label,
+                      icon: t.icon,
+                      count: countOf(t),
+                      selected: filter.eventType == t,
+                      onTap: () => notifier.state = filter.eventType == t
+                          ? filter.copyWith(clearEventType: true)
+                          : filter.copyWith(eventType: t),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.xs),
           // Sekundäre Filter
           SizedBox(
-            height: 36,
+            height: 48,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
               children: [
                 _FilterChip(
                   label: 'Korrekt',
+                  icon: Icons.check,
                   selected: filter.correct == true,
-                  activeColor: Colors.green.shade600,
+                  activeColor: context.colors.correct,
                   onTap: () => notifier.state = filter.correct == true
                       ? filter.copyWith(clearCorrect: true)
                       : filter.copyWith(correct: true),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s),
                 _FilterChip(
                   label: 'Falsch',
+                  icon: Icons.close,
                   selected: filter.correct == false,
-                  activeColor: Colors.red.shade600,
+                  activeColor: context.colors.wrong,
                   onTap: () => notifier.state = filter.correct == false
                       ? filter.copyWith(clearCorrect: true)
                       : filter.copyWith(correct: false),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s),
                 _FilterChip(
                   label: 'Karte',
+                  icon: Icons.style_outlined,
                   selected: filter.withCard == true,
                   onTap: () => notifier.state = filter.withCard == true
                       ? filter.copyWith(clearWithCard: true)
                       : filter.copyWith(withCard: true),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s),
                 _FilterChip(
                   label: '⭐ Coaching',
                   selected: filter.coachingOnly,
-                  onTap: () => notifier.state =
-                      filter.copyWith(coachingOnly: !filter.coachingOnly),
+                  onTap: () => notifier.state = filter.copyWith(
+                    coachingOnly: !filter.coachingOnly,
+                  ),
                 ),
               ],
             ),
@@ -208,33 +295,147 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final Color? activeColor;
+  final IconData? icon;
+  final int? count;
 
   const _FilterChip({
     required this.label,
     required this.selected,
     required this.onTap,
     this.activeColor,
+    this.icon,
+    this.count,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = activeColor ?? Colors.green.shade700;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    final color = activeColor ?? context.scheme.primary;
+    final fg = selected ? AppColors.onColor(color) : context.scheme.onSurface;
+    return Center(
+      child: AnimatedContainer(
+        duration: AppMotion.of(context, AppMotion.fast),
+        height: 40,
         decoration: BoxDecoration(
-          color: selected ? color : Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: selected ? Colors.white : Colors.black87,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          color: selected ? color : context.scheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: selected ? color : context.scheme.outlineVariant,
           ),
         ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m + 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 18, color: selected ? fg : color),
+                    const SizedBox(width: AppSpacing.xs + 2),
+                  ],
+                  Text(
+                    label,
+                    style: context.text.labelLarge?.copyWith(
+                      fontSize: 14,
+                      color: fg,
+                    ),
+                  ),
+                  if (count != null && count! > 0) ...[
+                    const SizedBox(width: AppSpacing.xs + 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs + 2,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? fg.withValues(alpha: 0.2)
+                            : context.scheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(AppRadius.s),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: context.text.labelMedium?.copyWith(color: fg),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kleines Minuten-Badge links in Szenen- und Coaching-Karten.
+class _MinuteBadge extends StatelessWidget {
+  final Event event;
+
+  const _MinuteBadge({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+      decoration: BoxDecoration(
+        color: context.scheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.m),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        "${event.minute}'",
+        style: context.text.titleMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bewertung als farbige Pille mit ✓/✗.
+class _AssessmentPill extends StatelessWidget {
+  final Assessment assessment;
+
+  const _AssessmentPill({required this.assessment});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = assessment.isCorrect
+        ? context.colors.correct
+        : context.colors.wrong;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          color.withValues(alpha: 0.12),
+          context.scheme.surface,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.s),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            assessment.isCorrect ? Icons.check : Icons.close,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            assessment.label,
+            style: context.text.labelMedium?.copyWith(color: color),
+          ),
+        ],
       ),
     );
   }
@@ -248,67 +449,118 @@ class _SceneTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      leading: Text(
-        "${event.minute}'",
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-      ),
-      title: Text(event.type.label),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (event.refDecision != null)
-            Text(event.refDecision!.label,
-                style: const TextStyle(fontSize: 12)),
-          if (event.assessment != null)
-            Text(event.assessment!.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: event.assessment!.isCorrect
-                      ? Colors.green
-                      : Colors.red,
-                )),
-          if (event.sceneNote != null)
-            Text(event.sceneNote!,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-        ],
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (event.card != null)
-            Container(
-              width: 16,
-              height: 22,
-              margin: const EdgeInsets.only(right: 4),
-              decoration: BoxDecoration(
-                color: event.card == CardType.yellow
-                    ? Colors.yellow
-                    : event.card == CardType.yellowRed
-                        ? Colors.orange
-                        : Colors.red,
-                borderRadius: BorderRadius.circular(2),
+    return Card(
+      child: InkWell(
+        onTap: () => _showDetail(context, ref, event),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.m,
+            AppSpacing.m,
+            AppSpacing.s,
+            AppSpacing.m,
+          ),
+          child: Row(
+            children: [
+              _MinuteBadge(event: event),
+              const SizedBox(width: AppSpacing.l),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          margin: const EdgeInsets.only(right: AppSpacing.s),
+                          decoration: BoxDecoration(
+                            color: event.type.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Flexible(
+                          child: Text(
+                            event.type.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.text.titleMedium,
+                          ),
+                        ),
+                        if (event.refDecision != null) ...[
+                          Text(
+                            '  ·  ',
+                            style: context.text.bodyMedium?.copyWith(
+                              color: context.scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              event.refDecision!.label,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.text.bodyLarge,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (event.assessment != null ||
+                        event.sceneNote != null) ...[
+                      const SizedBox(height: AppSpacing.xs + 2),
+                      Row(
+                        children: [
+                          if (event.assessment != null) ...[
+                            _AssessmentPill(assessment: event.assessment!),
+                            const SizedBox(width: AppSpacing.s),
+                          ],
+                          if (event.sceneNote != null)
+                            Expanded(
+                              child: Text(
+                                event.sceneNote!,
+                                style: context.text.bodyMedium?.copyWith(
+                                  color: context.scheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 20),
-            color: Colors.grey,
-            onPressed: () => _openEdit(context, ref),
-            tooltip: 'Bearbeiten',
+              if (event.card != null)
+                Container(
+                  width: 18,
+                  height: 26,
+                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                  decoration: BoxDecoration(
+                    color: context.colors.card(event.card!),
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x33000000), blurRadius: 2),
+                    ],
+                  ),
+                ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                color: context.scheme.onSurfaceVariant,
+                onPressed: () => _openEdit(context, ref),
+                tooltip: 'Bearbeiten',
+              ),
+              IconButton(
+                icon: Icon(
+                  event.coachingFlag ? Icons.star : Icons.star_border,
+                  color: event.coachingFlag
+                      ? context.colors.coaching
+                      : context.scheme.onSurfaceVariant,
+                ),
+                onPressed: () => _toggleCoaching(ref, event),
+                tooltip: 'Coaching',
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(
-              event.coachingFlag ? Icons.star : Icons.star_border,
-              color: event.coachingFlag ? Colors.amber : Colors.grey,
-            ),
-            onPressed: () => _toggleCoaching(ref, event),
-            tooltip: 'Coaching',
-          ),
-        ],
+        ),
       ),
-      onTap: () => _showDetail(context, ref, event),
     );
   }
 
@@ -320,19 +572,22 @@ class _SceneTile extends ConsumerWidget {
   }
 
   Future<void> _openEdit(BuildContext context, WidgetRef ref) async {
-    final allPlayers =
-        await ref.read(eventRepositoryProvider).getPlayersForGame(gameId);
-    final eventPlayers =
-        allPlayers.where((p) => p.eventId == event.id).toList();
+    final allPlayers = await ref
+        .read(eventRepositoryProvider)
+        .getPlayersForGame(gameId);
+    final eventPlayers = allPlayers
+        .where((p) => p.eventId == event.id)
+        .toList();
 
     if (!context.mounted) return;
     showDialog<void>(
       context: context,
       builder: (ctx) => Dialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        clipBehavior: Clip.antiAlias,
         child: SizedBox(
-          width: 480,
-          height: 620,
+          width: 540,
+          height: 680,
           child: EventFormPanel(
             gameId: gameId,
             locationX: event.locationX,
@@ -374,51 +629,69 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   @override
   void initState() {
     super.initState();
-    _coachingCtrl =
-        TextEditingController(text: widget.event.coachingNote ?? '');
+    _coachingCtrl = TextEditingController(
+      text: widget.event.coachingNote ?? '',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        left: AppSpacing.xl,
+        right: AppSpacing.xl,
+        top: 0,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("${widget.event.minute}' — ${widget.event.type.label}",
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            "${widget.event.minute}' — ${widget.event.type.label}",
+            style: context.text.headlineSmall,
+          ),
+          const SizedBox(height: AppSpacing.s),
           if (widget.event.refDecision != null)
-            Text('Entscheidung: ${widget.event.refDecision!.label}'),
+            Text(
+              'Entscheidung: ${widget.event.refDecision!.label}',
+              style: context.text.bodyLarge,
+            ),
           if (widget.event.assessment != null)
-            Text('Bewertung: ${widget.event.assessment!.label}'),
+            Text(
+              'Bewertung: ${widget.event.assessment!.label}',
+              style: context.text.bodyLarge,
+            ),
           if (widget.event.sceneNote != null) ...[
-            const SizedBox(height: 8),
-            Text('Notiz: ${widget.event.sceneNote}',
-                style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              'Notiz: ${widget.event.sceneNote}',
+              style: context.text.bodyLarge?.copyWith(
+                color: context.scheme.onSurfaceVariant,
+              ),
+            ),
           ],
-          const SizedBox(height: 16),
-          const Text('Coaching-Notiz:',
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.l),
+          Text('Coaching-Notiz:', style: context.text.titleSmall),
+          const SizedBox(height: AppSpacing.s),
           TextField(
             controller: _coachingCtrl,
             maxLines: 3,
             decoration: const InputDecoration(
               hintText: 'Was möchte ich mit dem Schiedsrichter besprechen?',
-              border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: _saveCoachingNote,
-            child: const Text('Speichern'),
+          const SizedBox(height: AppSpacing.l),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(180, AppSizes.liveTap),
+              ),
+              onPressed: _saveCoachingNote,
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('Speichern'),
+            ),
           ),
         ],
       ),
@@ -426,8 +699,7 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   }
 
   Future<void> _saveCoachingNote() async {
-    final note =
-        _coachingCtrl.text.isEmpty ? null : _coachingCtrl.text;
+    final note = _coachingCtrl.text.isEmpty ? null : _coachingCtrl.text;
     final repo = ref.read(eventRepositoryProvider);
     await repo.updateCoachingNote(widget.event.id, note);
     await repo.updateCoachingFlag(widget.event.id, true);
@@ -460,18 +732,14 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
   @override
   void initState() {
     super.initState();
-    _overallCtrl =
-        TextEditingController(text: widget.game.coachingNote ?? '');
+    _overallCtrl = TextEditingController(text: widget.game.coachingNote ?? '');
     _overallFocus = FocusNode()..addListener(_saveOverallNote);
   }
 
   void _saveOverallNote() {
     if (!_overallFocus.hasFocus) {
-      final note =
-          _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
-      ref
-          .read(gameRepositoryProvider)
-          .updateCoachingNote(widget.game.id, note);
+      final note = _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
+      ref.read(gameRepositoryProvider).updateCoachingNote(widget.game.id, note);
     }
   }
 
@@ -481,32 +749,31 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
 
     return eventsAsync.when(
       data: (events) {
-        final coaching =
-            events.where((e) => e.coachingFlag).toList();
-        return ListView(
-          padding: const EdgeInsets.all(12),
-          children: [
-            _OverallNoteSection(
-              controller: _overallCtrl,
-              focusNode: _overallFocus,
+        final coaching = events.where((e) => e.coachingFlag).toList();
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.l),
+              children: [
+                _OverallNoteSection(
+                  controller: _overallCtrl,
+                  focusNode: _overallFocus,
+                ),
+                const SizedBox(height: AppSpacing.l),
+                if (coaching.isEmpty)
+                  const _EmptyMessage(
+                    icon: Icons.star_outline_rounded,
+                    text: 'Noch keine Szenen für das Coaching markiert.',
+                  )
+                else
+                  ...coaching.map(
+                    (e) => _CoachingItem(event: e, gameId: widget.game.id),
+                  ),
+              ],
             ),
-            const SizedBox(height: 12),
-            if (coaching.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Noch keine Szenen für das Coaching markiert.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              ...coaching.map(
-                (e) => _CoachingItem(
-                  event: e,
-                  gameId: widget.game.id,
-                ),
-              ),
-          ],
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -534,29 +801,43 @@ class _OverallNoteSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'ALLGEMEINE NOTIZ',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: Colors.black54,
-          ),
+    return Card(
+      color: context.scheme.primaryContainer.withValues(alpha: 0.5),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.l,
+          AppSpacing.m,
+          AppSpacing.l,
+          AppSpacing.l,
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Eröffnungsworte, allgemeines Fazit …',
-            border: OutlineInputBorder(),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.campaign_outlined,
+                  size: 20,
+                  color: context.scheme.primary,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                const SectionHeader('Allgemeine Notiz'),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s),
+            TextField(
+              controller: controller,
+              focusNode: focusNode,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Eröffnungsworte, allgemeines Fazit …',
+                fillColor: context.scheme.surface,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -578,15 +859,13 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
   @override
   void initState() {
     super.initState();
-    _noteCtrl =
-        TextEditingController(text: widget.event.coachingNote ?? '');
+    _noteCtrl = TextEditingController(text: widget.event.coachingNote ?? '');
     _noteFocus = FocusNode()..addListener(_saveNote);
   }
 
   void _saveNote() {
     if (!_noteFocus.hasFocus) {
-      final note =
-          _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
+      final note = _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
       ref
           .read(eventRepositoryProvider)
           .updateCoachingNote(widget.event.id, note);
@@ -603,83 +882,94 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
   @override
   Widget build(BuildContext context) {
     final e = widget.event;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row: minute · type · decision · assessment · flag
-            Row(
-              children: [
-                Text(
-                  "${e.minute}'",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    [
-                      e.type.label,
-                      if (e.refDecision != null) e.refDecision!.label,
-                      if (e.assessment != null) e.assessment!.label,
-                    ].join(' · '),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    e.coachingFlag
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: e.coachingFlag ? Colors.amber : Colors.grey,
-                  ),
-                  onPressed: _toggleFlag,
-                  tooltip: 'Coaching-Flag',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            // Scene note (read-only, from live capture)
-            if (e.sceneNote != null) ...[
-              const SizedBox(height: 6),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.m,
+            AppSpacing.s,
+            AppSpacing.xs,
+            AppSpacing.m,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row: minute · type · decision · assessment · flag
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.sticky_note_2_outlined,
-                      size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
+                  _MinuteBadge(event: e),
+                  const SizedBox(width: AppSpacing.m),
                   Expanded(
                     child: Text(
-                      e.sceneNote!,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey),
+                      [
+                        e.type.label,
+                        if (e.refDecision != null) e.refDecision!.label,
+                        if (e.assessment != null) e.assessment!.label,
+                      ].join(' · '),
+                      style: context.text.titleMedium,
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      e.coachingFlag
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: e.coachingFlag
+                          ? context.colors.coaching
+                          : context.scheme.onSurfaceVariant,
+                    ),
+                    onPressed: _toggleFlag,
+                    tooltip: 'Coaching-Flag',
                   ),
                 ],
               ),
-            ],
-            // Coaching note (inline editable)
-            const SizedBox(height: 8),
-            TextField(
-              controller: _noteCtrl,
-              focusNode: _noteFocus,
-              maxLines: null,
-              decoration: const InputDecoration(
-                hintText: 'Coaching-Notiz …',
-                border: OutlineInputBorder(),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 8),
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 56 + AppSpacing.m,
+                  right: AppSpacing.s,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Scene note (read-only, from live capture)
+                    if (e.sceneNote != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.sticky_note_2_outlined,
+                            size: 18,
+                            color: context.scheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: AppSpacing.s),
+                          Expanded(
+                            child: Text(
+                              e.sceneNote!,
+                              style: context.text.bodyMedium?.copyWith(
+                                color: context.scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    // Coaching note (inline editable)
+                    const SizedBox(height: AppSpacing.s),
+                    TextField(
+                      controller: _noteCtrl,
+                      focusNode: _noteFocus,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                        hintText: 'Coaching-Notiz …',
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -706,60 +996,100 @@ class _StatsTab extends ConsumerWidget {
     final eventsAsync = ref.watch(eventsProvider(gameId));
 
     return eventsAsync.when(
-      data: (events) => Row(
-        children: [
-          Expanded(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Heatmap',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Expanded(child: HeatmapCanvas(events: events)),
-                ],
-              ),
+      data: (events) {
+        final heatmap = StatCard(
+          title: 'Heatmap',
+          icon: Icons.blur_on_rounded,
+          // Echtes Spielfeld-Seitenverhältnis (105 × 68 m), nicht gestreckt
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 105 / 68,
+              child: HeatmapCanvas(events: events),
             ),
           ),
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        );
+        final timeline = StatCard(
+          title: 'Zeitachse',
+          icon: Icons.bar_chart_rounded,
+          child: _TimelineChart(events: events),
+        );
+        final ranking = StatCard(
+          title: 'Spieler-Ranking',
+          icon: Icons.leaderboard_outlined,
+          child: _PlayerRanking(gameId: gameId),
+        );
+        final fouls = StatCard(
+          title: 'Vergehen pro Team',
+          icon: Icons.table_chart_outlined,
+          child: SingleChildScrollView(child: _TeamFoulsTable(gameId: gameId)),
+        );
+        const gap = SizedBox.square(dimension: AppSpacing.l);
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // Schmale Fenster: Karten untereinander, scrollbar
+            if (constraints.maxWidth < 900 || constraints.maxHeight < 520) {
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.l),
                 children: [
-                  const Text('Zeitachse',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  _TimelineChart(events: events),
-                  const SizedBox(height: 16),
-                  const Text('Spieler-Ranking',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Expanded(child: _PlayerRanking(gameId: gameId)),
-                  const SizedBox(height: 16),
-                  const Text('Vergehen pro Team',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  _TeamFoulsTable(gameId: gameId),
+                  for (final c in [heatmap, timeline, ranking, fouls]) ...[
+                    SizedBox(height: 320, child: c),
+                    gap,
+                  ],
+                ],
+              );
+            }
+            // 2 × 2-Dashboard (US-605)
+            return Padding(
+              padding: const EdgeInsets.all(AppSpacing.l),
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 3, child: heatmap),
+                        gap,
+                        Expanded(flex: 2, child: timeline),
+                      ],
+                    ),
+                  ),
+                  gap,
+                  Expanded(
+                    flex: 9,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 3, child: ranking),
+                        gap,
+                        Expanded(flex: 2, child: fouls),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Fehler: $e')),
     );
   }
 }
 
+/// Ereignisse pro 15-Minuten-Phase als Balkendiagramm; die Balken wachsen
+/// beim Öffnen hoch (US-402, US-605, US-606).
 class _TimelineChart extends StatelessWidget {
   final List<Event> events;
   static const _phases = [
-    (0, 15), (15, 30), (30, 45), (45, 60), (60, 75), (75, 90)
+    (0, 15),
+    (15, 30),
+    (30, 45),
+    (45, 60),
+    (60, 75),
+    (75, 90),
   ];
 
   const _TimelineChart({required this.events});
@@ -774,36 +1104,67 @@ class _TimelineChart extends StatelessWidget {
     }).toList();
     final maxCount = counts.fold(1, (a, b) => a > b ? a : b);
 
-    return Column(
-      children: List.generate(_phases.length, (i) {
-        final label = '${_phases[i].$1}–${_phases[i].$2}\'';
-        final frac = counts[i] / maxCount;
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Row(
-            children: [
-              SizedBox(
-                  width: 46,
-                  child: Text(label,
-                      style: const TextStyle(fontSize: 11))),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: frac,
-                    backgroundColor: Colors.grey.shade200,
-                    color: Colors.green.shade700,
-                    minHeight: 18,
+    return TweenAnimationBuilder<double>(
+      key: const Key('timeline_chart'),
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.of(context, const Duration(milliseconds: 600)),
+      curve: AppMotion.curve,
+      builder: (context, grow, _) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: List.generate(_phases.length, (i) {
+          final label = '${_phases[i].$1}–${_phases[i].$2}\'';
+          final frac = counts[i] / maxCount;
+          // 2. Halbzeit leicht abgesetzt
+          final color = i < 3
+              ? context.scheme.primary
+              : Color.lerp(context.scheme.primary, Colors.black, 0.25)!;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              child: Column(
+                children: [
+                  Text(
+                    '${counts[i]}',
+                    style: context.text.titleSmall?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: context.scheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.s),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: (frac * grow).clamp(0.0, 1.0),
+                        widthFactor: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(AppRadius.s),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      style: context.text.labelMedium?.copyWith(
+                        color: context.scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text('${counts[i]}',
-                  style: const TextStyle(fontSize: 11)),
-            ],
-          ),
-        );
-      }),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -820,64 +1181,94 @@ class _PlayerRanking extends ConsumerWidget {
     return rankingAsync.when(
       data: (ranking) {
         if (ranking.isEmpty) {
-          return const Text(
+          return Text(
             'Keine Spielernummern erfasst.',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
+            style: context.text.bodyMedium?.copyWith(
+              color: context.scheme.onSurfaceVariant,
+            ),
           );
         }
-        return ListView.builder(
+        final maxCount = ranking.first.count;
+        return ListView.separated(
           itemCount: ranking.length,
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
           itemBuilder: (ctx, i) {
             final entry = ranking[i];
             final isHome = entry.team == TeamSide.home;
-            final teamColor = isHome ? Colors.blue : Colors.red;
+            final teamColor = context.colors.team(entry.team);
             final teamLabel = isHome ? 'H' : 'G';
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                children: [
-                  Text('${i + 1}.',
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.grey)),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
+            return Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '${i + 1}.',
+                    style: context.text.bodyMedium?.copyWith(
+                      color: context.scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: teamColor,
+                    borderRadius: BorderRadius.circular(AppRadius.s - 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    teamLabel,
+                    style: context.text.labelMedium?.copyWith(
+                      color: AppColors.onColor(teamColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s),
+                SizedBox(
+                  width: 52,
+                  child: Text(
+                    '#${entry.number}',
+                    style: context.text.titleMedium?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.s),
+                    child: LinearProgressIndicator(
+                      value: entry.count / maxCount,
+                      minHeight: 10,
                       color: teamColor,
-                      borderRadius: BorderRadius.circular(3),
+                      backgroundColor: context.scheme.surfaceContainer,
                     ),
-                    alignment: Alignment.center,
-                    child: Text(teamLabel,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(width: 6),
-                  Text('#${entry.number}',
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text('${entry.count}×',
-                        style: const TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: AppSpacing.m),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s + 2,
+                    vertical: 2,
                   ),
-                ],
-              ),
+                  decoration: BoxDecoration(
+                    color: context.scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(AppRadius.m),
+                  ),
+                  child: Text(
+                    '${entry.count}×',
+                    style: context.text.labelLarge?.copyWith(fontSize: 14),
+                  ),
+                ),
+              ],
             );
           },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Text('Fehler: $e',
-          style: const TextStyle(color: Colors.red, fontSize: 12)),
+      error: (e, _) => Text(
+        'Fehler: $e',
+        style: TextStyle(color: context.scheme.error, fontSize: 13),
+      ),
     );
   }
 }
@@ -888,7 +1279,7 @@ class _TeamFoulsTable extends ConsumerWidget {
 
   const _TeamFoulsTable({required this.gameId});
 
-  static const _cellWidth = 30.0;
+  static const _cellWidth = 40.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -898,13 +1289,19 @@ class _TeamFoulsTable extends ConsumerWidget {
       data: (fouls) {
         final periods = fouls.periods;
 
-        Widget row(String label, int Function(FoulPeriod, TeamSide) value,
-            {bool bold = false}) {
+        Widget row(
+          String label,
+          int Function(FoulPeriod, TeamSide) value, {
+          bool bold = false,
+        }) {
           final style = TextStyle(
-              fontSize: 12,
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal);
+            fontSize: 14,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            fontFeatures: const [FontFeature.tabularFigures()],
+            color: context.scheme.onSurface,
+          );
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
               children: [
                 Expanded(child: Text(label, style: style)),
@@ -912,8 +1309,11 @@ class _TeamFoulsTable extends ConsumerWidget {
                   for (final team in TeamSide.values)
                     SizedBox(
                       width: _cellWidth,
-                      child: Text('${value(period, team)}',
-                          textAlign: TextAlign.right, style: style),
+                      child: Text(
+                        '${value(period, team)}',
+                        textAlign: TextAlign.right,
+                        style: style,
+                      ),
                     ),
               ],
             ),
@@ -929,10 +1329,13 @@ class _TeamFoulsTable extends ConsumerWidget {
                 for (final period in periods)
                   SizedBox(
                     width: _cellWidth * 2,
-                    child: Text(period.label,
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey)),
+                    child: Text(
+                      period.label,
+                      textAlign: TextAlign.right,
+                      style: context.text.labelMedium?.copyWith(
+                        color: context.scheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -943,28 +1346,31 @@ class _TeamFoulsTable extends ConsumerWidget {
                   for (final team in TeamSide.values)
                     SizedBox(
                       width: _cellWidth,
-                      child: Text(team == TeamSide.home ? 'H' : 'G',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: team == TeamSide.home
-                                  ? Colors.blue
-                                  : Colors.red)),
+                      child: Text(
+                        team == TeamSide.home ? 'H' : 'G',
+                        textAlign: TextAlign.right,
+                        style: context.text.labelMedium?.copyWith(
+                          color: context.colors.team(team),
+                        ),
+                      ),
                     ),
               ],
             ),
             for (final category in FoulCategory.values)
-              row(category.label,
-                  (period, team) => fouls.count(period, team, category)),
-            const Divider(height: 8),
+              row(
+                category.label,
+                (period, team) => fouls.count(period, team, category),
+              ),
+            const Divider(height: AppSpacing.m),
             row('Summe', fouls.total, bold: true),
           ],
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Text('Fehler: $e',
-          style: const TextStyle(color: Colors.red, fontSize: 12)),
+      error: (e, _) => Text(
+        'Fehler: $e',
+        style: TextStyle(color: context.scheme.error, fontSize: 13),
+      ),
     );
   }
 }

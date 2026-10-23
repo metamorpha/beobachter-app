@@ -3,6 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/event.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import 'pitch_canvas.dart';
 
 /// Kontinuierliche Dichte-Heatmap (KDE): Jedes Ereignis trägt eine weiche
 /// Gauß-Glocke bei, Überlagerungen addieren sich. Hotspots erscheinen
@@ -14,9 +17,12 @@ class HeatmapCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: HeatmapPainter(events: events),
-      child: const SizedBox.expand(),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.m),
+      child: CustomPaint(
+        painter: HeatmapPainter(events: events, colors: context.colors),
+        child: const SizedBox.expand(),
+      ),
     );
   }
 }
@@ -78,20 +84,26 @@ class HeatmapDensity {
 
 class HeatmapPainter extends CustomPainter {
   final List<Event> events;
+  final AppColors colors;
   late final HeatmapDensity _density = HeatmapDensity.fromEvents(events);
 
   // Ab dieser normierten Dichte wird eine Zelle gezeichnet.
   static const double _threshold = 0.05;
 
-  HeatmapPainter({required this.events});
+  HeatmapPainter({required this.events, this.colors = AppColors.light});
+
+  // Material yellow / orange / red — Farbrampe unverändert (US-401)
+  static const _yellow = Color(0xFFFFEB3B);
+  static const _orange = Color(0xFFFF9800);
+  static const _red = Color(0xFFF44336);
 
   /// Farbrampe: gelb (niedrig) → orange → rot (Maximum),
   /// Alpha von 0.15 (Einzelereignis sichtbar) bis 0.85 (Linien durchscheinend).
   static Color colorFor(double intensity) {
     final t = intensity.clamp(0.0, 1.0);
     final color = t < 0.5
-        ? Color.lerp(Colors.yellow, Colors.orange, t * 2)!
-        : Color.lerp(Colors.orange, Colors.red, (t - 0.5) * 2)!;
+        ? Color.lerp(_yellow, _orange, t * 2)!
+        : Color.lerp(_orange, _red, (t - 0.5) * 2)!;
     return color.withValues(alpha: 0.15 + 0.70 * t);
   }
 
@@ -102,9 +114,8 @@ class HeatmapPainter extends CustomPainter {
     final cellW = w / HeatmapDensity.cols;
     final cellH = h / HeatmapDensity.rows;
 
-    // Rasen
-    canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFF2E7D32));
+    // Rasen mit Feldlinien (gedämpft, damit die Dichte dominiert)
+    paintPitch(canvas, size, colors, lineOpacity: 0.55);
 
     // Dichte-Overlay: alle Zellen in eine Ebene zeichnen und diese einmal
     // weichzeichnen — glättet die Gitterkanten des 96×64-Rasters in einem Pass.
@@ -112,7 +123,10 @@ class HeatmapPainter extends CustomPainter {
       Offset.zero & size,
       Paint()
         ..imageFilter = ui.ImageFilter.blur(
-            sigmaX: cellW, sigmaY: cellH, tileMode: TileMode.decal),
+          sigmaX: cellW,
+          sigmaY: cellH,
+          tileMode: TileMode.decal,
+        ),
     );
     final cellPaint = Paint();
     for (int r = 0; r < HeatmapDensity.rows; r++) {
@@ -127,14 +141,6 @@ class HeatmapPainter extends CustomPainter {
       }
     }
     canvas.restore();
-
-    // Feldlinien (vereinfacht)
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-    canvas.drawRect(Rect.fromLTWH(2, 2, w - 4, h - 4), linePaint);
-    canvas.drawLine(Offset(w / 2, 0), Offset(w / 2, h), linePaint);
   }
 
   @override

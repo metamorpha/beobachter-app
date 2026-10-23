@@ -13,7 +13,7 @@
 |-------|----------|-----------|
 | Unit-Tests (Domain-Logik) | `flutter_test` | Timer-Arithmetik, Event-Formatierung |
 | Integrationstests (Repository + SQLite) | `flutter_test` + `drift/native` In-Memory-DB | CRUD, Cascade, Enum-Rundreise |
-| Manuelle Tests (UI + Workflow) | Gerät / Simulator | Live-Erfassung, Spieluhr, Undo |
+| Manuelle Tests (UI + Workflow) | Gerät / Simulator | Live-Erfassung, Spieluhr, Löschen |
 | Fachliche Validierung | Review durch Beobachter | Kategorien, Bewertungssystem |
 
 ### Testprinzip
@@ -102,7 +102,7 @@
 | EV-03 | getEvents gibt Events chronologisch (elapsedMs) zurück | ✅ |
 | EV-04 | getEvent gibt null bei unbekannter ID | ✅ |
 | EV-05 | updateEvent aktualisiert coachingFlag | ✅ |
-| EV-06 | deleteEvent entfernt Event (Undo-Pfad) | ✅ |
+| EV-06 | deleteEvent entfernt Event (Löschen in „Letzte Ereignisse") | ✅ |
 | EV-07 | deleteGame löscht Events via CASCADE | ✅ |
 | EV-08 | CardType.red wird als Enum korrekt roundtripped | ✅ |
 | EV-09 | Optionale Felder (assessment, refDecision) bleiben null | ✅ |
@@ -164,7 +164,7 @@ Details siehe `docs/15_spiel_beenden_tests.md`.
 | M-04 | Spielfeld antippen | Side Panel öffnet sich in <200ms |
 | M-05 | Ereignistyp "Fußvergehen" wählen | Button hervorgehoben, Spieler-Sektion erscheint |
 | M-06 | Nur Typ wählen → Speichern (Minimal-Pfad) | Event gespeichert, Marker auf Spielfeld |
-| M-07 | Undo-SnackBar erscheint | 5-Sekunden-Fenster, "Rückgängig" entfernt Event |
+| M-07 | Lösch-Icon in „Letzte Ereignisse" antippen | Event verschwindet aus Liste und Spielfeld (kein Undo, siehe `06_architecture.md`) |
 | M-08 | Vollständiges Foul: Typ + Spieler + Entscheidung + Bewertung + Notiz | Alle Felder in Szenenliste sichtbar |
 | M-09 | Spieluhr stoppen (Halbzeit) → starten | elapsedMs wird fortgesetzt, kein Reset |
 | M-10 | App-Neustart während Spiel | Spieluhr zeigt korrekte akkumulierte Zeit |
@@ -246,7 +246,7 @@ Das 2×2-Grid (Korrekt/Falsch × Erwartbar/Komplex) ist fachlich gut durchdacht:
 - **Spieluhr:** Background-safe via Timestamp-Ansatz. Korrekte Akkumulation über Halbzeiten. 13 Spielphasen (1./2. HZ, NS, VL) mit automatischem NS-Übergang und phasenbewussten Zeitstempeln (45+XX, 90+XX usw.).
 - **Ereigniserfassung:** Minimal-Pfad (3 Taps) implementiert. Spielfeld-Koordinaten korrekt normalisiert.
 - **Datenpersistenz:** Sofortiges Schreiben nach Speichern. Cascade-Delete via PRAGMA foreign_keys.
-- **Undo-Mechanismus:** 5-Sekunden-SnackBar, deleteEvent() korrekt.
+- **Korrektur:** Kein Undo nach dem Speichern (nie implementiert, 2026-10-23 so entschieden); Löschen über „Letzte Ereignisse" ruft deleteEvent() korrekt auf.
 - **Bewertung:** 2×2-Grid implementiert, ein Tap wählt beide Dimensionen.
 - **Nachbearbeitung:** Szenenliste, Coaching-Flag, Coaching-Notiz, Coaching-Ansicht.
 - **Heatmap:** Vereinfacht (6×4-Zonen), visuell ausreichend für MVP.
@@ -290,3 +290,13 @@ Alle ursprünglichen MVP-Lücken wurden behoben. Keine offenen Punkte.
 ### Empfehlung
 
 Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind implementiert, alle 99 Tests grün. Nächster Schritt: Feldtest mit echtem Spiel.
+
+---
+
+## UI-Redesign (Epic 6)
+
+- 31 neue Widget-Tests in `test/ui_redesign_test.dart` (TC-6011 – TC-6063), u. a. mit Flutters `textContrastGuideline` und `androidTapTargetGuideline`
+- 8 Golden-Tests in `test/golden/` (Tag `golden`), nur auf macOS; auf anderen Plattformen übersprungen
+- Gesamtsuite: **252 Tests, alle grün** (213 bestehende, 31 Redesign, 8 Golden)
+- Integrationstests auf macOS: alle 4 Dateien grün (einzeln gestartet; mehrere Dateien in einem Lauf scheitern am Tool mit „Error waiting for a debug connection")
+- Offen: manueller Geräte-Check TC-6064 (iPad, Android-Tablet, Surface, draußen bei Tageslicht)
