@@ -164,7 +164,12 @@ void main() {
       await _openDialog(tester);
 
       expect(find.byType(SquadEditDialog), findsOneWidget);
-      expect(find.text('Aufstellung'), findsOneWidget);
+      // Titel im Dialog (der Live-Screen-Button trägt seit US-602 dieselbe Beschriftung)
+      expect(
+          find.descendant(
+              of: find.byType(SquadEditDialog),
+              matching: find.text('Aufstellung')),
+          findsOneWidget);
       expect(find.text('Heim'), findsWidgets);
       expect(find.text('Gast'), findsWidgets);
       expect(_chip(TeamSide.home, 4), findsOneWidget);
