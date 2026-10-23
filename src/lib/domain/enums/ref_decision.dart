@@ -10,7 +10,7 @@ enum RefDecision {
   cornerKick,       // Ecke
   goalKick,         // Abstoß
   throwIn,          // Einwurf
-  goal,             // Tor/Anstoß
+  goal,             // Tor/Anstoß — nur noch für migrierte Torentscheidungen (US-215)
 }
 
 extension RefDecisionLabel on RefDecision {

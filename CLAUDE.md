@@ -60,7 +60,7 @@ Key design decisions:
 |------|---------|
 | `01_epics.md` | MVP epics, prioritized for live-game use |
 | `02_us_spielverwaltung.md` | User stories — Epic 1: Spielverwaltung (US-101–108) |
-| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–209) |
+| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–215) |
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–305) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
@@ -79,23 +79,24 @@ Key design decisions:
 | `14_heatmap_kde_tests.md` | Heatmap KDE test cases — US-401 (10 TCs) |
 | `15_spiel_beenden_tests.md` | End game test cases — US-212 (13 TCs) |
 | `18_live_ereignisliste_tests.md` | Live side panel event list test cases — US-213 (10 TCs) |
-| `19_spielstand_tests.md` | Score & goal scorer test cases — US-214 (19 TCs) |
+| `19_spielstand_tests.md` | Score & goal scorer test cases — US-214 (19 TCs, abgelöst durch 25) |
 | `20_team_vergehen_tests.md` | Fouls per team & half test cases — US-404 (13 TCs) |
 | `21_spiel_fortsetzen_tests.md` | Resume running game from game list — US-109 (8 TCs) |
 | `22_aufstellung_live_tests.md` | Edit squads during live game — US-110 (9 TCs) |
 | `23_ui_redesign_plan.md` | UI redesign plan — theme, reachability, motion (presentation layer only) |
 | `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
+| `25_tor_erfassung_tests.md` | Goal capture via header buttons — US-215 (20 TCs) |
 
 ### src/lib/ structure
 
 ```
 domain/
-  entities/     Game · Event · EventPlayer · Squad · TimerState
-  enums/        EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole
-  repositories/ Abstract interfaces (GameRepository, EventRepository, SquadRepository, TimerRepository)
+  entities/     Game · Event · EventPlayer · Squad · TimerState · Goal · Score
+  enums/        EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole · GoalKind
+  repositories/ Abstract interfaces (GameRepository, EventRepository, SquadRepository, TimerRepository, GoalRepository)
 data/
   database/
-    tables/     5 Drift tables (games, events, event_players, squads, timer_states)
+    tables/     6 Drift tables (games, events, event_players, squads, timer_states, goals)
     app_database.dart  @DriftDatabase + foreign_keys pragma
   repositories/ Concrete implementations
 core/
@@ -122,7 +123,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (252 tests incl. 8 golden, all green)
+# Run tests (250 tests incl. 8 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -139,12 +140,13 @@ flutter run
 
 | Enum | Values |
 |------|--------|
-| `EventType` | footFoul · bodyFoul · handball · unsporting · violent · offside · advantage · goalDecision · custom |
-| `RefDecision` | freeKick · **indirectFreeKick** · penalty · advantage · playOn · yellowCard · yellowRedCard · redCard · cornerKick · goalKick · throwIn · goal |
+| `EventType` | footFoul · bodyFoul · handball · unsporting · violent · offside · advantage · custom |
+| `RefDecision` | freeKick · **indirectFreeKick** · penalty · advantage · playOn · yellowCard · yellowRedCard · redCard · cornerKick · goalKick · throwIn · goal (nur migrierte Altdaten, nicht wählbar) |
 | `CardType` | yellow · yellowRed · red |
 | `Assessment` | correctExpected · correctComplex · wrongExpected · wrongComplex |
 | `TeamSide` | home · away |
 | `PlayerRole` | fouler · fouled |
+| `GoalKind` | regular · ownGoal · penalty |
 
 ### Key entity: Event
 
@@ -160,13 +162,23 @@ Event {
   sceneNote: String?
   coachingFlag: bool
   coachingNote: String?
-  goalScorerTeam: TeamSide?  // only for goalDecision (US-214)
-  goalScorerNumber: int?
-  ownGoal: bool             // goal credited to opponent of goalScorerTeam
 }
 ```
 
-**Score** (`domain/entities/score.dart`) is always derived from events, never stored: an event counts iff `type == goalDecision && refDecision == goal && goalScorerTeam != null` (see `Event.goalForTeam`). DB schema is v6.
+### Key entity: Goal (US-215)
+
+Goals are captured separately from events via the „+ Tor" buttons in the live header — no pitch location, no assessment.
+
+```dart
+Goal {
+  elapsedMs: int / gamePhase   // frozen at button tap
+  team: TeamSide        // team credited with the goal (also for own goals)
+  scorerNumber: int?    // own goal: player of the defending team (= scorerTeam)
+  kind: GoalKind        // regular · ownGoal · penalty
+}
+```
+
+**Score** (`domain/entities/score.dart`) is always derived from goals, never stored (`Score.fromGoals`). DB schema is v7; the v6→v7 migration copies counted goal decisions into `goals` and turns all former `goalDecision` events into `custom` / „Torentscheidung". The `events.goal_scorer_*`/`own_goal` columns are legacy and unused.
 
 ## Implementation Status
 
@@ -183,6 +195,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Vergehen pro Team (US-404) | Done — `TeamFouls` + `teamFoulsProvider`; DB schema v6 (`event_players.jersey_number` nullable) |
 | Laufendes Spiel fortsetzen (US-109) | Done — Tap in der Spielliste öffnet bei `GamePhase.istLaufend` den Live-Screen; Badge „Läuft" |
 | Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
+| Tor-Erfassung (US-215) | Done — „+ Tor"-Buttons je Team in der Live-Kopfzeile, `GoalDialog`, Tabelle `goals`; DB schema v7 |
 | UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` |
 
 ## Development Pipeline

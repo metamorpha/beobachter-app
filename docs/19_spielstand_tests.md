@@ -1,5 +1,7 @@
 # Testfälle — Spielstand und Torschütze (US-214)
 
+> **Abgelöst durch `25_tor_erfassung_tests.md` (US-215, 2026-10-23).** Die Erfassung über die Torentscheidung entfällt; die zugehörigen Tests wurden entfernt.
+
 ---
 
 ## Zählregel (Unit)

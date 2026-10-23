@@ -13,7 +13,6 @@ extension EventTypeStyle on EventType {
         EventType.violent => Icons.flash_on,
         EventType.offside => Icons.flag_outlined,
         EventType.advantage => Icons.fast_forward_rounded,
-        EventType.goalDecision => Icons.sports_soccer,
         EventType.custom => Icons.edit_note,
       };
 
@@ -25,7 +24,6 @@ extension EventTypeStyle on EventType {
         EventType.violent => const Color(0xFFB91C1C),
         EventType.offside => const Color(0xFF0E7490),
         EventType.advantage => const Color(0xFF2563EB),
-        EventType.goalDecision => const Color(0xFF111827),
         EventType.custom => const Color(0xFF475569),
       };
 }

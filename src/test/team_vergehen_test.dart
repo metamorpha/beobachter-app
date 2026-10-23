@@ -151,11 +151,10 @@ void main() {
       }
     });
 
-    test('TC-4042: Abseits, Vorteil und Torentscheidung zählen nicht', () {
+    test('TC-4042: Abseits und Vorteil zählen nicht', () {
       final types = [
         EventType.offside,
         EventType.advantage,
-        EventType.goalDecision,
       ];
       final fouls = TeamFouls.fromEvents(
         [for (final t in types) _event(t.name, t)],
@@ -334,11 +333,27 @@ void main() {
         INSERT INTO event_players (id, event_id, role, team, jersey_number)
         VALUES ('p1', 'e1', 'fouler', 'home', 7);
       ''');
+      // v7-Migration liest Torentscheidungen aus events (US-215)
+      raw.execute('''
+        CREATE TABLE events (
+          id TEXT NOT NULL PRIMARY KEY,
+          game_id TEXT NOT NULL,
+          elapsed_ms INTEGER NOT NULL,
+          game_phase TEXT NOT NULL DEFAULT 'ersteHalbzeit',
+          type TEXT NOT NULL,
+          custom_type_label TEXT,
+          ref_decision TEXT,
+          goal_scorer_team TEXT,
+          goal_scorer_number INTEGER,
+          own_goal INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL
+        );
+      ''');
       raw.execute('PRAGMA user_version = 5;');
     }));
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 6);
+    expect(db.schemaVersion, 7);
     final rows = await db.select(db.eventPlayers).get();
     expect(rows, hasLength(1));
     expect(rows.single.id, 'p1');

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/entities/event.dart';
 import '../../../domain/entities/game.dart';
+import '../../../domain/entities/goal.dart';
 import '../../../domain/entities/score.dart';
 import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/game_phase.dart';
+import '../../../domain/enums/goal_kind.dart';
+import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
@@ -15,6 +19,7 @@ import '../../widgets/squad_edit_dialog.dart';
 import '../../widgets/timer_display.dart';
 import '../review/review_screen.dart';
 import 'event_form_panel.dart';
+import 'goal_dialog.dart';
 
 class LiveScreen extends ConsumerStatefulWidget {
   final Game game;
@@ -148,7 +153,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                       )
                     : _RecentEvents(
                         key: const ValueKey('recent'),
-                        gameId: widget.game.id,
+                        game: widget.game,
                       ),
               ),
             ),
@@ -219,7 +224,7 @@ class _SavedToast extends StatelessWidget {
   }
 }
 
-/// Kopfleiste nur zur Anzeige: Teams, Spielstand, Phase und Uhr (US-602).
+/// Kopfleiste: Tor-Buttons, Teams, Spielstand, Phase und Uhr (US-602, US-215).
 class _Scoreboard extends ConsumerWidget {
   final Game game;
 
@@ -229,10 +234,23 @@ class _Scoreboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final home = game.homeTeamName.isEmpty ? 'Heim' : game.homeTeamName;
     final away = game.awayTeamName.isEmpty ? 'Gast' : game.awayTeamName;
+    final abgeschlossen =
+        ref
+            .watch(timerStateProvider(game.id))
+            .valueOrNull
+            ?.phase
+            .istAbgeschlossen ??
+        false;
 
     return Row(
       key: const Key('live_scoreboard'),
       children: [
+        _GoalButton(
+          game: game,
+          team: TeamSide.home,
+          enabled: !abgeschlossen,
+        ),
+        const SizedBox(width: AppSpacing.m),
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -260,12 +278,64 @@ class _Scoreboard extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(width: AppSpacing.m),
+        _GoalButton(
+          game: game,
+          team: TeamSide.away,
+          enabled: !abgeschlossen,
+        ),
         const SizedBox(width: AppSpacing.l),
         Padding(
           padding: const EdgeInsets.only(right: AppSpacing.s),
           child: TimerClock(gameId: game.id),
         ),
       ],
+    );
+  }
+}
+
+/// „+ Tor" in Teamfarbe — friert Spielzeit und Phase beim Tap ein (US-215).
+class _GoalButton extends ConsumerWidget {
+  final Game game;
+  final TeamSide team;
+  final bool enabled;
+
+  const _GoalButton({
+    required this.game,
+    required this.team,
+    required this.enabled,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = context.colors.team(team);
+    final name = team == TeamSide.home ? game.homeTeamName : game.awayTeamName;
+    return Tooltip(
+      message: 'Tor ${team.label}',
+      child: FilledButton.icon(
+        key: Key('btn_goal_${team.name}'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, AppSizes.liveTap),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+          backgroundColor: color,
+          foregroundColor: AppColors.onColor(color),
+        ),
+        onPressed: enabled
+            ? () {
+                final timer = ref.read(timerServiceProvider(game.id));
+                GoalDialog.show(
+                  context,
+                  gameId: game.id,
+                  team: team,
+                  elapsedMs: timer.currentMs,
+                  gamePhase: timer.current.phase,
+                  teamName: name,
+                );
+              }
+            : null,
+        icon: const Icon(Icons.sports_soccer, size: 22),
+        label: const Text('+ Tor'),
+      ),
     );
   }
 }
@@ -371,17 +441,33 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-class _RecentEvents extends ConsumerWidget {
-  final String gameId;
+/// Eintrag in „Letzte Ereignisse": Ereignis oder Tor (US-215).
+typedef _Entry = ({Event? event, Goal? goal});
 
-  const _RecentEvents({super.key, required this.gameId});
+class _RecentEvents extends ConsumerWidget {
+  final Game game;
+
+  const _RecentEvents({super.key, required this.game});
+
+  static GamePhase _phase(_Entry e) => e.event?.gamePhase ?? e.goal!.gamePhase;
+  static int _ms(_Entry e) => e.event?.elapsedMs ?? e.goal!.elapsedMs;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final gameId = game.id;
     final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? [];
-    // Neuestes zuerst; Liste füllt die Panelhöhe und scrollt (US-213)
-    final recent = events.reversed.toList();
-    final goalScores = Score.runningByEventId(events);
+    final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? [];
+    final goalScores = Score.runningByGoalId(goals);
+
+    // Ereignisse und Tore chronologisch (Phase, dann Zeit), neuestes zuerst;
+    // Liste füllt die Panelhöhe und scrollt (US-213)
+    final recent = <_Entry>[
+      for (final e in events) (event: e, goal: null),
+      for (final g in goals) (event: null, goal: g),
+    ]..sort((a, b) {
+        final byPhase = _phase(b).index.compareTo(_phase(a).index);
+        return byPhase != 0 ? byPhase : _ms(b).compareTo(_ms(a));
+      });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,84 +513,133 @@ class _RecentEvents extends ConsumerWidget {
                   separatorBuilder: (_, _) =>
                       const Divider(height: 1, indent: AppSpacing.l),
                   itemBuilder: (_, i) {
-                    final e = recent[i];
-                    final goalScore = goalScores[e.id];
-                    return ConstrainedBox(
-                      key: Key('recent_event_${e.id}'),
-                      // Mindesthöhe 56 dp gegen Fehltipps (US-213, US-602)
-                      constraints: const BoxConstraints(
-                        minHeight: AppSizes.liveTap,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: AppSpacing.l),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 52,
-                              child: Text(
-                                e.elapsedLabel,
-                                style: TextStyle(
-                                  color: context.scheme.onSurfaceVariant,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 10,
-                              height: 10,
-                              margin: const EdgeInsets.only(
-                                right: AppSpacing.s + 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: e.type.color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                // Gezähltes Tor mit Spielstand danach (US-214)
-                                goalScore != null
-                                    ? '⚽ Tor ${goalScore.shortLabel}'
-                                    : e.type.label,
-                                style: TextStyle(
-                                  color: context.scheme.onSurface,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete_outline,
-                                color: context.scheme.onSurfaceVariant,
-                                size: 22,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: AppSizes.tap,
-                                minHeight: AppSizes.tap,
-                              ),
-                              tooltip: 'Löschen',
-                              onPressed: () async {
-                                await ref
-                                    .read(eventRepositoryProvider)
-                                    .deleteEvent(e.id);
-                                ref.invalidate(eventsProvider(gameId));
-                              },
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                          ],
-                        ),
-                      ),
+                    final entry = recent[i];
+                    final e = entry.event;
+                    if (e != null) {
+                      return _RecentRow(
+                        key: Key('recent_event_${e.id}'),
+                        time: e.elapsedLabel,
+                        dotColor: e.type.color,
+                        label: e.type.label,
+                        onDelete: () async {
+                          await ref
+                              .read(eventRepositoryProvider)
+                              .deleteEvent(e.id);
+                          ref.invalidate(eventsProvider(gameId));
+                        },
+                      );
+                    }
+                    final g = entry.goal!;
+                    final name = g.team == TeamSide.home
+                        ? game.homeTeamName
+                        : game.awayTeamName;
+                    return _RecentRow(
+                      key: Key('recent_goal_${g.id}'),
+                      time: g.elapsedLabel,
+                      dotColor: context.colors.team(g.team),
+                      label: _goalLabel(g, goalScores[g.id]),
+                      bold: true,
+                      onTap: () => GoalDialog.edit(context, g, teamName: name),
+                      onDelete: () async {
+                        await ref.read(goalRepositoryProvider).deleteGoal(g.id);
+                        ref.invalidate(goalsProvider(gameId));
+                      },
                     );
                   },
                 ),
         ),
       ],
+    );
+  }
+
+  /// z. B. „⚽ 2:1 · #9 · 11m" — Spielstand nach diesem Tor.
+  static String _goalLabel(Goal g, Score? after) => [
+    '⚽ ${after?.shortLabel ?? 'Tor'}',
+    if (g.scorerNumber != null) '#${g.scorerNumber}',
+    ?g.kind.shortLabel,
+  ].join(' · ');
+}
+
+/// Zeile in „Letzte Ereignisse" — Mindesthöhe 56 dp gegen Fehltipps
+/// (US-213, US-602).
+class _RecentRow extends StatelessWidget {
+  final String time;
+  final Color dotColor;
+  final String label;
+  final bool bold;
+  final VoidCallback? onTap;
+  final VoidCallback onDelete;
+
+  const _RecentRow({
+    super.key,
+    required this.time,
+    required this.dotColor,
+    required this.label,
+    required this.onDelete,
+    this.bold = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppSizes.liveTap),
+        child: Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.l),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 52,
+                child: Text(
+                  time,
+                  style: TextStyle(
+                    color: context.scheme.onSurfaceVariant,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(right: AppSpacing.s + 2),
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: context.scheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: context.scheme.onSurfaceVariant,
+                  size: 22,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: AppSizes.tap,
+                  minHeight: AppSizes.tap,
+                ),
+                tooltip: 'Löschen',
+                onPressed: onDelete,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -536,7 +671,7 @@ class _EmptyEvents extends StatelessWidget {
   }
 }
 
-/// Spielstand unter den Mannschaftsnamen; leuchtet bei Änderung kurz auf (US-214).
+/// Spielstand unter den Mannschaftsnamen; leuchtet bei Änderung kurz auf (US-214, US-215).
 class _ScoreDisplay extends StatefulWidget {
   final Score score;
 
