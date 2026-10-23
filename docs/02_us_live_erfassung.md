@@ -255,6 +255,8 @@
 
 ### US-214 · Spielstand und Torschütze
 
+> **Abgelöst durch US-215 (2026-10-23):** Tore werden nicht mehr als Ereignistyp „Torentscheidung“ erfasst, sondern über eigene Tor-Buttons. Die Kriterien zur Spielstand-Anzeige gelten weiter, die Erfassung im Ereignisformular entfällt.
+
 **Als** Schiedsrichterbeobachter  
 **möchte ich** bei einer Torentscheidung den Torschützen (inkl. Eigentor) erfassen und den aktuellen Spielstand jederzeit unter den Mannschaftsnamen sehen,  
 **damit** ich den Spielverlauf ohne eigene Strichliste im Blick behalte.
@@ -293,3 +295,46 @@
 - [x] Torschützen-Team, Nummer und Eigentor werden lokal gespeichert und überleben einen App-Neustart
 - [x] Die DB-Migration (Schema v4 → v5) erhält alle bestehenden Spiele und Ereignisse
 - [x] Torschützen erscheinen nicht im Spieler-Ranking der Statistik
+
+---
+
+### US-215 · Tor über eigene Buttons erfassen
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** ein Tor ohne Feldtipp direkt über einen Button beim jeweiligen Team erfassen,  
+**damit** der Spielstand stimmt, ohne dass ich einen Ort auf dem Platz antippen und einen Ereignistyp wählen muss.
+
+**Akzeptanzkriterien:**
+
+*Tor-Buttons in der Kopfzeile*
+- [x] Neben dem Spielstand in der Kopfzeile gibt es zwei Buttons **„+ Tor“**: links für Heim, rechts für Gast, jeweils in der Teamfarbe
+- [x] Die Buttons sind auch bei laufender Uhr und offenem Ereignisformular bedienbar
+- [x] Bei abgeschlossenem Spiel (US-212) sind die Buttons deaktiviert
+- [x] Spielzeit und Phase werden beim Tippen auf den Button festgehalten, nicht erst beim Speichern
+
+*Tor-Dialog*
+- [x] Nach dem Tippen öffnet sich ein Dialog „Tor für HEIM“ bzw. „Tor für GAST“; das Team steht damit fest (Pflichtangabe)
+- [x] **Torart** (optional): Standardtor (vorausgewählt) · Eigentor · Strafstoßtor
+- [x] **Torschütze** (optional): Rückennummer per Kader-Chip oder Zahleneingabe — Bedienung identisch zu Fouler/Gefoulter
+- [x] Bei Standardtor und Strafstoßtor zeigt die Auswahl den Kader des Teams, für das das Tor zählt
+- [x] Bei **Eigentor** zeigt die Auswahl ausschließlich den Kader der verteidigenden Mannschaft (Gegner des begünstigten Teams); eine bereits gewählte Nummer wird beim Wechsel der Torart verworfen
+- [x] Eine Vorschau-Zeile zeigt das Ergebnis, z. B. „Tor für HEIM · #9 (Strafstoß) → 2 : 1“ bzw. „Eigentor #4 (Gast) → Tor für HEIM · 2 : 1“
+- [x] **Speichern** ist sofort möglich — schnellster Weg: „+ Tor“ → Speichern (2 Taps); **Abbrechen** verwirft das Tor
+
+*Anzeige*
+- [x] Der Spielstand in der Kopfzeile aktualisiert sich sofort nach Speichern, Bearbeiten und Löschen eines Tors und wird kurz hervorgehoben
+- [x] In „Letzte Ereignisse“ (US-213) erscheinen Tore chronologisch zwischen den Ereignissen, z. B. „⚽ 2:1 · #9“, mit Kennzeichnung „ET“ (Eigentor) bzw. „11m“ (Strafstoßtor)
+- [x] Tore haben in „Letzte Ereignisse“ ein Lösch-Icon wie Ereignisse (kein Undo); Tippen auf ein Tor öffnet den Dialog vorausgefüllt zum Bearbeiten
+- [x] Tore erscheinen nicht auf dem Platz, nicht in Heatmap, Szenenliste, Vergehen pro Team und Spieler-Ranking
+- [x] In der Spielnachbereitung gibt es einen Abschnitt **„Tore“** mit Minute, Team, Torschütze und Torart
+- [x] Die Spielliste zeigt den Spielstand weiterhin korrekt
+
+*Wegfall Torentscheidung*
+- [x] Der Ereignistyp **„Torentscheidung“** entfällt aus der Typauswahl, ebenso die Entscheidung **„Tor“** und der Tor-Abschnitt im Ereignisformular
+- [x] Bestehende Torentscheidungen werden bei der Migration in Ereignisse vom Typ **Sonstiges** mit Bezeichnung „Torentscheidung“ umgewandelt — Ort, Bewertung, Notizen und Coaching bleiben erhalten
+
+*Migration & Persistenz*
+- [x] Tore werden lokal gespeichert und überleben einen App-Neustart; beim Löschen eines Spiels werden seine Tore mitgelöscht
+- [x] Die DB-Migration (Schema v6 → v7) übernimmt jedes bisher gezählte Tor (Torentscheidung + Entscheidung Tor + Team) als Tor mit gleicher Spielzeit, Phase, Torschütze und Torart (Eigentor bleibt Eigentor)
+- [x] Der Spielstand jedes bestehenden Spiels ist nach der Migration identisch zu vorher
+

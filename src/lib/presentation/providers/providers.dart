@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../data/repositories/game_repository_impl.dart';
+import '../../data/repositories/goal_repository_impl.dart';
 import '../../data/repositories/squad_repository_impl.dart';
 import '../../data/repositories/timer_repository_impl.dart';
 import '../../domain/entities/event.dart';
 import '../../domain/entities/event_player.dart';
 import '../../domain/entities/game.dart';
+import '../../domain/entities/goal.dart';
 import '../../domain/entities/score.dart';
 import '../../domain/entities/team_fouls.dart';
 import '../../domain/entities/timer_state.dart';
@@ -18,6 +20,7 @@ import '../../domain/enums/player_role.dart';
 import '../../domain/enums/team_side.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../../domain/repositories/game_repository.dart';
+import '../../domain/repositories/goal_repository.dart';
 import '../../domain/repositories/squad_repository.dart';
 import '../../domain/repositories/timer_repository.dart';
 import '../../core/timer_service.dart';
@@ -34,6 +37,10 @@ final gameRepositoryProvider = Provider<GameRepository>(
 
 final eventRepositoryProvider = Provider<EventRepository>(
   (ref) => EventRepositoryImpl(ref.watch(databaseProvider)),
+);
+
+final goalRepositoryProvider = Provider<GoalRepository>(
+  (ref) => GoalRepositoryImpl(ref.watch(databaseProvider)),
 );
 
 final squadRepositoryProvider = Provider<SquadRepository>(
@@ -57,16 +64,23 @@ final eventsProvider =
   return ref.watch(eventRepositoryProvider).getEvents(gameId);
 });
 
-/// Aktueller Spielstand — abgeleitet aus den Ereignissen (US-214).
-final scoreProvider = Provider.family<Score, String>((ref, gameId) {
-  final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? const [];
-  return Score.fromEvents(events);
-});
 
 final eventCountProvider =
     FutureProvider.family<int, String>((ref, gameId) async {
   final events = await ref.watch(eventsProvider(gameId).future);
   return events.length;
+});
+
+// ── Tore (US-215) ─────────────────────────────────────────────────────────────
+
+final goalsProvider = FutureProvider.family<List<Goal>, String>((ref, gameId) {
+  return ref.watch(goalRepositoryProvider).getGoals(gameId);
+});
+
+/// Aktueller Spielstand — abgeleitet aus den Toren (US-215).
+final scoreProvider = Provider.family<Score, String>((ref, gameId) {
+  final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? const [];
+  return Score.fromGoals(goals);
 });
 
 // ── Squad ─────────────────────────────────────────────────────────────────────

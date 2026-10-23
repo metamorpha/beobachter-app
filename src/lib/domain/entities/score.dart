@@ -1,7 +1,7 @@
 import '../enums/team_side.dart';
-import 'event.dart';
+import 'goal.dart';
 
-/// Spielstand — immer aus den Ereignissen abgeleitet, nie gespeichert (US-214).
+/// Spielstand — immer aus den Toren abgeleitet, nie gespeichert (US-215).
 class Score {
   final int home;
   final int away;
@@ -13,31 +13,28 @@ class Score {
   Score plus(TeamSide team) =>
       team == TeamSide.home ? Score(home + 1, away) : Score(home, away + 1);
 
-  /// Endstand über alle Ereignisse.
-  factory Score.fromEvents(List<Event> events) {
+  /// Endstand über alle Tore.
+  factory Score.fromGoals(List<Goal> goals) {
     var score = Score.zero;
-    for (final e in events) {
-      final team = e.goalForTeam;
-      if (team != null) score = score.plus(team);
+    for (final g in goals) {
+      score = score.plus(g.team);
     }
     return score;
   }
 
-  /// Spielstand nach jedem gezählten Tor, nach Event-ID.
+  /// Spielstand nach jedem Tor, nach Tor-ID.
   /// Sortiert nach Phase, dann Zeit — Nachspielzeit der 1. HZ liegt zeitlich
   /// vor der 2. HZ, obwohl ihr elapsedMs größer ist.
-  static Map<String, Score> runningByEventId(List<Event> events) {
-    final sorted = [...events]..sort((a, b) {
+  static Map<String, Score> runningByGoalId(List<Goal> goals) {
+    final sorted = [...goals]..sort((a, b) {
         final byPhase = a.gamePhase.index.compareTo(b.gamePhase.index);
         return byPhase != 0 ? byPhase : a.elapsedMs.compareTo(b.elapsedMs);
       });
     final result = <String, Score>{};
     var score = Score.zero;
-    for (final e in sorted) {
-      final team = e.goalForTeam;
-      if (team == null) continue;
-      score = score.plus(team);
-      result[e.id] = score;
+    for (final g in sorted) {
+      score = score.plus(g.team);
+      result[g.id] = score;
     }
     return result;
   }

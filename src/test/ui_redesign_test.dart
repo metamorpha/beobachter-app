@@ -420,7 +420,7 @@ void main() {
         squads: {TeamSide.home: [7, 9, 11]},
         timer: _timer(GamePhase.ersteHalbzeit),
       );
-      for (final type in ['footFoul', 'goalDecision']) {
+      for (final type in ['footFoul', 'custom']) {
         await tester.tap(find.byKey(Key('event_type_$type')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: type);

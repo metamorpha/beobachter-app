@@ -18,7 +18,7 @@ extension FoulCategoryX on FoulCategory {
         FoulCategory.other => 'Andere',
       };
 
-  /// Kategorie eines Ereignistyps — null für Abseits, Vorteil, Torentscheidung.
+  /// Kategorie eines Ereignistyps — null für Abseits und Vorteil.
   static FoulCategory? of(EventType type) => switch (type) {
         EventType.footFoul => FoulCategory.foot,
         EventType.bodyFoul => FoulCategory.body,
@@ -28,9 +28,7 @@ extension FoulCategoryX on FoulCategory {
         EventType.custom =>
           FoulCategory.other,
         EventType.offside ||
-        EventType.advantage ||
-        EventType.goalDecision =>
-          null,
+        EventType.advantage => null,
       };
 }
 
