@@ -33,8 +33,14 @@ import 'package:beobachter_app/presentation/theme/app_theme.dart';
 /// (US-601 – US-606, TC-6064 Vorbereitung).
 ///
 /// Referenzbilder neu erzeugen: `flutter test --update-goldens --tags golden`
-/// Schriftdarstellung ist plattformabhängig — Referenzen stammen von macOS.
+/// Schriftdarstellung ist plattformabhängig — Referenzen stammen von macOS,
+/// deshalb laufen die Tests nur dort und werden sonst übersprungen.
 const _size = Size(1280, 800);
+
+final Object _skip = Platform.isMacOS
+    ? false
+    : 'Golden-Referenzbilder stammen von macOS; auf '
+          '${Platform.operatingSystem} weicht die Schriftdarstellung ab.';
 
 Future<void> _loadFonts() async {
   final inter = FontLoader('Inter');
@@ -323,60 +329,64 @@ Future<void> _snap(String name) async {
 }
 
 void main() {
-  setUpAll(_loadFonts);
+  group('Golden', skip: _skip, () {
+    setUpAll(_loadFonts);
 
-  testWidgets('Spielliste', (tester) async {
-    await _pump(tester, const GameListScreen());
-    await _snap('game_list');
-  });
+    testWidgets('Spielliste', (tester) async {
+      await _pump(tester, const GameListScreen());
+      await _snap('game_list');
+    });
 
-  testWidgets('Spiel-Setup', (tester) async {
-    await _pump(tester, GameSetupScreen(game: _game));
-    await _snap('game_setup');
-  });
+    testWidgets('Spiel-Setup', (tester) async {
+      await _pump(tester, GameSetupScreen(game: _game));
+      await _snap('game_setup');
+    });
 
-  testWidgets('Live-Screen', (tester) async {
-    await _pump(tester, LiveScreen(game: _game));
-    await _snap('live');
-  });
+    testWidgets('Live-Screen', (tester) async {
+      await _pump(tester, LiveScreen(game: _game));
+      await _snap('live');
+    });
 
-  testWidgets('Live-Screen mit Formular', (tester) async {
-    await _pump(tester, LiveScreen(game: _game));
-    await tester.tapAt(tester.getCenter(find.byKey(const Key('pitch_canvas'))));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('event_type_footFoul')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('fouler_team_away')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('decision_freeKick')));
-    await tester.tap(find.byKey(const Key('assessment_correctExpected')));
-    await tester.pumpAndSettle();
-    await _snap('live_form');
-  });
+    testWidgets('Live-Screen mit Formular', (tester) async {
+      await _pump(tester, LiveScreen(game: _game));
+      await tester.tapAt(
+        tester.getCenter(find.byKey(const Key('pitch_canvas'))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('event_type_footFoul')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('fouler_team_away')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('decision_freeKick')));
+      await tester.tap(find.byKey(const Key('assessment_correctExpected')));
+      await tester.pumpAndSettle();
+      await _snap('live_form');
+    });
 
-  testWidgets('Nachbereitung — Szenen', (tester) async {
-    await _pump(tester, ReviewScreen(game: _game));
-    await _snap('review_scenes');
-  });
+    testWidgets('Nachbereitung — Szenen', (tester) async {
+      await _pump(tester, ReviewScreen(game: _game));
+      await _snap('review_scenes');
+    });
 
-  testWidgets('Nachbereitung — Szene bearbeiten', (tester) async {
-    await _pump(tester, ReviewScreen(game: _game));
-    await tester.tap(find.byTooltip('Bearbeiten').at(2));
-    await tester.pumpAndSettle();
-    await _snap('review_edit');
-  });
+    testWidgets('Nachbereitung — Szene bearbeiten', (tester) async {
+      await _pump(tester, ReviewScreen(game: _game));
+      await tester.tap(find.byTooltip('Bearbeiten').at(2));
+      await tester.pumpAndSettle();
+      await _snap('review_edit');
+    });
 
-  testWidgets('Nachbereitung — Coaching', (tester) async {
-    await _pump(tester, ReviewScreen(game: _game));
-    await tester.tap(find.text('Coaching'));
-    await tester.pumpAndSettle();
-    await _snap('review_coaching');
-  });
+    testWidgets('Nachbereitung — Coaching', (tester) async {
+      await _pump(tester, ReviewScreen(game: _game));
+      await tester.tap(find.text('Coaching'));
+      await tester.pumpAndSettle();
+      await _snap('review_coaching');
+    });
 
-  testWidgets('Nachbereitung — Statistik', (tester) async {
-    await _pump(tester, ReviewScreen(game: _game));
-    await tester.tap(find.text('Statistik'));
-    await tester.pumpAndSettle();
-    await _snap('review_stats');
+    testWidgets('Nachbereitung — Statistik', (tester) async {
+      await _pump(tester, ReviewScreen(game: _game));
+      await tester.tap(find.text('Statistik'));
+      await tester.pumpAndSettle();
+      await _snap('review_stats');
+    });
   });
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+
+import 'package:beobachter_app/domain/enums/assessment.dart';
+import 'package:beobachter_app/presentation/providers/providers.dart';
+import 'package:beobachter_app/presentation/screens/live/live_screen.dart';
 
 import '../helpers/app_driver.dart';
 
@@ -102,6 +107,9 @@ void main() {
     await tester.tap(find.byKey(const Key('event_type_handball')));
     await tester.pumpAndSettle();
 
+    // Seit US-603 scrollt das Formular: Bewertung erst ins Bild holen
+    await tester.ensureVisible(find.byKey(const Key('assessment_correctExpected')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('assessment_correctExpected')));
     await tester.pumpAndSettle();
 
@@ -109,5 +117,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Ereignis erfassen'), findsNothing);
+
+    // Die Bewertung ist wirklich gespeichert (ein danebengehender Tap fiele auf)
+    final live = find.byType(LiveScreen);
+    final gameId = tester.widget<LiveScreen>(live).game.id;
+    final events = await ProviderScope.containerOf(tester.element(live))
+        .read(eventRepositoryProvider)
+        .getEvents(gameId);
+    expect(events.single.assessment, Assessment.correctExpected);
   });
 }
