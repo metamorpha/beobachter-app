@@ -110,6 +110,73 @@ class _PitchCanvasState extends State<PitchCanvas>
   }
 }
 
+/// Zeichnet Rasen mit Mähstreifen und alle Feldlinien — gemeinsam für das
+/// Live-Spielfeld und die Heatmap der Statistik (US-602, US-605).
+void paintPitch(
+  Canvas canvas,
+  Size size,
+  AppColors colors, {
+  double lineOpacity = 1,
+}) {
+  const stripes = 12;
+  final w = size.width;
+  final h = size.height;
+
+  canvas.drawRect(Offset.zero & size, Paint()..color = colors.pitch);
+  final stripePaint = Paint()..color = colors.pitchStripe;
+  final stripeW = w / stripes;
+  for (var i = 0; i < stripes; i += 2) {
+    canvas.drawRect(Rect.fromLTWH(i * stripeW, 0, stripeW, h), stripePaint);
+  }
+
+  final lineColor = colors.pitchLine.withValues(
+    alpha: colors.pitchLine.a * lineOpacity,
+  );
+  final line = Paint()
+    ..color = lineColor
+    ..strokeWidth = 2
+    ..style = PaintingStyle.stroke;
+  final dot = Paint()..color = lineColor;
+  const m = 10.0;
+  final field = Rect.fromLTWH(m, m, w - 2 * m, h - 2 * m);
+
+  // Außenlinien, Mittellinie, Mittelkreis, Mittelpunkt
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(field, const Radius.circular(2)),
+    line,
+  );
+  canvas.drawLine(Offset(w / 2, m), Offset(w / 2, h - m), line);
+  canvas.drawCircle(Offset(w / 2, h / 2), h * 0.16, line);
+  canvas.drawCircle(Offset(w / 2, h / 2), 4, dot);
+
+  // Strafräume, Torräume, Strafstoßpunkte, Teilkreise
+  final boxW = field.width * 0.16;
+  final boxH = field.height * 0.44;
+  final goalBoxW = field.width * 0.06;
+  final goalBoxH = field.height * 0.22;
+  for (final left in [true, false]) {
+    final x0 = left ? field.left : field.right - boxW;
+    canvas.drawRect(Rect.fromLTWH(x0, h / 2 - boxH / 2, boxW, boxH), line);
+    final gx0 = left ? field.left : field.right - goalBoxW;
+    canvas.drawRect(
+      Rect.fromLTWH(gx0, h / 2 - goalBoxH / 2, goalBoxW, goalBoxH),
+      line,
+    );
+    final spot = Offset(
+      left ? field.left + boxW * 0.7 : field.right - boxW * 0.7,
+      h / 2,
+    );
+    canvas.drawCircle(spot, 3, dot);
+    canvas.drawArc(
+      Rect.fromCircle(center: spot, radius: h * 0.12),
+      left ? -0.93 : 3.14159 - 0.93,
+      1.86,
+      false,
+      line,
+    );
+  }
+}
+
 class _PitchPainter extends CustomPainter {
   final List<Event> events;
   final AppColors colors;
@@ -127,59 +194,11 @@ class _PitchPainter extends CustomPainter {
     required this.rippleAt,
   }) : super(repaint: Listenable.merge([markerIn, ripple]));
 
-  static const _stripes = 12;
-
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-
-    // Rasen mit Mähstreifen
-    canvas.drawRect(Offset.zero & size, Paint()..color = colors.pitch);
-    final stripePaint = Paint()..color = colors.pitchStripe;
-    final stripeW = w / _stripes;
-    for (var i = 0; i < _stripes; i += 2) {
-      canvas.drawRect(Rect.fromLTWH(i * stripeW, 0, stripeW, h), stripePaint);
-    }
-
-    final line = Paint()
-      ..color = colors.pitchLine
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    const m = 10.0;
-    final field = Rect.fromLTWH(m, m, w - 2 * m, h - 2 * m);
-
-    // Außenlinien, Mittellinie, Mittelkreis, Mittelpunkt
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(field, const Radius.circular(2)), line);
-    canvas.drawLine(Offset(w / 2, m), Offset(w / 2, h - m), line);
-    canvas.drawCircle(Offset(w / 2, h / 2), h * 0.16, line);
-    canvas.drawCircle(
-        Offset(w / 2, h / 2), 4, Paint()..color = colors.pitchLine);
-
-    // Strafräume, Torräume, Strafstoßpunkte, Teilkreise
-    final boxW = field.width * 0.16;
-    final boxH = field.height * 0.44;
-    final goalBoxW = field.width * 0.06;
-    final goalBoxH = field.height * 0.22;
-    for (final left in [true, false]) {
-      final x0 = left ? field.left : field.right - boxW;
-      canvas.drawRect(Rect.fromLTWH(x0, h / 2 - boxH / 2, boxW, boxH), line);
-      final gx0 = left ? field.left : field.right - goalBoxW;
-      canvas.drawRect(
-          Rect.fromLTWH(gx0, h / 2 - goalBoxH / 2, goalBoxW, goalBoxH), line);
-      final spot = Offset(
-          left ? field.left + boxW * 0.7 : field.right - boxW * 0.7, h / 2);
-      canvas.drawCircle(spot, 3, Paint()..color = colors.pitchLine);
-      final arcR = h * 0.12;
-      canvas.drawArc(
-        Rect.fromCircle(center: spot, radius: arcR),
-        left ? -0.93 : 3.14159 - 0.93,
-        1.86,
-        false,
-        line,
-      );
-    }
+    paintPitch(canvas, size, colors);
 
     // Ereignis-Marker in Typ-Farbe; neue Marker „ploppen" ein
     final shadow = Paint()
