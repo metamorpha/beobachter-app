@@ -170,6 +170,8 @@ Future<ProviderContainer> _pump(WidgetTester tester, Widget home,
   tester.view.physicalSize = _size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
+  // Echte Schatten statt der schwarzen Test-Konturen; _snap setzt zurück
+  debugDisableShadows = false;
 
   final db = AppDatabase.forTesting(NativeDatabase.memory());
   final c = ProviderContainer(overrides: [databaseProvider.overrideWithValue(db)]);
@@ -191,8 +193,14 @@ Future<ProviderContainer> _pump(WidgetTester tester, Widget home,
   return c;
 }
 
-Future<void> _snap(String name) => expectLater(
-    find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
+Future<void> _snap(String name) async {
+  try {
+    await expectLater(
+        find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
+  } finally {
+    debugDisableShadows = true;
+  }
+}
 
 void main() {
   setUpAll(_loadFonts);

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+import '../theme/app_motion.dart';
+import '../theme/app_spacing.dart';
+
 /// Rückennummern-Eingabe mit Chips — gemeinsam für Spiel-Setup und
 /// Aufstellungs-Dialog im Live-Screen (US-102, US-110).
 class SquadInput extends StatefulWidget {
@@ -39,6 +43,7 @@ class _SquadInputState extends State<SquadInput> {
 
   @override
   Widget build(BuildContext context) {
+    final onTeam = AppColors.onColor(widget.teamColor);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -52,7 +57,7 @@ class _SquadInputState extends State<SquadInput> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   hintText: 'Rückennummer (1–99)',
-                  isDense: true,
+                  prefixIcon: Icon(Icons.tag_rounded),
                 ),
                 onSubmitted: (_) {
                   _submit();
@@ -61,28 +66,45 @@ class _SquadInputState extends State<SquadInput> {
                 },
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
+            const SizedBox(width: AppSpacing.s),
+            FilledButton.tonal(
               key: _key('add'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(AppSizes.tap, 52),
+              ),
               onPressed: _submit,
               child: const Text('+ Hinzufügen'),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: widget.numbers
-              .map((n) => Chip(
+        const SizedBox(height: AppSpacing.m),
+        AnimatedSize(
+          duration: AppMotion.of(context, AppMotion.medium),
+          curve: AppMotion.curve,
+          alignment: Alignment.topLeft,
+          child: Wrap(
+            spacing: AppSpacing.s - 2,
+            runSpacing: AppSpacing.s - 2,
+            children: widget.numbers
+                .map(
+                  (n) => Chip(
                     key: _key('chip_$n'),
-                    label: Text('#$n',
-                        style: const TextStyle(color: Colors.white)),
+                    label: Text(
+                      '#$n',
+                      style: TextStyle(
+                        color: onTeam,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
                     backgroundColor: widget.teamColor,
-                    deleteIconColor: Colors.white70,
+                    side: BorderSide.none,
+                    deleteIconColor: onTeam.withValues(alpha: 0.8),
                     onDeleted: () => widget.onRemove(n),
-                  ))
-              .toList(),
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ],
     );

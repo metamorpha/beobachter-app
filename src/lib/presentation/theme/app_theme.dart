@@ -43,22 +43,25 @@ abstract final class AppTheme {
       fontFamily: fontFamily,
       brightness: Brightness.light,
     );
-    final text = base.textTheme.copyWith(
-      headlineSmall: base.textTheme.headlineSmall
+    // ThemeData.textTheme trägt vor Theme.of noch keine Größen (Geometrie
+    // wird erst beim Lokalisieren ergänzt) — daher explizit zugrunde legen.
+    final sized = Typography.englishLike2021.merge(base.textTheme);
+    final text = sized.copyWith(
+      headlineSmall: sized.headlineSmall
           ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
-      titleLarge: base.textTheme.titleLarge
+      titleLarge: sized.titleLarge
           ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.2),
       titleMedium:
-          base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          sized.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       titleSmall:
-          base.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-      labelLarge: base.textTheme.labelLarge
+          sized.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      labelLarge: sized.labelLarge
           ?.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
-      labelMedium: base.textTheme.labelMedium
+      labelMedium: sized.labelMedium
           ?.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
-      labelSmall: base.textTheme.labelSmall?.copyWith(
+      labelSmall: sized.labelSmall?.copyWith(
           fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8),
-      bodySmall: base.textTheme.bodySmall?.copyWith(fontSize: 13),
+      bodySmall: sized.bodySmall?.copyWith(fontSize: 13),
     );
 
     final roundedM = RoundedRectangleBorder(
