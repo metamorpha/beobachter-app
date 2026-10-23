@@ -290,3 +290,13 @@ Alle ursprünglichen MVP-Lücken wurden behoben. Keine offenen Punkte.
 ### Empfehlung
 
 Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind implementiert, alle 99 Tests grün. Nächster Schritt: Feldtest mit echtem Spiel.
+
+---
+
+## UI-Redesign (Epic 6)
+
+- 31 neue Widget-Tests in `test/ui_redesign_test.dart` (TC-6011 – TC-6063), u. a. mit Flutters `textContrastGuideline` und `androidTapTargetGuideline`
+- 8 Golden-Tests in `test/golden/` (Tag `golden`)
+- Gesamtsuite: **252 Tests, alle grün** (213 bestehende, 31 Redesign, 8 Golden)
+- Integrationstests auf macOS: alle 4 Dateien grün (einzeln gestartet; mehrere Dateien in einem Lauf scheitern am Tool mit „Error waiting for a debug connection")
+- Offen: manueller Geräte-Check TC-6064 (iPad, Android-Tablet, Surface, draußen bei Tageslicht)

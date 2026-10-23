@@ -220,3 +220,12 @@ Phase 1 ist Voraussetzung für alles Weitere. Die Phasen 2–5 sind unabhängig 
 | 2 | Linkshänder-Option | **Nicht Teil des Redesigns.** Der Nutzer schreibt dafür später eine eigene User Story. Das Layout sollte die Spiegelung aber nicht unnötig erschweren (Aktionsleiste und Panel als eigenständige Widgets). |
 | 3 | Haptisches Feedback | **Keine Vibration.** Rückmeldung erfolgt ausschließlich visuell. |
 | 4 | Schrift | **Inter**, als Asset gebündelt. |
+
+---
+
+## 10. Umsetzung — Abweichungen vom Plan
+
+- **Phase 1** hat nur das Fundament gelegt (Theme, Inter, Tokens, Bausteine). Die hartkodierten Farben wurden nicht vorab, sondern beim Umbau des jeweiligen Screens in Phase 2–5 ersetzt. Das spart einen zweiten Durchgang durch dieselben Dateien.
+- **Zeitachse** mit Widgets statt `CustomPainter`, damit Werte als Text lesbar und testbar bleiben.
+- **Speicher-Bestätigung**: Das Panel schließt sofort, ein Hinweis „Ereignis gespeichert" blendet über dem Spielfeld ein.
+- **Golden-Tests** liefen schon ab Phase 2 als Screenshot-Werkzeug mit und wurden in Phase 6 als Tests behalten.

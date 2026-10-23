@@ -238,3 +238,40 @@ Jede Spielkachel zeigt Datum und Ereignisanzahl im Subtitle. Der `eventCountProv
 
 Alle Tests laufen gegen eine In-Memory-SQLite-Datenbank (`NativeDatabase.memory()`).
 
+
+---
+
+## UI-Redesign (Epic 6, US-601 – US-606)
+
+Nur die Presentation-Schicht wurde geändert; `domain/`, `data/`, `core/` und `providers.dart` sind unverändert.
+
+### Theme (`presentation/theme/`)
+
+| Datei | Inhalt |
+|---|---|
+| `app_theme.dart` | Einziges, helles `ThemeData` (Material 3, Inter) mit allen Component-Themes; Seitenwechsel per FadeForwards (350 ms), iOS behält Cupertino |
+| `app_colors.dart` | `AppColors` als `ThemeExtension`: Heim/Gast, korrekt/falsch, Karten, Coaching, Phasen-Aktionen, Spielfeld; `context.colors` mit Fallback für Tests ohne App-Theme |
+| `app_spacing.dart` | Abstände, Radien, Mindestgrößen (`tap` 48, `liveTap` 56, `primaryAction` 64) |
+| `app_motion.dart` | Dauern/Kurve; `AppMotion.of` liefert `Duration.zero` bei „Bewegung reduzieren" |
+| `event_type_style.dart` | Icon und Markerfarbe je `EventType` |
+
+Inter liegt unter `assets/fonts/inter/` (SIL OFL, `OFL.txt`).
+
+**Stolperfalle:** `ThemeData.textTheme` enthält vor `Theme.of` noch keine Schriftgrößen (die Geometrie wird erst beim Lokalisieren ergänzt). `AppTheme` legt deshalb `Typography.englishLike2021` explizit zugrunde, sonst fehlen z. B. dem AppBar-Titel die Größen.
+
+### Gemeinsame Bausteine (`presentation/widgets/`)
+
+- `SelectTile` — große Auswahlfläche (Typ, Entscheidung, Team, Nummer, Karte, Bewertung) mit Druck-Skalierung und weichem Farbwechsel
+- `SectionHeader`, `StatCard`
+- `TimerDisplay` aufgeteilt in `TimerClock` (Anzeige, Kopfleiste) und `PhaseActions` (Buttons, Aktionsleiste); `TimerDisplay` kombiniert beide weiterhin
+- `paintPitch()` in `pitch_canvas.dart` — gemeinsame Feldzeichnung für Live-Spielfeld und Heatmap
+
+### Animationen ohne Dauerschleife
+
+Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kommen. Deshalb:
+- der Punkt der laufenden Uhr blendet im Sekundentakt des Timer-Streams (je Tick eine endliche Animation),
+- das „Läuft"-Badge pulsiert nur dreimal nach dem Erscheinen.
+
+### Golden-Tests
+
+`test/golden/screens_golden_test.dart` rendert acht Screens mit echter Inter-Schrift und Material Icons bei 1280 × 800 und echten Schatten (`debugDisableShadows = false`). Neu erzeugen: `flutter test --update-goldens --tags golden`. Referenzbilder stammen von macOS; auf anderen Plattformen können Schriftdetails abweichen.

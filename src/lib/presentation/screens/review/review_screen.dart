@@ -672,7 +672,7 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
             ),
           ],
           const SizedBox(height: AppSpacing.l),
-          const SectionHeader('Coaching-Notiz'),
+          Text('Coaching-Notiz:', style: context.text.titleSmall),
           const SizedBox(height: AppSpacing.s),
           TextField(
             controller: _coachingCtrl,

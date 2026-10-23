@@ -81,6 +81,8 @@ class _SelectTileState extends State<SelectTile> {
         color: fg,
         fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
         height: 1.15,
+        // Rückennummern gleich breit (US-601); wirkt nur auf Ziffern
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
 
@@ -125,7 +127,9 @@ class _SelectTileState extends State<SelectTile> {
                 child: Center(
                   widthFactor: 1,
                   child: widget.icon == null
-                      ? labelText
+                      // Ein Wort wie „Strafstoß" nicht mitten im Wort
+                      // umbrechen, lieber leicht verkleinern
+                      ? FittedBox(fit: BoxFit.scaleDown, child: labelText)
                       : widget.horizontal
                       ? Row(
                           mainAxisSize: MainAxisSize.min,

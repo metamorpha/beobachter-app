@@ -51,7 +51,7 @@
 
 ### TC-6014: Keine hartkodierten Farben in Screens und Widgets
 
-**Schritte:** `grep -rn "Colors\.\(red\|green\|blue\|grey\|amber\|orange\|yellow\|blueGrey\|deepOrange\)" lib/presentation/screens lib/presentation/widgets` (**manuell**).
+**Schritte:** Quelltexte unter `lib/presentation/screens` und `lib/presentation/widgets` nach `Colors.red|green|blue|grey|amber|orange|yellow|blueGrey|deepOrange` durchsuchen (automatisiert als Test).
 
 **Erwartetes Ergebnis:** Keine Treffer. (`Colors.white`, `Colors.black` und `Colors.transparent` für Overlays im Spielfeld sind erlaubt.)
 
@@ -165,6 +165,14 @@
 
 ---
 
+### TC-6037: Kein Überlauf bei schmaler Breite
+
+**Schritte:** Formular in 300 dp Breite bauen (so schmal ist es kurz, während das Panel einblendet), Typ „Fußvergehen" und „Torentscheidung" wählen, bis zur Karten-Zeile scrollen.
+
+**Erwartetes Ergebnis:** Kein Layout-Überlauf.
+
+---
+
 ### TC-6036: Formularlogik unverändert
 
 **Schritte:** Bestehende Tests in `event_form_panel_test.dart`, `spielstand_test.dart` ausführen.
@@ -272,3 +280,15 @@
 **Schritte:** Auf iPad, Android-Tablet und Surface ein Spiel anlegen, 10 Ereignisse erfassen, Halbzeit und Abpfiff bedienen, draußen bei Tageslicht.
 
 **Erwartetes Ergebnis:** Alle Aktionen ohne Umgreifen erreichbar, Texte lesbar, Übergänge ruckelfrei, keine Vibration.
+
+---
+
+## Ergebnis (2026-10-23)
+
+| Bereich | Ergebnis |
+|---|---|
+| Automatisiert (`test/ui_redesign_test.dart`) | 31 Tests für TC-6011 – TC-6063, alle grün |
+| Golden-Tests (`test/golden/`, Tag `golden`) | 8 Screens inkl. Bearbeiten-Dialog, Referenzbilder von macOS |
+| Bestehende Suite (TC-6001) | 213 Tests grün; angepasst: 5 Typ-Finder, 1 Text-Finder (TC-1101), 1 `ensureVisible` (TC-EFR-05) |
+| TC-6002 | `git diff main -- lib/domain lib/data lib/core lib/presentation/providers` ist leer |
+| TC-6064 Geräte-Check | **offen** — manuell auf iPad, Android-Tablet und Surface |

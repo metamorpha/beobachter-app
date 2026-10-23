@@ -104,7 +104,8 @@ core/
 presentation/
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog
+  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · select_tile · section_header · stat_card
 ```
 
 ## Commands
@@ -121,8 +122,11 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (213 tests, all green)
+# Run tests (252 tests incl. 8 golden, all green)
 flutter test
+
+# Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen)
+flutter test --update-goldens --tags golden
 
 # Run app (simulator or device)
 flutter run
@@ -178,6 +182,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Vergehen pro Team (US-404) | Done — `TeamFouls` + `teamFoulsProvider`; DB schema v6 (`event_players.jersey_number` nullable) |
 | Laufendes Spiel fortsetzen (US-109) | Done — Tap in der Spielliste öffnet bei `GamePhase.istLaufend` den Live-Screen; Badge „Läuft" |
 | Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
+| UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` |
 
 ## Development Pipeline
 

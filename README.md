@@ -62,6 +62,7 @@ Als Schiedsrichterbeobachter hat man während eines Spiels keine Hand frei, kein
 | **Geschwindigkeit** | Der Beobachter schaut aufs Spiel, nicht aufs Display: große Tap-Ziele, kaum Pflichtfelder (nur Ereignistyp + Entscheidung), möglichst ein Tap pro Schritt. |
 | **Robuste Spieluhr** | Die Uhr rechnet mit Zeitstempeln statt mit Intervallen. Sie läuft korrekt weiter, auch wenn die App im Hintergrund war oder neu gestartet wurde. |
 | **Plattformübergreifend** | Native App für iOS, Android und Windows (Surface), optimiert für Tablets im Querformat. |
+| **Lesbar draußen** | Ein helles, kontraststarkes Design für alle Screens. Zeitkritische Buttons liegen in Daumenreichweite: die Spieluhr unten links, Speichern unten rechts. |
 | **Deutsch** | Oberfläche und alle Texte sind ausschließlich deutsch. |
 
 Eine Synchronisation mit einem Server ist für später angedacht. Die Architektur ist dafür vorbereitet, im MVP aber bewusst nicht enthalten.
@@ -78,7 +79,8 @@ Eine Synchronisation mit einem Server ist für später angedacht. Die Architektu
 | IDs | `uuid` |
 | CSV-Import | `file_picker` + eigener Parser für DFB/FLVW-Presseberichte |
 | Desktop-Fenster | `window_manager` (maximiert, feste Größe unter Windows/macOS) |
-| Tests | `flutter_test`, `integration_test`, `mocktail` |
+| Design | Material 3, ein helles Theme mit Design-Tokens (`presentation/theme/`), Schrift [Inter](https://rsms.me/inter/) gebündelt (SIL OFL) |
+| Tests | `flutter_test`, `integration_test`, `mocktail`, Golden-Tests der Hauptscreens |
 | Zielplattformen | iOS · Android · Windows (Surface) · macOS |
 
 ---
@@ -119,7 +121,8 @@ core/
 presentation/
   providers/      Riverpod-Provider
   screens/        game_list · game_setup · live · review
-  widgets/        pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog
+  theme/          app_theme · app_colors · app_spacing · app_motion · event_type_style
+  widgets/        pitch_canvas · heatmap_canvas · timer_display · assessment_grid · select_tile · squad_input · …
 ```
 
 ---
@@ -154,8 +157,11 @@ cd src/
 flutter pub get                       # Abhängigkeiten installieren
 flutter pub run build_runner build    # Drift-Code generieren (einmalig und nach Schema-Änderungen)
 flutter analyze                       # Statische Analyse
-flutter test                          # Unit- & Widget-Tests
+flutter test                          # Unit-, Widget- & Golden-Tests
 flutter run                           # App starten (Simulator, Emulator oder Gerät)
+
+# Nach gewollten UI-Änderungen die Referenzbilder neu erzeugen
+flutter test --update-goldens --tags golden
 ```
 
 Eine Beispiel-CSV für den Import liegt unter [`resources/`](resources/).
@@ -230,6 +236,17 @@ Die Anforderungen sind in fünf Epics gegliedert. Die vollständigen Stories mit
 | US-501 | **Automatisches lokales Speichern** jedes Ereignisses | ✅ |
 | US-502 | **Offline-Betrieb**: volle Funktion ohne Internet | ✅ |
 
+### Epic 6 — UI-Modernisierung · [details](docs/02_us_ui_redesign.md)
+
+| ID | Story | Status |
+|---|---|---|
+| US-601 | **Einheitliches helles Design** mit Inter und hohem Kontrast für den Außeneinsatz | ✅ |
+| US-602 | **Live-Screen in Daumenreichweite**: Spieluhr, Aufstellung und Szenen unten links | ✅ |
+| US-603 | **Erfassungsformular mit großen Auswahlflächen**, Speichern fest unten rechts | ✅ |
+| US-604 | **Spielliste als Karten**, Setup zweispaltig mit fester Startleiste | ✅ |
+| US-605 | **Nachbereitung als Karten**, Statistik als Dashboard | ✅ |
+| US-606 | **Flüssige Übergänge**, ohne Taps zu verzögern; „Bewegung reduzieren" wird beachtet | ✅ |
+
 ### Ideen für später
 - Synchronisation mit einem Server
 - Export der Nachbereitung (PDF, E-Mail)
@@ -251,5 +268,6 @@ Jedes Feature durchläuft eine feste Reihenfolge: **User Story → UX-Flow → T
 | [`07_implementation.md`](docs/07_implementation.md) | Implementierungsnotizen, bekannte Einschränkungen |
 | [`08_test_report.md`](docs/08_test_report.md) | Teststrategie und QA-Bericht |
 | `09`–`22_*.md` | UX-Flows und Testfälle zu einzelnen Features |
+| [`23_ui_redesign_plan.md`](docs/23_ui_redesign_plan.md) / [`24_ui_redesign_tests.md`](docs/24_ui_redesign_tests.md) | Plan und Testfälle des UI-Redesigns |
 
 Die ursprüngliche App-Idee steht in [`idea.md`](idea.md). Unter [`prompts/`](prompts/) liegen rollenbasierte Prompts (Product Owner, UX, Architekt, Entwickler, Tester), mit denen [`run.sh`](run.sh) die komplette Design-Pipeline durchläuft.

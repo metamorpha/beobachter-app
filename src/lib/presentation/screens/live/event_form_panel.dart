@@ -132,28 +132,34 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   @override
   Widget build(BuildContext context) {
+    // Nur Kopf und Speichern stehen fest; Typen und Felder scrollen gemeinsam,
+    // damit das Formular bei jeder Höhe und Breite passt (auch beim Einblenden).
     return ColoredBox(
       color: context.scheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(),
-          _buildTypeSection(),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: AppMotion.of(context, AppMotion.fast),
-              child: _type == null
-                  ? const _EmptyHint(key: ValueKey('empty'))
-                  : SingleChildScrollView(
-                      key: const ValueKey('fields'),
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.l,
-                        0,
-                        AppSpacing.l,
-                        AppSpacing.s,
-                      ),
-                      child: _buildFields(),
-                    ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildTypeSection(),
+                  AnimatedSwitcher(
+                    duration: AppMotion.of(context, AppMotion.fast),
+                    child: _type == null
+                        ? const _EmptyHint(key: ValueKey('empty'))
+                        : Padding(
+                            key: const ValueKey('fields'),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.l),
+                            child: _buildFields(),
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
           _buildSaveButton(),
@@ -341,31 +347,39 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
 
   Widget _cardAndCoachingRow() {
     final colors = context.colors;
+    // Bricht bei schmaler Breite um (z. B. während das Panel einblendet)
     return Row(
       children: [
-        const SectionHeader('Karte'),
-        const SizedBox(width: AppSpacing.m),
-        ...CardType.values.map((c) {
-          final sel = _card == c;
-          final color = colors.card(c);
-          return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.s),
-            child: SelectTile(
-              key: Key('card_${c.name}'),
-              label: c.label,
-              dense: true,
-              width: 64,
-              selected: sel,
-              color: color,
-              unselectedColor: Color.alphaBlend(
-                color.withValues(alpha: 0.18),
-                context.scheme.surface,
+        Expanded(
+          child: Wrap(
+            spacing: AppSpacing.s,
+            runSpacing: AppSpacing.s,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(right: AppSpacing.xs),
+                child: SectionHeader('Karte'),
               ),
-              onTap: () => setState(() => _card = sel ? null : c),
-            ),
-          );
-        }),
-        const Spacer(),
+              ...CardType.values.map((c) {
+                final sel = _card == c;
+                final color = colors.card(c);
+                return SelectTile(
+                  key: Key('card_${c.name}'),
+                  label: c.label,
+                  dense: true,
+                  width: 64,
+                  selected: sel,
+                  color: color,
+                  unselectedColor: Color.alphaBlend(
+                    color.withValues(alpha: 0.18),
+                    context.scheme.surface,
+                  ),
+                  onTap: () => setState(() => _card = sel ? null : c),
+                );
+              }),
+            ],
+          ),
+        ),
         const SectionHeader('Coaching'),
         IconButton(
           tooltip: 'Für Coaching markieren',
@@ -807,21 +821,19 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.touch_app_outlined,
-            size: 32,
-            color: context.scheme.outline,
-          ),
+          Icon(Icons.touch_app_outlined,
+              size: 32, color: context.scheme.outline),
           const SizedBox(height: AppSpacing.s),
           Text(
             'Typ auswählen, dann speichern',
-            style: context.text.bodyMedium?.copyWith(
-              color: context.scheme.onSurfaceVariant,
-            ),
+            textAlign: TextAlign.center,
+            style: context.text.bodyMedium
+                ?.copyWith(color: context.scheme.onSurfaceVariant),
           ),
         ],
       ),

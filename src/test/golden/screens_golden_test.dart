@@ -46,11 +46,11 @@ Future<void> _loadFonts() async {
   final root = Platform.environment['FLUTTER_ROOT'];
   if (root != null) {
     final icons = File(
-        '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+      '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+    );
     if (icons.existsSync()) {
       final loader = FontLoader('MaterialIcons')
-        ..addFont(Future.value(
-            ByteData.sublistView(icons.readAsBytesSync())));
+        ..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync())));
       await loader.load();
     }
   }
@@ -83,90 +83,204 @@ Event _e(
   String? note,
   GamePhase phase = GamePhase.ersteHalbzeit,
   TeamSide? scorer,
-}) =>
-    Event(
-      id: id,
-      gameId: 'g1',
-      elapsedMs: minute * 60 * 1000 + 17000,
-      gamePhase: phase,
-      type: type,
-      locationX: x,
-      locationY: y,
-      refDecision: decision,
-      card: card,
-      assessment: assessment,
-      coachingFlag: coaching,
-      sceneNote: note,
-      goalScorerTeam: scorer,
-      createdAt: DateTime(2026, 10, 18),
-    );
+}) => Event(
+  id: id,
+  gameId: 'g1',
+  elapsedMs: minute * 60 * 1000 + 17000,
+  gamePhase: phase,
+  type: type,
+  locationX: x,
+  locationY: y,
+  refDecision: decision,
+  card: card,
+  assessment: assessment,
+  coachingFlag: coaching,
+  sceneNote: note,
+  goalScorerTeam: scorer,
+  createdAt: DateTime(2026, 10, 18),
+);
 
-Future<AppDatabase> _seed(ProviderContainer c,
-    {GamePhase phase = GamePhase.zweiteHalbzeit}) async {
+Future<AppDatabase> _seed(
+  ProviderContainer c, {
+  GamePhase phase = GamePhase.zweiteHalbzeit,
+}) async {
   final games = c.read(gameRepositoryProvider);
   await games.createGame(_game);
-  await games.createGame(Game(
-    id: 'g2',
-    date: DateTime(2026, 10, 11),
-    homeTeamName: 'TuS Hohenlimburg',
-    awayTeamName: 'SC Berchum',
-    liga: 'Kreisliga A',
-    spieltag: '8',
-    createdAt: DateTime(2026, 10, 11),
-  ));
+  await games.createGame(
+    Game(
+      id: 'g2',
+      date: DateTime(2026, 10, 11),
+      homeTeamName: 'TuS Hohenlimburg',
+      awayTeamName: 'SC Berchum',
+      liga: 'Kreisliga A',
+      spieltag: '8',
+      createdAt: DateTime(2026, 10, 11),
+    ),
+  );
   final squads = c.read(squadRepositoryProvider);
-  await squads.saveSquad('g1', TeamSide.home, [1, 3, 4, 6, 7, 8, 9, 10, 11, 14, 17]);
-  await squads.saveSquad('g1', TeamSide.away, [1, 2, 5, 6, 7, 9, 10, 13, 16, 19, 23]);
+  await squads.saveSquad('g1', TeamSide.home, [
+    1,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    14,
+    17,
+  ]);
+  await squads.saveSquad('g1', TeamSide.away, [
+    1,
+    2,
+    5,
+    6,
+    7,
+    9,
+    10,
+    13,
+    16,
+    19,
+    23,
+  ]);
 
   final events = c.read(eventRepositoryProvider);
   EventPlayer p(PlayerRole r, TeamSide t, int n) =>
       EventPlayer(id: '', eventId: '', role: r, team: t, jerseyNumber: n);
   final seed = <(Event, List<EventPlayer>)>[
-    (_e('a', 6, EventType.footFoul, 0.32, 0.41,
-        decision: RefDecision.freeKick, assessment: Assessment.correctExpected),
-      [p(PlayerRole.fouler, TeamSide.away, 6), p(PlayerRole.fouled, TeamSide.home, 9)]),
-    (_e('b', 14, EventType.offside, 0.81, 0.30,
-        decision: RefDecision.indirectFreeKick, assessment: Assessment.correctComplex),
-      []),
-    (_e('c', 23, EventType.bodyFoul, 0.55, 0.62,
-        decision: RefDecision.yellowCard, card: CardType.yellow,
-        assessment: Assessment.wrongExpected, coaching: true,
-        note: 'Zu spät, Ellbogen im Spiel'),
-      [p(PlayerRole.fouler, TeamSide.home, 4), p(PlayerRole.fouled, TeamSide.away, 10)]),
-    (_e('d', 31, EventType.goalDecision, 0.93, 0.50,
-        decision: RefDecision.goal, scorer: TeamSide.home),
-      []),
-    (_e('e', 38, EventType.handball, 0.18, 0.55,
-        decision: RefDecision.penalty, assessment: Assessment.wrongComplex,
-        coaching: true, note: 'Arm angelegt?'),
-      [p(PlayerRole.fouler, TeamSide.home, 3)]),
-    (_e('f', 52, EventType.advantage, 0.45, 0.22,
-        decision: RefDecision.advantage, assessment: Assessment.correctExpected,
-        phase: GamePhase.zweiteHalbzeit),
-      []),
-    (_e('g', 61, EventType.footFoul, 0.61, 0.78,
-        decision: RefDecision.freeKick, assessment: Assessment.correctExpected,
-        phase: GamePhase.zweiteHalbzeit),
-      [p(PlayerRole.fouler, TeamSide.away, 6)]),
-    (_e('h', 67, EventType.goalDecision, 0.07, 0.47,
-        decision: RefDecision.goal, scorer: TeamSide.away,
-        phase: GamePhase.zweiteHalbzeit),
-      []),
+    (
+      _e(
+        'a',
+        6,
+        EventType.footFoul,
+        0.32,
+        0.41,
+        decision: RefDecision.freeKick,
+        assessment: Assessment.correctExpected,
+      ),
+      [
+        p(PlayerRole.fouler, TeamSide.away, 6),
+        p(PlayerRole.fouled, TeamSide.home, 9),
+      ],
+    ),
+    (
+      _e(
+        'b',
+        14,
+        EventType.offside,
+        0.81,
+        0.30,
+        decision: RefDecision.indirectFreeKick,
+        assessment: Assessment.correctComplex,
+      ),
+      [],
+    ),
+    (
+      _e(
+        'c',
+        23,
+        EventType.bodyFoul,
+        0.55,
+        0.62,
+        decision: RefDecision.yellowCard,
+        card: CardType.yellow,
+        assessment: Assessment.wrongExpected,
+        coaching: true,
+        note: 'Zu spät, Ellbogen im Spiel',
+      ),
+      [
+        p(PlayerRole.fouler, TeamSide.home, 4),
+        p(PlayerRole.fouled, TeamSide.away, 10),
+      ],
+    ),
+    (
+      _e(
+        'd',
+        31,
+        EventType.goalDecision,
+        0.93,
+        0.50,
+        decision: RefDecision.goal,
+        scorer: TeamSide.home,
+      ),
+      [],
+    ),
+    (
+      _e(
+        'e',
+        38,
+        EventType.handball,
+        0.18,
+        0.55,
+        decision: RefDecision.penalty,
+        assessment: Assessment.wrongComplex,
+        coaching: true,
+        note: 'Arm angelegt?',
+      ),
+      [p(PlayerRole.fouler, TeamSide.home, 3)],
+    ),
+    (
+      _e(
+        'f',
+        52,
+        EventType.advantage,
+        0.45,
+        0.22,
+        decision: RefDecision.advantage,
+        assessment: Assessment.correctExpected,
+        phase: GamePhase.zweiteHalbzeit,
+      ),
+      [],
+    ),
+    (
+      _e(
+        'g',
+        61,
+        EventType.footFoul,
+        0.61,
+        0.78,
+        decision: RefDecision.freeKick,
+        assessment: Assessment.correctExpected,
+        phase: GamePhase.zweiteHalbzeit,
+      ),
+      [p(PlayerRole.fouler, TeamSide.away, 6)],
+    ),
+    (
+      _e(
+        'h',
+        67,
+        EventType.goalDecision,
+        0.07,
+        0.47,
+        decision: RefDecision.goal,
+        scorer: TeamSide.away,
+        phase: GamePhase.zweiteHalbzeit,
+      ),
+      [],
+    ),
   ];
   for (final (e, players) in seed) {
     await events.createEvent(e, players);
   }
-  await c.read(timerRepositoryProvider).saveTimerState(TimerState(
-        gameId: 'g1',
-        isRunning: false,
-        elapsedMs: 68 * 60 * 1000 + 12000,
-        phase: phase,
-      ));
+  await c
+      .read(timerRepositoryProvider)
+      .saveTimerState(
+        TimerState(
+          gameId: 'g1',
+          isRunning: false,
+          elapsedMs: 68 * 60 * 1000 + 12000,
+          phase: phase,
+        ),
+      );
   return c.read(databaseProvider);
 }
 
-Future<ProviderContainer> _pump(WidgetTester tester, Widget home,
-    {GamePhase phase = GamePhase.zweiteHalbzeit}) async {
+Future<ProviderContainer> _pump(
+  WidgetTester tester,
+  Widget home, {
+  GamePhase phase = GamePhase.zweiteHalbzeit,
+}) async {
   tester.view.physicalSize = _size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -174,21 +288,25 @@ Future<ProviderContainer> _pump(WidgetTester tester, Widget home,
   debugDisableShadows = false;
 
   final db = AppDatabase.forTesting(NativeDatabase.memory());
-  final c = ProviderContainer(overrides: [databaseProvider.overrideWithValue(db)]);
+  final c = ProviderContainer(
+    overrides: [databaseProvider.overrideWithValue(db)],
+  );
   addTearDown(() async {
     c.dispose();
     await db.close();
   });
   await _seed(c, phase: phase);
 
-  await tester.pumpWidget(UncontrolledProviderScope(
-    container: c,
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      home: home,
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: home,
+      ),
     ),
-  ));
+  );
   await tester.pumpAndSettle();
   return c;
 }
@@ -196,7 +314,9 @@ Future<ProviderContainer> _pump(WidgetTester tester, Widget home,
 Future<void> _snap(String name) async {
   try {
     await expectLater(
-        find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/$name.png'),
+    );
   } finally {
     debugDisableShadows = true;
   }
@@ -237,6 +357,13 @@ void main() {
   testWidgets('Nachbereitung — Szenen', (tester) async {
     await _pump(tester, ReviewScreen(game: _game));
     await _snap('review_scenes');
+  });
+
+  testWidgets('Nachbereitung — Szene bearbeiten', (tester) async {
+    await _pump(tester, ReviewScreen(game: _game));
+    await tester.tap(find.byTooltip('Bearbeiten').at(2));
+    await tester.pumpAndSettle();
+    await _snap('review_edit');
   });
 
   testWidgets('Nachbereitung — Coaching', (tester) async {

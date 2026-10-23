@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_motion.dart';
 import 'app_spacing.dart';
 
 /// Einziges Theme der App: hell, kontraststark, Inter (US-601).
@@ -11,29 +12,30 @@ abstract final class AppTheme {
 
   static const _primary = Color(0xFF1B6B3A);
 
-  static final ColorScheme _scheme = ColorScheme.fromSeed(
-    seedColor: _primary,
-    brightness: Brightness.light,
-  ).copyWith(
-    primary: _primary,
-    onPrimary: Colors.white,
-    primaryContainer: const Color(0xFFD3EEDB),
-    onPrimaryContainer: const Color(0xFF0B3A1D),
-    secondaryContainer: const Color(0xFFE2EAE4),
-    onSecondaryContainer: const Color(0xFF1C2B21),
-    surface: Colors.white,
-    onSurface: const Color(0xFF121A15),
-    onSurfaceVariant: const Color(0xFF47524A),
-    surfaceContainerLowest: Colors.white,
-    surfaceContainerLow: const Color(0xFFF5F7F5),
-    surfaceContainer: const Color(0xFFEEF2EF),
-    surfaceContainerHigh: const Color(0xFFE7ECE8),
-    surfaceContainerHighest: const Color(0xFFDFE5E0),
-    outline: const Color(0xFF7D8880),
-    outlineVariant: const Color(0xFFD2D9D4),
-    error: const Color(0xFFB91C1C),
-    onError: Colors.white,
-  );
+  static final ColorScheme _scheme =
+      ColorScheme.fromSeed(
+        seedColor: _primary,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: _primary,
+        onPrimary: Colors.white,
+        primaryContainer: const Color(0xFFD3EEDB),
+        onPrimaryContainer: const Color(0xFF0B3A1D),
+        secondaryContainer: const Color(0xFFE2EAE4),
+        onSecondaryContainer: const Color(0xFF1C2B21),
+        surface: Colors.white,
+        onSurface: const Color(0xFF121A15),
+        onSurfaceVariant: const Color(0xFF47524A),
+        surfaceContainerLowest: Colors.white,
+        surfaceContainerLow: const Color(0xFFF5F7F5),
+        surfaceContainer: const Color(0xFFEEF2EF),
+        surfaceContainerHigh: const Color(0xFFE7ECE8),
+        surfaceContainerHighest: const Color(0xFFDFE5E0),
+        outline: const Color(0xFF7D8880),
+        outlineVariant: const Color(0xFFD2D9D4),
+        error: const Color(0xFFB91C1C),
+        onError: Colors.white,
+      );
 
   static ThemeData get light {
     final scheme = _scheme;
@@ -47,25 +49,35 @@ abstract final class AppTheme {
     // wird erst beim Lokalisieren ergänzt) — daher explizit zugrunde legen.
     final sized = Typography.englishLike2021.merge(base.textTheme);
     final text = sized.copyWith(
-      headlineSmall: sized.headlineSmall
-          ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
-      titleLarge: sized.titleLarge
-          ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.2),
-      titleMedium:
-          sized.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      titleSmall:
-          sized.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-      labelLarge: sized.labelLarge
-          ?.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
-      labelMedium: sized.labelMedium
-          ?.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+      headlineSmall: sized.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
+      ),
+      titleLarge: sized.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+      ),
+      titleMedium: sized.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      titleSmall: sized.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      labelLarge: sized.labelLarge?.copyWith(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+      ),
+      labelMedium: sized.labelMedium?.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
       labelSmall: sized.labelSmall?.copyWith(
-          fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
       bodySmall: sized.bodySmall?.copyWith(fontSize: 13),
     );
 
     final roundedM = RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.m));
+      borderRadius: BorderRadius.circular(AppRadius.m),
+    );
     const buttonMin = Size(AppSizes.tap, AppSizes.tap);
 
     return base.copyWith(
@@ -75,14 +87,30 @@ abstract final class AppTheme {
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       splashFactory: InkSparkle.splashFactory,
-      pageTransitionsTheme: const PageTransitionsTheme(builders: {
-        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
-        // iOS behält die native Wisch-zurück-Geste (Navigation unverändert).
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-      }),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _ReducedMotionAware(
+            FadeForwardsPageTransitionsBuilder(),
+            duration: AppMotion.slow,
+          ),
+          TargetPlatform.windows: _ReducedMotionAware(
+            FadeForwardsPageTransitionsBuilder(),
+            duration: AppMotion.slow,
+          ),
+          TargetPlatform.linux: _ReducedMotionAware(
+            FadeForwardsPageTransitionsBuilder(),
+            duration: AppMotion.slow,
+          ),
+          TargetPlatform.macOS: _ReducedMotionAware(
+            FadeForwardsPageTransitionsBuilder(),
+            duration: AppMotion.slow,
+          ),
+          // iOS behält die native Wisch-zurück-Geste (Navigation unverändert).
+          TargetPlatform.iOS: _ReducedMotionAware(
+            CupertinoPageTransitionsBuilder(),
+          ),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
@@ -128,13 +156,14 @@ abstract final class AppTheme {
         foregroundColor: scheme.onPrimary,
         elevation: 2,
         highlightElevation: 4,
-        extendedSizeConstraints:
-            const BoxConstraints.tightFor(height: AppSizes.primaryAction),
-        extendedPadding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        extendedSizeConstraints: const BoxConstraints.tightFor(
+          height: AppSizes.primaryAction,
+        ),
+        extendedPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         extendedTextStyle: text.labelLarge?.copyWith(fontSize: 16),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.l + 4)),
+          borderRadius: BorderRadius.circular(AppRadius.l + 4),
+        ),
       ),
       cardTheme: CardThemeData(
         color: scheme.surface,
@@ -149,7 +178,8 @@ abstract final class AppTheme {
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.s + 2)),
+          borderRadius: BorderRadius.circular(AppRadius.s + 2),
+        ),
         side: BorderSide(color: scheme.outlineVariant),
         labelStyle: text.labelLarge?.copyWith(fontSize: 14),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
@@ -160,7 +190,9 @@ abstract final class AppTheme {
         fillColor: scheme.surfaceContainer,
         isDense: false,
         contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.l, vertical: AppSpacing.m + 2),
+          horizontal: AppSpacing.l,
+          vertical: AppSpacing.m + 2,
+        ),
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.m),
@@ -179,7 +211,8 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl)),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
         titleTextStyle: text.headlineSmall?.copyWith(color: scheme.onSurface),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -187,8 +220,10 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
         shape: const RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
+        ),
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: scheme.onPrimaryContainer,
@@ -202,16 +237,57 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.m),
         ),
         overlayColor: WidgetStatePropertyAll(
-            scheme.primary.withValues(alpha: 0.06)),
+          scheme.primary.withValues(alpha: 0.06),
+        ),
       ),
-      dividerTheme:
-          DividerThemeData(color: scheme.outlineVariant, thickness: 1),
+      dividerTheme: DividerThemeData(
+        color: scheme.outlineVariant,
+        thickness: 1,
+      ),
       tooltipTheme: TooltipThemeData(
         waitDuration: const Duration(milliseconds: 600),
         textStyle: text.bodySmall?.copyWith(color: Colors.white),
       ),
-      progressIndicatorTheme:
-          ProgressIndicatorThemeData(color: scheme.primary),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
+    );
+  }
+}
+
+/// Seitenwechsel ohne Animation, wenn „Bewegung reduzieren" aktiv ist (US-606).
+class _ReducedMotionAware extends PageTransitionsBuilder {
+  final PageTransitionsBuilder inner;
+
+  /// Abweichende Dauer (z. B. 350 ms statt 450 ms bei FadeForwards).
+  final Duration? duration;
+
+  const _ReducedMotionAware(this.inner, {this.duration});
+
+  @override
+  DelegatedTransitionBuilder? get delegatedTransition =>
+      inner.delegatedTransition;
+
+  @override
+  Duration get transitionDuration => duration ?? inner.transitionDuration;
+
+  @override
+  Duration get reverseTransitionDuration =>
+      duration ?? inner.reverseTransitionDuration;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
+    return inner.buildTransitions(
+      route,
+      context,
+      animation,
+      secondaryAnimation,
+      child,
     );
   }
 }
