@@ -5,6 +5,8 @@ import '../../domain/enums/team_side.dart';
 import '../providers/providers.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/form_factor.dart';
+import 'phone_dialog.dart';
 import 'squad_input.dart';
 
 /// Aufstellungen beider Teams während des Spiels korrigieren (US-110).
@@ -15,8 +17,8 @@ class SquadEditDialog extends ConsumerStatefulWidget {
   const SquadEditDialog({super.key, required this.gameId});
 
   static Future<void> show(BuildContext context, String gameId) =>
-      showDialog<void>(
-        context: context,
+      showAppDialog<void>(
+        context,
         builder: (_) => SquadEditDialog(gameId: gameId),
       );
 
@@ -102,30 +104,34 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final teams = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _teamColumn(TeamSide.home),
+        const SizedBox(width: AppSpacing.xl),
+        _teamColumn(TeamSide.away),
+      ],
+    );
+    final done = FilledButton(
+      key: const Key('btn_squad_done'),
+      style: FilledButton.styleFrom(minimumSize: const Size(140, 52)),
+      onPressed: () => Navigator.pop(context),
+      child: const Text('Fertig'),
+    );
+
+    // Smartphone: Vollbild statt Dialog fester Breite (US-701)
+    if (FormFactor.isPhone(context)) {
+      return PhoneDialogFrame(
+        title: const Text('Aufstellung'),
+        body: teams,
+        actions: [done],
+      );
+    }
     return AlertDialog(
       icon: Icon(Icons.groups_rounded, color: context.scheme.primary),
       title: const Text('Aufstellung'),
-      content: SizedBox(
-        width: 720,
-        child: SingleChildScrollView(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _teamColumn(TeamSide.home),
-              const SizedBox(width: AppSpacing.xl),
-              _teamColumn(TeamSide.away),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        FilledButton(
-          key: const Key('btn_squad_done'),
-          style: FilledButton.styleFrom(minimumSize: const Size(140, 52)),
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Fertig'),
-        ),
-      ],
+      content: SizedBox(width: 720, child: SingleChildScrollView(child: teams)),
+      actions: [done],
     );
   }
 }

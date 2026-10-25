@@ -61,7 +61,7 @@ Als Schiedsrichterbeobachter hat man während eines Spiels keine Hand frei, kein
 | **Offline-first** | Auf dem Sportplatz gibt es meist kein Internet. Alles läuft lokal, Daten liegen in einer SQLite-Datenbank auf dem Gerät. |
 | **Geschwindigkeit** | Der Beobachter schaut aufs Spiel, nicht aufs Display: große Tap-Ziele, kaum Pflichtfelder (nur Ereignistyp + Entscheidung), möglichst ein Tap pro Schritt. |
 | **Robuste Spieluhr** | Die Uhr rechnet mit Zeitstempeln statt mit Intervallen. Sie läuft korrekt weiter, auch wenn die App im Hintergrund war oder neu gestartet wurde. |
-| **Plattformübergreifend** | Native App für iOS, Android und Windows (Surface), optimiert für Tablets im Querformat. |
+| **Plattformübergreifend** | Native App für iOS, Android und Windows (Surface), optimiert für Tablets im Querformat. Auf Android-Smartphones gibt es ein eigenes Layout: Live-Erfassung quer, alles andere hoch. |
 | **Lesbar draußen** | Ein helles, kontraststarkes Design für alle Screens. Zeitkritische Buttons liegen in Daumenreichweite: die Spieluhr unten links, Speichern unten rechts. |
 | **Deutsch** | Oberfläche und alle Texte sind ausschließlich deutsch. |
 
@@ -166,11 +166,45 @@ flutter test --update-goldens --tags golden
 
 Eine Beispiel-CSV für den Import liegt unter [`resources/`](resources/).
 
+### Builds (GitHub Actions)
+
+Windows und Android werden in zwei getrennten Workflows gebaut. Beide laufen bei jedem Push auf `main` und lassen sich unter **Actions** einzeln über **Run workflow** starten:
+
+| Workflow | Datei | Artefakt |
+|---|---|---|
+| Build Windows | [`build-windows.yml`](.github/workflows/build-windows.yml) | `beobachter-app-windows` (Release-Ordner) |
+| Build Android | [`build-android.yml`](.github/workflows/build-android.yml) | `beobachter-app-android` (`app-release.apk`) |
+
+Die APK wird direkt auf dem Gerät installiert (kein Play Store; ggf. „Installation aus unbekannten Quellen" erlauben).
+
+### Android-Release-Schlüssel einrichten
+
+Damit eine neue APK über die alte installiert werden kann und die **lokalen Spieldaten erhalten bleiben**, muss jede Version mit demselben Schlüssel signiert sein. Ohne Schlüssel signiert jeder CI-Lauf mit einem anderen Debug-Schlüssel – dann muss die App vor jedem Update deinstalliert werden, und die Daten gehen verloren.
+
+Einmalig (benötigt ein JDK, z. B. aus Android Studio):
+
+```bash
+keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 \
+        -validity 10000 -alias beobachter
+base64 -i upload-keystore.jks | pbcopy      # macOS; Linux: base64 -w0 upload-keystore.jks
+```
+
+Dann unter **GitHub → Settings → Secrets and variables → Actions** anlegen:
+
+| Secret | Inhalt |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | Base64 der `.jks`-Datei |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore-Passwort |
+| `ANDROID_KEY_ALIAS` | `beobachter` |
+| `ANDROID_KEY_PASSWORD` | Schlüssel-Passwort |
+
+Den Keystore und die Passwörter sicher aufbewahren – geht der Schlüssel verloren, lässt sich die App nicht mehr ohne Deinstallation aktualisieren. Für lokale Release-Builds eine `src/android/key.properties` anlegen (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`); sie ist per `.gitignore` ausgeschlossen. Fehlen Schlüssel oder Secrets, entsteht weiterhin eine debug-signierte APK.
+
 ---
 
 ## User Stories
 
-Die Anforderungen sind in fünf Epics gegliedert. Die vollständigen Stories mit Akzeptanzkriterien stehen in [`docs/`](docs/).
+Die Anforderungen sind in sieben Epics gegliedert. Die vollständigen Stories mit Akzeptanzkriterien stehen in [`docs/`](docs/).
 
 **Legende:** ✅ umgesetzt · 🟡 umgesetzt, einzelne Kriterien (meist Filter) noch offen
 
@@ -247,6 +281,17 @@ Die Anforderungen sind in fünf Epics gegliedert. Die vollständigen Stories mit
 | US-605 | **Nachbereitung als Karten**, Statistik als Dashboard | ✅ |
 | US-606 | **Flüssige Übergänge**, ohne Taps zu verzögern; „Bewegung reduzieren" wird beachtet | ✅ |
 
+### Epic 7 — Android-Smartphone · [details](docs/02_us_android.md)
+
+| ID | Story | Status |
+|---|---|---|
+| US-701 | **Live-Erfassung auf dem Smartphone** im Querformat: Formular im Vollbild, Ereignisse als Seitenleiste | ✅ |
+| US-702 | **Display bleibt während des Spiels an**, im Live-Screen abschaltbar | ✅ |
+| US-703 | **Spielliste, Setup und Aufstellung** im Hochformat | ✅ |
+| US-704 | **Nachbereitung und Statistik** auf dem Smartphone | ✅ |
+| US-705 | **Android-App-Grundlagen**: Name, Icon, feste Signatur | ✅ |
+| US-706 | **Getrennte Builds** für Windows und Android | ✅ |
+
 ### Ideen für später
 - Synchronisation mit einem Server
 - Export der Nachbereitung (PDF, E-Mail)
@@ -269,5 +314,6 @@ Jedes Feature durchläuft eine feste Reihenfolge: **User Story → UX-Flow → T
 | [`08_test_report.md`](docs/08_test_report.md) | Teststrategie und QA-Bericht |
 | `09`–`22_*.md` | UX-Flows und Testfälle zu einzelnen Features |
 | [`23_ui_redesign_plan.md`](docs/23_ui_redesign_plan.md) / [`24_ui_redesign_tests.md`](docs/24_ui_redesign_tests.md) | Plan und Testfälle des UI-Redesigns |
+| [`26_android_smartphone_tests.md`](docs/26_android_smartphone_tests.md) | Testfälle Android-Smartphone und CI-Builds |
 
 Die ursprüngliche App-Idee steht in [`idea.md`](idea.md). Unter [`prompts/`](prompts/) liegen rollenbasierte Prompts (Product Owner, UX, Architekt, Entwickler, Tester), mit denen [`run.sh`](run.sh) die komplette Design-Pipeline durchläuft.

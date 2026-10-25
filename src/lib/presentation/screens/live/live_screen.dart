@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,11 +11,15 @@ import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/game_phase.dart';
 import '../../../domain/enums/goal_kind.dart';
 import '../../../domain/enums/team_side.dart';
+import '../../platform/device_providers.dart';
+import '../../platform/preferred_orientation.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
+import '../../theme/form_factor.dart';
+import '../../widgets/phone_dialog.dart';
 import '../../widgets/pitch_canvas.dart';
 import '../../widgets/squad_edit_dialog.dart';
 import '../../widgets/timer_display.dart';
@@ -38,17 +44,63 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
   /// Zählt Speichervorgänge; jeder neue Wert startet die Bestätigung (US-603).
   int _savedCount = 0;
 
+  /// Display-Sperre nur unter Android (US-702); beim Öffnen immer an.
+  late final bool _wakeLockAvailable = ref.read(isAndroidProvider);
+  late final ScreenWakeLock _wakeLock = ref.read(screenWakeLockProvider);
+  bool _keepScreenOn = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_wakeLockAvailable) _wakeLock.enable();
+  }
+
+  @override
+  void dispose() {
+    if (_wakeLockAvailable) _wakeLock.disable();
+    super.dispose();
+  }
+
+  void _toggleKeepScreenOn() {
+    setState(() => _keepScreenOn = !_keepScreenOn);
+    _keepScreenOn ? _wakeLock.enable() : _wakeLock.disable();
+  }
+
+  Widget? _displayButton({bool showLabel = true}) => _wakeLockAvailable
+      ? _DisplayButton(
+          on: _keepScreenOn,
+          showLabel: showLabel,
+          onPressed: _toggleKeepScreenOn,
+        )
+      : null;
+
   @override
   Widget build(BuildContext context) {
-    final eventsAsync = ref.watch(eventsProvider(widget.game.id));
-    final events = eventsAsync.valueOrNull ?? [];
-    final abgeschlossen =
-        ref
-            .watch(timerStateProvider(widget.game.id))
-            .valueOrNull
-            ?.phase
-            .istAbgeschlossen ??
-        false;
+    final events = ref.watch(eventsProvider(widget.game.id)).valueOrNull ?? [];
+    final phase = ref
+        .watch(timerStateProvider(widget.game.id))
+        .valueOrNull
+        ?.phase;
+    final abgeschlossen = phase?.istAbgeschlossen ?? false;
+
+    return PreferredOrientation(
+      landscape: true,
+      child: FormFactor.isPhone(context)
+          ? _buildPhone(
+              context,
+              events,
+              abgeschlossen: abgeschlossen,
+              laeuft: phase?.istLaufend ?? false,
+            )
+          : _buildTablet(context, events, abgeschlossen: abgeschlossen),
+    );
+  }
+
+  Widget _buildTablet(
+    BuildContext context,
+    List<Event> events, {
+    required bool abgeschlossen,
+  }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final panelWidth = _formVisible
         ? screenWidth * 0.40
@@ -102,7 +154,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.m),
-                  _ActionBar(game: widget.game),
+                  _ActionBar(game: widget.game, trailing: _displayButton()),
                 ],
               ),
             ),
@@ -159,6 +211,335 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Smartphone (US-701) ──────────────────────────────────────────────────
+
+  Widget _buildPhone(
+    BuildContext context,
+    List<Event> events, {
+    required bool abgeschlossen,
+    required bool laeuft,
+  }) {
+    return PopScope(
+      // Laufendes Spiel nicht versehentlich per Zurück-Geste verlassen
+      canPop: !laeuft,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (await _confirmLeave(context) && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 56,
+          titleSpacing: 0,
+          title: _Scoreboard(game: widget.game, compact: true),
+        ),
+        body: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              // ── Phasen-Buttons (linker Daumen) ──────────────────────────
+              SizedBox(
+                width: PhaseActions.compactWidth + 2 * AppSpacing.s,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: PhaseActions(gameId: widget.game.id, compact: true),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      PitchCanvas(
+                        events: events,
+                        onTap: (x, y) {
+                          // Abgeschlossenes Spiel: keine neue Erfassung (US-212)
+                          if (_formVisible || abgeschlossen) return;
+                          _openPhoneForm(x, y);
+                        },
+                      ),
+                      if (_savedCount > 0 && !AppMotion.reduced(context))
+                        Positioned(
+                          top: AppSpacing.l,
+                          left: 0,
+                          right: 0,
+                          child: _SavedToast(key: ValueKey(_savedCount)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              // ── Icon-Leiste (rechter Daumen) ────────────────────────────
+              _PhoneRail(
+                builder: (showLabel) => [
+                  _RailButton(
+                    key: const Key('btn_ereignisse'),
+                    icon: Icons.history_rounded,
+                    label: 'Ereignisse',
+                    showLabel: showLabel,
+                    onPressed: () => _openRecentSheet(context),
+                  ),
+                  _RailButton(
+                    key: const Key('btn_aufstellung'),
+                    icon: Icons.groups_rounded,
+                    label: 'Aufstellung',
+                    showLabel: showLabel,
+                    onPressed: () =>
+                        SquadEditDialog.show(context, widget.game.id),
+                  ),
+                  _RailButton(
+                    key: const Key('btn_szenen'),
+                    icon: Icons.view_list_rounded,
+                    label: 'Szenen',
+                    showLabel: showLabel,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReviewScreen(game: widget.game),
+                      ),
+                    ),
+                  ),
+                  ?_displayButton(showLabel: showLabel),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Erfassungsformular als Vollbild-Dialog statt im Seitenpanel.
+  Future<void> _openPhoneForm(double x, double y) async {
+    setState(() => _formVisible = true);
+    await showAppDialog<void>(
+      context,
+      builder: (ctx) => FullscreenDialog(
+        child: EventFormPanel(
+          gameId: widget.game.id,
+          locationX: x,
+          locationY: y,
+          onClose: () => Navigator.pop(ctx),
+          onSaved: (event) {
+            Navigator.pop(ctx);
+            setState(() => _savedCount++);
+            ref.invalidate(eventsProvider(widget.game.id));
+          },
+        ),
+      ),
+    );
+    if (mounted) setState(() => _formVisible = false);
+  }
+
+  /// „Letzte Ereignisse" als Seitenleiste von rechts.
+  void _openRecentSheet(BuildContext context) {
+    final width = math.min(360.0, MediaQuery.sizeOf(context).width * 0.5);
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Schließen',
+      barrierColor: context.scheme.scrim.withValues(alpha: 0.4),
+      transitionDuration: AppMotion.of(context, AppMotion.medium),
+      pageBuilder: (ctx, _, _) => Align(
+        alignment: Alignment.centerRight,
+        child: GestureDetector(
+          // Wischen nach rechts schließt
+          onHorizontalDragEnd: (d) {
+            if ((d.primaryVelocity ?? 0) > 200) Navigator.pop(ctx);
+          },
+          child: Material(
+            key: const Key('recent_sheet'),
+            elevation: 3,
+            color: ctx.scheme.surface,
+            child: SizedBox(
+              width: width,
+              height: double.infinity,
+              child: SafeArea(
+                left: false,
+                child: _RecentEvents(
+                  game: widget.game,
+                  onClose: () => Navigator.pop(ctx),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (_, anim, _, child) => SlideTransition(
+        position: Tween(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: AppMotion.curve)),
+        child: child,
+      ),
+    );
+  }
+
+  Future<bool> _confirmLeave(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.logout_rounded, color: ctx.scheme.primary),
+        title: const Text('Live-Erfassung verlassen?'),
+        content: const Text(
+          'Die Uhr läuft weiter. Du kannst das Spiel jederzeit aus der '
+          'Spielliste fortsetzen.',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('dialog_btn_leave_cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bleiben'),
+          ),
+          FilledButton(
+            key: const Key('dialog_btn_leave_confirm'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Verlassen'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+}
+
+/// Rechte Icon-Leiste im Smartphone-Layout; bei wenig Höhe ohne Beschriftung.
+class _PhoneRail extends StatelessWidget {
+  final List<Widget> Function(bool showLabel) builder;
+
+  const _PhoneRail({required this.builder});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 80,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final count = builder(true).length;
+          final showLabel =
+              constraints.maxHeight >= count * _RailButton.labelledHeight;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: builder(showLabel),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RailButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? tooltip;
+  final bool selected;
+  final bool showLabel;
+  final VoidCallback onPressed;
+
+  const _RailButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.tooltip,
+    this.selected = false,
+    this.showLabel = true,
+  });
+
+  /// Höhe eines Eintrags mit Beschriftung inkl. Luft.
+  static const labelledHeight = AppSizes.liveTap + 24;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = IconButton.styleFrom(
+      minimumSize: const Size.square(AppSizes.liveTap),
+      backgroundColor: selected
+          ? context.scheme.primaryContainer
+          : context.scheme.surface,
+      foregroundColor: selected
+          ? context.scheme.onPrimaryContainer
+          : context.scheme.onSurface,
+      side: BorderSide(color: context.scheme.outlineVariant),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          style: style,
+          tooltip: tooltip ?? label,
+          iconSize: 26,
+          onPressed: onPressed,
+          icon: Icon(icon),
+        ),
+        if (showLabel)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelSmall?.copyWith(fontSize: 12),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Schalter „Display bleibt an" (US-702) — Zustand am Icon erkennbar.
+class _DisplayButton extends StatelessWidget {
+  final bool on;
+  final bool showLabel;
+  final VoidCallback onPressed;
+
+  const _DisplayButton({
+    required this.on,
+    required this.onPressed,
+    this.showLabel = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = on
+        ? 'Display bleibt an — zum Ausschalten tippen'
+        : 'Display geht automatisch aus — zum Einschalten tippen';
+    final icon = on ? Icons.light_mode : Icons.light_mode_outlined;
+    if (FormFactor.isPhone(context)) {
+      return _RailButton(
+        key: const Key('btn_display'),
+        icon: icon,
+        label: 'Display',
+        tooltip: tooltip,
+        selected: on,
+        showLabel: showLabel,
+        onPressed: onPressed,
+      );
+    }
+    // Android-Tablet: zusätzlicher Button in der Aktionsleiste
+    return Tooltip(
+      message: tooltip,
+      child: IconButton.filledTonal(
+        key: const Key('btn_display'),
+        style: IconButton.styleFrom(
+          minimumSize: const Size(AppSizes.liveTap + 8, AppSizes.primaryAction),
+          backgroundColor: on
+              ? context.scheme.primaryContainer
+              : context.scheme.surface,
+          foregroundColor: on
+              ? context.scheme.onPrimaryContainer
+              : context.scheme.onSurface,
+          side: BorderSide(color: context.scheme.outlineVariant),
+        ),
+        iconSize: 26,
+        onPressed: onPressed,
+        icon: Icon(icon),
       ),
     );
   }
@@ -228,7 +609,10 @@ class _SavedToast extends StatelessWidget {
 class _Scoreboard extends ConsumerWidget {
   final Game game;
 
-  const _Scoreboard({required this.game});
+  /// Einzeilige Kopfzeile für das Smartphone (US-701).
+  final bool compact;
+
+  const _Scoreboard({required this.game, this.compact = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -242,14 +626,71 @@ class _Scoreboard extends ConsumerWidget {
             .istAbgeschlossen ??
         false;
 
+    if (compact) {
+      final nameStyle = context.text.titleSmall?.copyWith(
+        color: context.scheme.onSurfaceVariant,
+      );
+      return Row(
+        key: const Key('live_scoreboard'),
+        children: [
+          _GoalButton(
+            game: game,
+            team: TeamSide.home,
+            enabled: !abgeschlossen,
+            compact: true,
+          ),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _TeamDot(color: context.colors.home),
+                const SizedBox(width: AppSpacing.xs + 2),
+                Flexible(
+                  child: Text(
+                    home,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: nameStyle,
+                  ),
+                ),
+                _ScoreDisplay(
+                  score: ref.watch(scoreProvider(game.id)),
+                  fontSize: 22,
+                ),
+                Flexible(
+                  child: Text(
+                    away,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: nameStyle,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs + 2),
+                _TeamDot(color: context.colors.away),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
+          _GoalButton(
+            game: game,
+            team: TeamSide.away,
+            enabled: !abgeschlossen,
+            compact: true,
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.s),
+            child: TimerClock(gameId: game.id, compact: true),
+          ),
+        ],
+      );
+    }
+
     return Row(
       key: const Key('live_scoreboard'),
       children: [
-        _GoalButton(
-          game: game,
-          team: TeamSide.home,
-          enabled: !abgeschlossen,
-        ),
+        _GoalButton(game: game, team: TeamSide.home, enabled: !abgeschlossen),
         const SizedBox(width: AppSpacing.m),
         Expanded(
           child: Column(
@@ -279,11 +720,7 @@ class _Scoreboard extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.m),
-        _GoalButton(
-          game: game,
-          team: TeamSide.away,
-          enabled: !abgeschlossen,
-        ),
+        _GoalButton(game: game, team: TeamSide.away, enabled: !abgeschlossen),
         const SizedBox(width: AppSpacing.l),
         Padding(
           padding: const EdgeInsets.only(right: AppSpacing.s),
@@ -299,11 +736,13 @@ class _GoalButton extends ConsumerWidget {
   final Game game;
   final TeamSide team;
   final bool enabled;
+  final bool compact;
 
   const _GoalButton({
     required this.game,
     required this.team,
     required this.enabled,
+    this.compact = false,
   });
 
   @override
@@ -315,8 +754,10 @@ class _GoalButton extends ConsumerWidget {
       child: FilledButton.icon(
         key: Key('btn_goal_${team.name}'),
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, AppSizes.liveTap),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+          minimumSize: Size(0, compact ? AppSizes.tap : AppSizes.liveTap),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? AppSpacing.m : AppSpacing.l,
+          ),
           backgroundColor: color,
           foregroundColor: AppColors.onColor(color),
         ),
@@ -357,7 +798,10 @@ class _TeamDot extends StatelessWidget {
 class _ActionBar extends StatelessWidget {
   final Game game;
 
-  const _ActionBar({required this.game});
+  /// Zusätzlicher Button am Ende, z. B. „Display" unter Android (US-702).
+  final Widget? trailing;
+
+  const _ActionBar({required this.game, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -390,6 +834,7 @@ class _ActionBar extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => ReviewScreen(game: game)),
                 ),
               ),
+              ?trailing,
             ],
           ),
         );
@@ -447,7 +892,10 @@ typedef _Entry = ({Event? event, Goal? goal});
 class _RecentEvents extends ConsumerWidget {
   final Game game;
 
-  const _RecentEvents({super.key, required this.game});
+  /// Nur in der Smartphone-Seitenleiste: ✕ zum Schließen (US-701).
+  final VoidCallback? onClose;
+
+  const _RecentEvents({super.key, required this.game, this.onClose});
 
   static GamePhase _phase(_Entry e) => e.event?.gamePhase ?? e.goal!.gamePhase;
   static int _ms(_Entry e) => e.event?.elapsedMs ?? e.goal!.elapsedMs;
@@ -461,13 +909,14 @@ class _RecentEvents extends ConsumerWidget {
 
     // Ereignisse und Tore chronologisch (Phase, dann Zeit), neuestes zuerst;
     // Liste füllt die Panelhöhe und scrollt (US-213)
-    final recent = <_Entry>[
-      for (final e in events) (event: e, goal: null),
-      for (final g in goals) (event: null, goal: g),
-    ]..sort((a, b) {
-        final byPhase = _phase(b).index.compareTo(_phase(a).index);
-        return byPhase != 0 ? byPhase : _ms(b).compareTo(_ms(a));
-      });
+    final recent =
+        <_Entry>[
+          for (final e in events) (event: e, goal: null),
+          for (final g in goals) (event: null, goal: g),
+        ]..sort((a, b) {
+          final byPhase = _phase(b).index.compareTo(_phase(a).index);
+          return byPhase != 0 ? byPhase : _ms(b).compareTo(_ms(a));
+        });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,6 +943,15 @@ class _RecentEvents extends ConsumerWidget {
                   style: context.text.titleSmall,
                 ),
               ),
+              if (onClose != null) ...[
+                const Spacer(),
+                IconButton(
+                  key: const Key('btn_recent_close'),
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: 'Schließen',
+                  onPressed: onClose,
+                ),
+              ],
             ],
           ),
         ),
@@ -674,8 +1132,9 @@ class _EmptyEvents extends StatelessWidget {
 /// Spielstand unter den Mannschaftsnamen; leuchtet bei Änderung kurz auf (US-214, US-215).
 class _ScoreDisplay extends StatefulWidget {
   final Score score;
+  final double fontSize;
 
-  const _ScoreDisplay({required this.score});
+  const _ScoreDisplay({required this.score, this.fontSize = 30});
 
   @override
   State<_ScoreDisplay> createState() => _ScoreDisplayState();
@@ -718,7 +1177,7 @@ class _ScoreDisplayState extends State<_ScoreDisplay>
             widget.score.label,
             key: const Key('live_score'),
             style: TextStyle(
-              fontSize: 30,
+              fontSize: widget.fontSize,
               fontWeight: FontWeight.w700,
               height: 1.1,
               color: context.scheme.onSurface,

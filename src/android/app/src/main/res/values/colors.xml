@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- primary aus AppTheme (US-705) -->
+    <color name="ic_launcher_background">#1B6B3A</color>
+    <!-- surfaceContainerLow aus AppTheme: kein Farbsprung beim Start -->
+    <color name="splash_background">#F5F7F5</color>
+</resources>

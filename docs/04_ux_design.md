@@ -985,7 +985,7 @@ Live-Screen — App dreht ins Querformat
 │              │                                               │ [☰ ]        │
 │ [■ Abpfiff ] │                                               │ Ereignisse  │
 │              │                S P I E L F E L D              │ [👥]        │
-│              │          (Seitenverhältnis wie bisher)        │ Aufstellung │
+│              │      (füllt die Fläche wie auf dem Tablet)    │ Aufstellung │
 │              │                                               │ [≡ ]        │
 │              │                                               │ Szenen      │
 │              │                                               │ [☀ ]        │
@@ -996,9 +996,9 @@ Live-Screen — App dreht ins Querformat
 ```
 
 - **Kopfzeile:** „+ Tor"-Buttons (≥ 48 dp, Teamfarbe) direkt neben dem jeweiligen Teamnamen; Teamnamen werden mit „…" gekürzt; Spielstand (22 pt) und Uhr (24 pt) sind kleiner als auf dem Tablet; gleich breite Ziffern bleiben.
-- **Linke Leiste (ca. 160 dp):** Phasen-Button ≥ 144 × 56 dp, vertikal mittig. Bei zwei Buttons („Verlängerung", „Spiel beenden") stehen sie untereinander.
-- **Rechte Leiste (ca. 72 dp):** vier Icon-Buttons ≥ 56 × 56 dp mit kurzer Beschriftung darunter (12 pt). Reihenfolge nach Häufigkeit im Spiel: Ereignisse, Aufstellung, Szenen, Display.
-- **Spielfeld:** füllt den Rest und behält sein Seitenverhältnis; Tap-Rückmeldung und Marker wie bisher.
+- **Linke Leiste (ca. 176 dp):** Phasen-Button 160 × 56 dp, vertikal mittig; lange Beschriftungen brechen in zwei Zeilen um. Bei zwei Buttons („Verlängerung", „Spiel beenden") stehen sie untereinander.
+- **Rechte Leiste (ca. 80 dp):** vier Icon-Buttons ≥ 56 × 56 dp mit kurzer Beschriftung darunter (12 pt); reicht die Höhe nicht, entfällt die Beschriftung (Tooltip bleibt). Reihenfolge nach Häufigkeit im Spiel: Ereignisse, Aufstellung, Szenen, Display.
+- **Spielfeld:** füllt den Rest wie auf dem Tablet (Koordinaten bleiben normalisiert); Tap-Rückmeldung und Marker wie bisher.
 - „Gespeichert"-Toast erscheint wie bisher über dem Spielfeld.
 
 ### Wireframe — Erfassungsformular Smartphone (Vollbild, Querformat)
@@ -1111,8 +1111,8 @@ Live-Screen — App dreht ins Querformat
 └──────────────────────────────┘
 ```
 
-- **Szenen:** Karten in voller Breite; Bearbeiten (✎) öffnet das Formular als Vollbild-Dialog (statt Dialog fester Breite).
-- **Coaching:** Karten untereinander; Notiz-Dialoge als Vollbild.
+- **Szenen:** Karten in voller Breite; Typ, Entscheidung, Bewertung und Notiz stehen untereinander. Bearbeiten (✎) öffnet das Formular als Vollbild-Dialog (statt Dialog fester Breite).
+- **Coaching:** Karten untereinander. Das Detail-Sheet einer Szene (Tap auf die Karte) wächst mit der Tastatur mit und scrollt.
 - **Statistik:** Karten untereinander (Heatmap, Zeitachse, Ranking, Tore, Vergehen pro Team), je ca. 320 dp hoch, Seite scrollt — die Tabelle „Vergehen pro Team" scrollt bei Bedarf zusätzlich horizontal.
 
 ### Android-App-Grundlagen (US-705)

@@ -105,10 +105,11 @@ core/
   timer_service.dart              Background-safe game clock
   pressebericht_csv_parser.dart  DFB/FLVW Pressebericht CSV parser
 presentation/
+  platform/     device_providers (isAndroid, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch)
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
-  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · select_tile · section_header · stat_card
+  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style · form_factor
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · select_tile · section_header · stat_card · phone_dialog
 ```
 
 ## Commands
@@ -125,7 +126,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (250 tests incl. 8 golden, all green)
+# Run tests (297 tests incl. 15 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -198,6 +199,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Laufendes Spiel fortsetzen (US-109) | Done — Tap in der Spielliste öffnet bei `GamePhase.istLaufend` den Live-Screen; Badge „Läuft" |
 | Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
 | Tor-Erfassung (US-215) | Done — „+ Tor"-Buttons je Team in der Live-Kopfzeile, `GoalDialog`, Tabelle `goals`; DB schema v7 |
+| Android-Smartphone (US-701–706) | Done — Smartphone-Layout per `FormFactor.isPhone` (kürzere Seite < 600 dp, nicht per Plattform); Live-Screen quer mit Seitenleisten, Dialoge im Vollbild (`showAppDialog`); Display-Sperre über Kanal `de.beobachter/screen` in `MainActivity`; getrennte Workflows `build-windows.yml` / `build-android.yml` |
 | UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` |
 
 ## Development Pipeline

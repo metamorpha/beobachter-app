@@ -266,9 +266,9 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 
 ### TC-7045: Dialoge passen sich der Breite an
 
-**Schritte:** 390 × 844 dp. Bestätigungsdialog „Spiel löschen" öffnen; in der Nachbereitung die Coaching-Notiz bearbeiten.
+**Schritte:** 390 × 844 dp. Bestätigungsdialog „Spiel löschen" öffnen.
 
-**Erwartetes Ergebnis:** Kein Dialog ist breiter als Bildschirmbreite − 32 dp bzw. die Notiz öffnet als Vollbild-Dialog; kein Overflow.
+**Erwartetes Ergebnis:** Der Dialog ist höchstens Bildschirmbreite − 32 dp breit; kein Overflow. (Vollbild-Dialoge prüfen TC-7020 und TC-7053.)
 
 ---
 
@@ -419,4 +419,11 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 | US-706 CI | 6 | 6 |
 | **Summe** | **46** | **13** |
 
-Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spielliste und Spiel-Setup (390 × 844), Live-Screen und Erfassungsformular (844 × 390), Statistik (390 × 844).
+Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spielliste, Spiel-Setup, Szenenliste und Statistik (390 × 844); Live-Screen, Erfassungsformular und Seitenleiste „Letzte Ereignisse" (844 × 390).
+
+## Ergebnis (2026-10-25)
+
+- Automatisiert: alle 33 automatisierten TCs grün (40 Testfunktionen in `test/android_smartphone_test.dart`), 7 Smartphone-Goldens erzeugt.
+- Regression: `flutter analyze` ohne Befunde, `flutter test` 297 Tests grün; die 8 Tablet-Goldens unverändert (TC-7002).
+- TC-7003: keine Änderungen unter `domain/`, `data/`, `core/` und in `providers.dart`.
+- Offen (manuell, Gerät bzw. GitHub nötig): TC-7046, TC-7061 – TC-7065, TC-7071 – TC-7076.

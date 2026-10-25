@@ -10,11 +10,14 @@ import '../../../domain/enums/event_type.dart';
 import '../../../domain/enums/goal_kind.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
+import '../../platform/preferred_orientation.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
+import '../../theme/form_factor.dart';
+import '../../widgets/phone_dialog.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/stat_card.dart';
 import '../../widgets/heatmap_canvas.dart';
@@ -28,6 +31,13 @@ class ReviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return PreferredOrientation(
+      landscape: false,
+      child: _buildTabs(context),
+    );
+  }
+
+  Widget _buildTabs(BuildContext context) {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -64,8 +74,12 @@ class ReviewScreen extends ConsumerWidget {
                   color: context.scheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(AppRadius.m + 2),
                 ),
-                child: const TabBar(
-                  tabs: [
+                child: TabBar(
+                  // Smartphone: drei Tabs passen nebeneinander (US-704)
+                  labelPadding: FormFactor.isPhone(context)
+                      ? const EdgeInsets.symmetric(horizontal: AppSpacing.xs)
+                      : null,
+                  tabs: const [
                     _TabLabel(icon: Icons.view_list_rounded, text: 'Szenen'),
                     _TabLabel(icon: Icons.forum_outlined, text: 'Coaching'),
                     _TabLabel(icon: Icons.insights_rounded, text: 'Statistik'),
@@ -101,7 +115,7 @@ class _TabLabel extends StatelessWidget {
       children: [
         Icon(icon, size: 20),
         const SizedBox(width: AppSpacing.s),
-        Text(text),
+        Flexible(child: Text(text, overflow: TextOverflow.ellipsis)),
       ],
     ),
   );
@@ -433,9 +447,12 @@ class _AssessmentPill extends StatelessWidget {
             color: color,
           ),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            assessment.label,
-            style: context.text.labelMedium?.copyWith(color: color),
+          Flexible(
+            child: Text(
+              assessment.label,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: color),
+            ),
           ),
         ],
       ),
@@ -487,7 +504,9 @@ class _SceneTile extends ConsumerWidget {
                             style: context.text.titleMedium,
                           ),
                         ),
-                        if (event.refDecision != null) ...[
+                        // Smartphone: Entscheidung in eigener Zeile (US-704)
+                        if (event.refDecision != null &&
+                            !FormFactor.isPhone(context)) ...[
                           Text(
                             '  ·  ',
                             style: context.text.bodyMedium?.copyWith(
@@ -504,7 +523,42 @@ class _SceneTile extends ConsumerWidget {
                         ],
                       ],
                     ),
-                    if (event.assessment != null ||
+                    if (event.refDecision != null &&
+                        FormFactor.isPhone(context))
+                      Text(
+                        event.refDecision!.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.bodyMedium?.copyWith(
+                          color: context.scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    // Smartphone: Bewertung und Notiz untereinander (US-704)
+                    if (FormFactor.isPhone(context)) ...[
+                      if (event.assessment != null) ...[
+                        const SizedBox(height: AppSpacing.xs + 2),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: _AssessmentPill(
+                                assessment: event.assessment!,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (event.sceneNote != null) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          event.sceneNote!,
+                          style: context.text.bodyMedium?.copyWith(
+                            color: context.scheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ] else if (event.assessment != null ||
                         event.sceneNote != null) ...[
                       const SizedBox(height: AppSpacing.xs + 2),
                       Row(
@@ -582,6 +636,27 @@ class _SceneTile extends ConsumerWidget {
         .toList();
 
     if (!context.mounted) return;
+    // Smartphone: Formular im Vollbild (US-704)
+    if (FormFactor.isPhone(context)) {
+      showAppDialog<void>(
+        context,
+        builder: (ctx) => FullscreenDialog(
+          child: EventFormPanel(
+            gameId: gameId,
+            locationX: event.locationX,
+            locationY: event.locationY,
+            initialEvent: event,
+            initialPlayers: eventPlayers,
+            onClose: () => Navigator.of(ctx).pop(),
+            onSaved: (updated) {
+              ref.invalidate(eventsProvider(gameId));
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ),
+      );
+      return;
+    }
     showDialog<void>(
       context: context,
       builder: (ctx) => Dialog(
@@ -608,9 +683,17 @@ class _SceneTile extends ConsumerWidget {
   }
 
   void _showDetail(BuildContext context, WidgetRef ref, Event event) {
+    // Smartphone: Sheet darf mit Tastatur wachsen (US-704)
+    final phone = FormFactor.isPhone(context);
     showModalBottomSheet(
       context: context,
-      builder: (_) => _EventDetailSheet(event: event, gameId: gameId),
+      isScrollControlled: phone,
+      useSafeArea: phone,
+      builder: (_) => phone
+          ? SingleChildScrollView(
+              child: _EventDetailSheet(event: event, gameId: gameId),
+            )
+          : _EventDetailSheet(event: event, gameId: gameId),
     );
   }
 }
