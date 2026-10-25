@@ -932,3 +932,205 @@ Spielstand in der Kopfzeile leuchtet kurz auf, Tor erscheint oben in „Letzte E
 ### Nachbereitung — Karte „Tore"
 
 Im Statistik-Dashboard teilt sich die untere Reihe in Spieler-Ranking · **Tore** · Vergehen pro Team. Die Karte listet je Tor Minute, Team-Badge, Spielstand danach, Torschütze und Torart.
+
+---
+
+## Android-Smartphone — Epic 7 (US-701 – US-706)
+
+> Ergänzt die bisherigen Wireframes um ein Smartphone-Layout. Für Tablets und Windows (Surface) gelten die Abschnitte oben unverändert.
+> User Stories: [`02_us_android.md`](02_us_android.md).
+
+### Grundsätze
+
+| Thema | Vorgabe |
+|---|---|
+| Layout-Weiche | Smartphone-Layout, wenn `MediaQuery.sizeOf(context).shortestSide < 600` dp. Die Weiche hängt an der Größe, nicht an der Plattform; Android-Tablets bekommen das Tablet-Layout. Unter Windows wird die Grenze nie unterschritten (Fenster maximiert, nicht verkleinerbar). |
+| Ausrichtung | Live-Screen im **Querformat** (beide Querlagen erlaubt); alle anderen Screens im **Hochformat**. Nur auf dem Smartphone — Tablets und Windows bleiben frei drehbar bzw. unverändert. |
+| Plattform-Weiche | Nur der Display-Schalter (US-702) hängt an der Plattform (Android). |
+| Größen | Tippflächen ≥ 48 dp, im Live-Screen ≥ 56 dp. Primäraktionen auf dem Smartphone ≥ 56 dp (statt 64 dp), weil im Querformat nur ~ 390 dp Höhe zur Verfügung stehen. |
+| Ränder | Inhalte innerhalb von `SafeArea` (Notch, Kamera-Loch, Gestenleiste). |
+| Dialoge | Auf dem Smartphone als **Vollbild-Dialog** (`Dialog.fullscreen`) mit ✕ links oben und Primäraktion fix unten. Kleine Bestätigungsdialoge bleiben normale Dialoge, ihre Breite ist auf Bildschirmbreite − 32 dp begrenzt. |
+| Zurück-Taste | Schließt immer zuerst das oberste Element (Sheet, Dialog, Formular). Im Live-Screen fragt sie nach, bevor sie zur Spielliste zurückkehrt. |
+
+### Flow 7 — Live-Screen auf dem Smartphone
+
+```
+Spielliste (Hochformat)
+   ↓ Tap auf Spiel / „Spiel starten"
+Live-Screen — App dreht ins Querformat
+   ├─ Tap aufs Spielfeld ──────→ Erfassungsformular (Vollbild) ──→ Speichern / ✕ → zurück
+   ├─ „+ Tor" (Heim/Gast) ─────→ Tor-Dialog (Vollbild) ─────────→ Speichern / Abbrechen → zurück
+   ├─ ☰ Ereignisse ───────────→ Seitenleiste „Letzte Ereignisse" von rechts
+   │                                ├─ Tap auf Tor → Tor bearbeiten
+   │                                └─ 🗑 → Ereignis/Tor löschen (wie US-213)
+   ├─ 👥 Aufstellung ─────────→ Aufstellung (Vollbild)
+   ├─ ☀ Display ──────────────→ Display an ↔ aus (US-702)
+   ├─ ≡ Szenen ───────────────→ Nachbereitung — App dreht ins Hochformat
+   └─ Zurück-Taste/-Geste
+         ├─ Formular/Dialog/Seitenleiste offen → schließt es
+         └─ sonst → Dialog „Live-Erfassung verlassen?"
+                      [Bleiben]  [Verlassen] → Spielliste (Hochformat)
+```
+
+- Das Spiel läuft beim Verlassen weiter (Uhr zeitstempelbasiert) und lässt sich aus der Spielliste fortsetzen (US-109).
+- Der Bestätigungsdialog sagt das ausdrücklich: „Die Uhr läuft weiter. Du kannst das Spiel jederzeit aus der Spielliste fortsetzen."
+- Ist das Spiel abgeschlossen, entfällt die Nachfrage.
+
+### Wireframe — Live-Screen Smartphone (Querformat, ca. 844 × 390 dp)
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ [⚽+]  FC Heim   2 : 1   SV Gast  [⚽+]            ● 2. HZ   67:12           │  Kopfzeile ≤ 56 dp
+├──────────────┬───────────────────────────────────────────────┬─────────────┤
+│              │                                               │ [☰ ]        │
+│ [■ Abpfiff ] │                                               │ Ereignisse  │
+│              │                S P I E L F E L D              │ [👥]        │
+│              │      (füllt die Fläche wie auf dem Tablet)    │ Aufstellung │
+│              │                                               │ [≡ ]        │
+│              │                                               │ Szenen      │
+│              │                                               │ [☀ ]        │
+│              │                                               │ Display     │
+└──────────────┴───────────────────────────────────────────────┴─────────────┘
+  linker Daumen:                                                 rechter Daumen:
+  Phasen-Button(s)                                               Icon-Leiste
+```
+
+- **Kopfzeile:** „+ Tor"-Buttons (≥ 48 dp, Teamfarbe) direkt neben dem jeweiligen Teamnamen; Teamnamen werden mit „…" gekürzt; Spielstand (22 pt) und Uhr (24 pt) sind kleiner als auf dem Tablet; gleich breite Ziffern bleiben.
+- **Linke Leiste (ca. 176 dp):** Phasen-Button 160 × 56 dp, vertikal mittig; lange Beschriftungen brechen in zwei Zeilen um. Bei zwei Buttons („Verlängerung", „Spiel beenden") stehen sie untereinander.
+- **Rechte Leiste (ca. 80 dp):** vier Icon-Buttons ≥ 56 × 56 dp mit kurzer Beschriftung darunter (12 pt); reicht die Höhe nicht, entfällt die Beschriftung (Tooltip bleibt). Reihenfolge nach Häufigkeit im Spiel: Ereignisse, Aufstellung, Szenen, Display.
+- **Spielfeld:** füllt den Rest wie auf dem Tablet (Koordinaten bleiben normalisiert); Tap-Rückmeldung und Marker wie bisher.
+- „Gespeichert"-Toast erscheint wie bisher über dem Spielfeld.
+
+### Wireframe — Erfassungsformular Smartphone (Vollbild, Querformat)
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ ✕   ⏱ 67:12   Ereignis erfassen                                            │
+├────────────────────────────────────────────────────────────────────────────┤
+│ EREIGNISTYP                                                                │
+│ [Fuß    ][Oberk.  ][Hand    ][Unspor. ][Tätl.   ][Abseits ][Vorteil][Sonst]│  breite Fläche → mehr Spalten
+│ SPIELER                                                                    │
+│ Täter   [Heim|Gast]  # 7 9 10 …        Gefoult [Heim|Gast]  # 4 5 …        │
+│ ENTSCHEIDUNG  [FS][IFS][11m][Vort.][Weiter][Gelb][G-R][Rot] …   ☆          │
+│ BEWERTUNG  [✓ Erwartbar][✓ Komplex][✗ Erwartbar][✗ Komplex]                │  ↕ scrollt
+│ + Notiz                                                                    │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                   [     ■ Speichern      ] │  fix unten, ≥ 56 dp
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Inhalt und Felder sind dieselben wie im Panel (`EventFormPanel`); nur der Rahmen ist ein Vollbild-Dialog. Die Spaltenzahl ergibt sich wie bisher aus der Breite.
+- Der Inhalt scrollt; „Speichern" bleibt immer sichtbar.
+- Öffnen: Einblenden von unten (ca. 250 ms), bei „Bewegung reduzieren" ohne Animation.
+- Beim Öffnen der Notiz verschiebt sich der Inhalt so, dass das Eingabefeld über der Tastatur bleibt.
+
+### Wireframe — „Letzte Ereignisse" Smartphone (Seitenleiste)
+
+```
+                              ┌──────────────────────────────┐
+     Spielfeld (abgedunkelt)  │ LETZTE EREIGNISSE          ✕ │
+                              │ 67:12 ● Fußvergehen       🗑 │  Zeilen ≥ 56 dp
+                              │ 61:03 ● ⚽ 2:1 · #9        🗑 │
+                              │ 54:40 ● Abseits           🗑 │
+                              │ …                            │
+                              └──────────────────────────────┘
+```
+
+- Gleitet von rechts ein, Breite ca. 360 dp (max. 50 % der Bildschirmbreite); Tap daneben, ✕, Wischen nach rechts oder die Zurück-Taste schließen sie.
+- Inhalt, Sortierung, Bearbeiten (Tore) und Löschen wie im Seitenpanel (US-213, US-215).
+
+### Display-Schalter (US-702)
+
+| Zustand | Darstellung | Tooltip / Semantik |
+|---|---|---|
+| an (Standard) | Icon `light_mode` gefüllt, Tonal-Button in `primary` | „Display bleibt an — zum Ausschalten tippen" |
+| aus | Icon `light_mode_outlined`, neutraler Button | „Display geht automatisch aus — zum Einschalten tippen" |
+
+- Nur auf Android sichtbar. Auf dem Smartphone in der rechten Icon-Leiste; auf Android-Tablets als zusätzlicher Icon-Button in der Aktionsleiste unten links.
+- Wirkt nur, solange der Live-Screen offen ist. Beim Verlassen wird die Sperre aufgehoben; beim nächsten Öffnen ist sie wieder an.
+- Kein Toast, kein Dialog — der Zustand ist am Button erkennbar.
+
+### Wireframe — Spielliste Smartphone (Hochformat, ca. 390 × 844 dp)
+
+```
+┌──────────────────────────────┐
+│ Beobachter                   │
+├──────────────────────────────┤
+│ ┌──────────────────────────┐ │
+│ │ ⚽ FC Heim                │ │
+│ │    SV Gast       ● Läuft │ │  eine Spalte
+│ │ 23.10.2026 · 12 Ereign.🗑│ │
+│ └──────────────────────────┘ │
+│ ┌──────────────────────────┐ │
+│ │ ⚽ TuS A                  │ │
+│ │    SC B          Beendet │ │
+│ └──────────────────────────┘ │
+│                              │
+│           [ + Neues Spiel ]  │  rechts unten, rechter Daumen
+└──────────────────────────────┘
+```
+
+### Wireframe — Spiel-Setup Smartphone (Hochformat)
+
+```
+┌──────────────────────────────┐
+│ ← Spiel einrichten           │
+├──────────────────────────────┤
+│ [⬆ Aus Pressebericht import.]│
+│ SPIELDATEN                   │
+│ [Heimmannschaft            ] │
+│ [Gastmannschaft            ] │
+│ [Liga        ] [Spieltag   ] │
+│ [Spielort                  ] │
+│ AUFSTELLUNG HEIM             │  ↕ scrollt
+│ [Rückennummer] [+]           │
+│ #1 #4 #7 …                   │
+│ AUFSTELLUNG GAST             │
+│ [Rückennummer] [+]           │
+├──────────────────────────────┤
+│ [      ▶ Spiel starten     ] │  fix unten, volle Breite
+└──────────────────────────────┘
+```
+
+- Mit offener Tastatur scrollt das aktive Feld in den sichtbaren Bereich; „Spiel starten" bleibt über der Tastatur.
+- Der CSV-Import öffnet die Android-Dateiauswahl (Storage Access Framework); Warnungen erscheinen wie bisher als Banner.
+
+### Wireframe — Nachbereitung Smartphone (Hochformat)
+
+```
+┌──────────────────────────────┐
+│ ← FC Heim – SV Gast          │
+│ [Szenen][Coaching][Statistik]│
+├──────────────────────────────┤
+│ ‹[Fuß][Hand][Abseits][✓]…›   │  Filter-Chips, horizontal scrollbar
+│ ┌──────────────────────────┐ │
+│ │ 67:12 Fußvergehen      ✎ │ │
+│ │ FS · ✓ Erwartbar  🟨   ☆ │ │
+│ └──────────────────────────┘ │
+│ …                            │
+└──────────────────────────────┘
+```
+
+- **Szenen:** Karten in voller Breite; Typ, Entscheidung, Bewertung und Notiz stehen untereinander. Bearbeiten (✎) öffnet das Formular als Vollbild-Dialog (statt Dialog fester Breite).
+- **Coaching:** Karten untereinander. Das Detail-Sheet einer Szene (Tap auf die Karte) wächst mit der Tastatur mit und scrollt.
+- **Statistik:** Karten untereinander (Heatmap, Zeitachse, Ranking, Tore, Vergehen pro Team), je ca. 320 dp hoch, Seite scrollt — die Tabelle „Vergehen pro Team" scrollt bei Bedarf zusätzlich horizontal.
+
+### Android-App-Grundlagen (US-705)
+
+| Thema | Vorgabe |
+|---|---|
+| App-Name | „Beobachter" |
+| App-Icon | Weißes Pfeifen-/Fußball-Symbol auf `primary` (`#1B6B3A`), als Adaptive Icon |
+| Berechtigungen | Keine (kein Internet, kein Speicherzugriff — CSV über die Systemdateiauswahl) |
+| Splash | Hintergrund in `surface`-Farbe, keine Logo-Animation |
+
+### Interaktions-Spezifikationen (Smartphone)
+
+| Moment | Verhalten |
+|---|---|
+| Live-Screen öffnen | Ausrichtung wechselt ins Querformat, bevor der Inhalt aufgebaut ist |
+| Live-Screen verlassen | Ausrichtung wechselt zurück ins Hochformat; Display-Sperre wird aufgehoben |
+| Vollbild-Dialog öffnen / schließen | Gleitet von unten ein bzw. aus, ca. 250 ms |
+| Seitenleiste „Letzte Ereignisse" | Gleitet von rechts ein, Spielfeld wird abgedunkelt |
+| Zurück-Taste | Schließt oberstes Element; im Live-Screen sonst Nachfrage (siehe Flow 7) |
+| „Bewegung reduzieren" aktiv | Alle Animationen entfallen, wie bisher |

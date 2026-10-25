@@ -10,6 +10,7 @@ import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/form_factor.dart';
 import '../../widgets/squad_input.dart';
 import '../live/live_screen.dart';
 
@@ -150,7 +151,10 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              // Smartphone: schmalere Ränder (US-703)
+              padding: EdgeInsets.all(
+                FormFactor.isPhone(context) ? AppSpacing.l : AppSpacing.xl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -211,7 +215,11 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
                 child: FilledButton.icon(
                   key: const Key('btn_start_game'),
                   style: FilledButton.styleFrom(
-                    minimumSize: const Size(260, AppSizes.primaryAction),
+                    // Smartphone: volle Breite (US-703)
+                    minimumSize: Size(
+                      FormFactor.isPhone(context) ? double.infinity : 260,
+                      AppSizes.primaryAction,
+                    ),
                     textStyle: context.text.labelLarge?.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -528,7 +536,9 @@ class _SetupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: EdgeInsets.all(
+          FormFactor.isPhone(context) ? AppSpacing.l : AppSpacing.xl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -536,7 +546,13 @@ class _SetupCard extends StatelessWidget {
               children: [
                 Icon(icon, size: 22, color: context.scheme.primary),
                 const SizedBox(width: AppSpacing.s),
-                Text(title, style: context.text.titleLarge),
+                Flexible(
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.titleLarge,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.l),

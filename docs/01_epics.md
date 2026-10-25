@@ -118,6 +118,26 @@
 
 ---
 
+## Epic 7 — Android-Smartphone
+
+**Ziel:** Die App lässt sich neben dem Windows-Tablet auch auf einem Android-Smartphone vollständig nutzen.
+
+**Warum wichtig:** Nicht jeder Beobachter hat ein Tablet dabei; das Smartphone ist immer zur Hand.
+
+**Scope:**
+- Smartphone-Layout für alle Screens (Live-Screen im Querformat, übrige Screens im Hochformat)
+- Display bleibt während des Spiels an, abschaltbar
+- APK zum direkten Installieren, fest signiert
+- Getrennte CI-Builds für Windows und Android
+
+**Außerhalb Scope:**
+- Play Store, iOS-Smartphone
+- Änderungen an Geschäftslogik oder an der Windows-Oberfläche
+
+User Stories: [`02_us_android.md`](02_us_android.md)
+
+---
+
 ## Priorisierung
 
 | Priorität | Epic | Begründung |

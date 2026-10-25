@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/game.dart';
 import '../../../domain/enums/game_phase.dart';
+import '../../platform/preferred_orientation.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
@@ -19,6 +20,18 @@ class GameListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gamesAsync = ref.watch(gamesProvider);
 
+    // Smartphone: Spielliste im Hochformat (US-703)
+    return PreferredOrientation(
+      landscape: false,
+      child: _buildScaffold(context, ref, gamesAsync),
+    );
+  }
+
+  Widget _buildScaffold(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<Game>> gamesAsync,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: Row(

@@ -10,6 +10,8 @@ import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/form_factor.dart';
+import '../../widgets/phone_dialog.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/select_tile.dart';
 
@@ -46,35 +48,33 @@ class GoalDialog extends ConsumerStatefulWidget {
     required int elapsedMs,
     required GamePhase gamePhase,
     String? teamName,
-  }) =>
-      showDialog<void>(
-        context: context,
-        builder: (_) => GoalDialog(
-          gameId: gameId,
-          team: team,
-          elapsedMs: elapsedMs,
-          gamePhase: gamePhase,
-          teamName: teamName,
-        ),
-      );
+  }) => showAppDialog<void>(
+    context,
+    builder: (_) => GoalDialog(
+      gameId: gameId,
+      team: team,
+      elapsedMs: elapsedMs,
+      gamePhase: gamePhase,
+      teamName: teamName,
+    ),
+  );
 
   /// Bestehendes Tor bearbeiten — Zeit bleibt unverändert.
   static Future<void> edit(
     BuildContext context,
     Goal goal, {
     String? teamName,
-  }) =>
-      showDialog<void>(
-        context: context,
-        builder: (_) => GoalDialog(
-          gameId: goal.gameId,
-          team: goal.team,
-          elapsedMs: goal.elapsedMs,
-          gamePhase: goal.gamePhase,
-          teamName: teamName,
-          initialGoal: goal,
-        ),
-      );
+  }) => showAppDialog<void>(
+    context,
+    builder: (_) => GoalDialog(
+      gameId: goal.gameId,
+      team: goal.team,
+      elapsedMs: goal.elapsedMs,
+      gamePhase: goal.gamePhase,
+      teamName: teamName,
+      initialGoal: goal,
+    ),
+  );
 
   @override
   ConsumerState<GoalDialog> createState() => _GoalDialogState();
@@ -150,6 +150,90 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
   @override
   Widget build(BuildContext context) {
     final teamColor = context.colors.team(widget.team);
+    final title = Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: teamColor, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEditMode
+                    ? 'Tor bearbeiten'
+                    : 'Tor für ${widget.team.label.toUpperCase()}',
+                key: const Key('goal_dialog_title'),
+              ),
+              if (widget.teamName != null && widget.teamName!.isNotEmpty)
+                Text(
+                  widget.teamName!,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.bodyMedium?.copyWith(
+                    color: context.scheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _TimeChip(
+          label: GamePhaseX.formatMs(widget.elapsedMs, widget.gamePhase),
+        ),
+      ],
+    );
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader('Torart'),
+        const SizedBox(height: AppSpacing.s),
+        Row(
+          children: [
+            for (final k in GoalKind.values) ...[
+              if (k != GoalKind.values.first)
+                const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: SelectTile(
+                  key: Key('goal_kind_${k.name}'),
+                  label: k.label,
+                  dense: true,
+                  selected: _kind == k,
+                  color: context.scheme.inverseSurface,
+                  onTap: () => _setKind(k),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppSpacing.l),
+        _scorerSection(),
+        const SizedBox(height: AppSpacing.l),
+        _preview(),
+      ],
+    );
+    final actions = [
+      TextButton(
+        key: const Key('btn_cancel_goal'),
+        style: TextButton.styleFrom(minimumSize: const Size(120, 52)),
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Abbrechen'),
+      ),
+      FilledButton.icon(
+        key: const Key('btn_save_goal'),
+        style: FilledButton.styleFrom(minimumSize: const Size(160, 52)),
+        onPressed: _saving ? null : _save,
+        icon: const Icon(Icons.check_rounded),
+        label: Text(_isEditMode ? 'Änderungen speichern' : 'Speichern'),
+      ),
+    ];
+
+    // Smartphone: Vollbild statt Dialog fester Breite (US-701)
+    if (FormFactor.isPhone(context)) {
+      return PhoneDialogFrame(title: title, body: body, actions: actions);
+    }
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
@@ -157,103 +241,27 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
         AppSpacing.xl,
         0,
       ),
-      title: Row(
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(color: teamColor, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: AppSpacing.s),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isEditMode
-                      ? 'Tor bearbeiten'
-                      : 'Tor für ${widget.team.label.toUpperCase()}',
-                  key: const Key('goal_dialog_title'),
-                ),
-                if (widget.teamName != null && widget.teamName!.isNotEmpty)
-                  Text(
-                    widget.teamName!,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.bodyMedium?.copyWith(
-                      color: context.scheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          _TimeChip(label: GamePhaseX.formatMs(widget.elapsedMs, widget.gamePhase)),
-        ],
-      ),
-      content: SizedBox(
-        width: 560,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SectionHeader('Torart'),
-              const SizedBox(height: AppSpacing.s),
-              Row(
-                children: [
-                  for (final k in GoalKind.values) ...[
-                    if (k != GoalKind.values.first)
-                      const SizedBox(width: AppSpacing.s),
-                    Expanded(
-                      child: SelectTile(
-                        key: Key('goal_kind_${k.name}'),
-                        label: k.label,
-                        dense: true,
-                        selected: _kind == k,
-                        color: context.scheme.inverseSurface,
-                        onTap: () => _setKind(k),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: AppSpacing.l),
-              _scorerSection(),
-              const SizedBox(height: AppSpacing.l),
-              _preview(),
-            ],
-          ),
-        ),
-      ),
+      title: title,
+      content: SizedBox(width: 560, child: SingleChildScrollView(child: body)),
       actionsPadding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
         0,
         AppSpacing.xl,
         AppSpacing.xl,
       ),
-      actions: [
-        TextButton(
-          key: const Key('btn_cancel_goal'),
-          style: TextButton.styleFrom(minimumSize: const Size(120, 52)),
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Abbrechen'),
-        ),
-        FilledButton.icon(
-          key: const Key('btn_save_goal'),
-          style: FilledButton.styleFrom(minimumSize: const Size(160, 52)),
-          onPressed: _saving ? null : _save,
-          icon: const Icon(Icons.check_rounded),
-          label: Text(_isEditMode ? 'Änderungen speichern' : 'Speichern'),
-        ),
-      ],
+      actions: actions,
     );
   }
 
   Widget _scorerSection() {
     final scorerTeam = _scorerTeam;
-    final numbers = ref
-            .watch(scorerTeam == TeamSide.home
-                ? homeSquadProvider(widget.gameId)
-                : awaySquadProvider(widget.gameId))
+    final numbers =
+        ref
+            .watch(
+              scorerTeam == TeamSide.home
+                  ? homeSquadProvider(widget.gameId)
+                  : awaySquadProvider(widget.gameId),
+            )
             .valueOrNull ??
         const <int>[];
     final color = context.colors.team(scorerTeam);
@@ -293,7 +301,8 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
                 style: context.text.titleMedium?.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
-                onChanged: (v) => setState(() => _scorerNumber = int.tryParse(v)),
+                onChanged: (v) =>
+                    setState(() => _scorerNumber = int.tryParse(v)),
               ),
             ),
             if (numbers.isNotEmpty) ...[
@@ -335,8 +344,9 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
     final after = base.plus(widget.team).label;
     final nr = _scorerNumber != null ? '#$_scorerNumber' : null;
     final text = switch (_kind) {
-      GoalKind.ownGoal => 'Eigentor ${nr != null ? '$nr ' : ''}'
-          '(${_scorerTeam.label}) → Tor für $team · $after',
+      GoalKind.ownGoal =>
+        'Eigentor ${nr != null ? '$nr ' : ''}'
+            '(${_scorerTeam.label}) → Tor für $team · $after',
       GoalKind.penalty =>
         'Tor für $team${nr != null ? ' · $nr' : ''} (Strafstoß) → $after',
       GoalKind.regular => 'Tor für $team${nr != null ? ' · $nr' : ''} → $after',

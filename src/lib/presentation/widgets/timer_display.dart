@@ -39,7 +39,10 @@ TimerState _stateOf(WidgetRef ref, String gameId) =>
 class TimerClock extends ConsumerWidget {
   final String gameId;
 
-  const TimerClock({super.key, required this.gameId});
+  /// Kleinere Uhr für die Smartphone-Kopfzeile (US-701).
+  final bool compact;
+
+  const TimerClock({super.key, required this.gameId, this.compact = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,12 +85,12 @@ class TimerClock extends ConsumerWidget {
               ],
             ),
           ),
-        const SizedBox(width: AppSpacing.m),
+        SizedBox(width: compact ? AppSpacing.s : AppSpacing.m),
         Text(
           key: const Key('timer_label'),
           state.formattedTime,
           style: TextStyle(
-            fontSize: 34,
+            fontSize: compact ? 24 : 34,
             fontWeight: FontWeight.w700,
             height: 1.1,
             letterSpacing: -0.5,
@@ -128,7 +131,14 @@ class _RunningDot extends StatelessWidget {
 class PhaseActions extends ConsumerWidget {
   final String gameId;
 
-  const PhaseActions({super.key, required this.gameId});
+  /// Smartphone: feste Breite für die linke Leiste, Höhe 56 dp; mehrere
+  /// Buttons stehen untereinander (US-701).
+  final bool compact;
+
+  const PhaseActions({super.key, required this.gameId, this.compact = false});
+
+  /// Breite eines Phasen-Buttons in der kompakten Variante.
+  static const compactWidth = 160.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,16 +167,28 @@ class PhaseActions extends ConsumerWidget {
                 for (final cfg in configs)
                   FilledButton.icon(
                     key: Key(cfg.key),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: cfg.color,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(
-                          AppSizes.phaseButtonWidth, AppSizes.primaryAction),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.l + 4),
-                      textStyle: context.text.labelLarge
-                          ?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
+                    style: compact
+                        ? FilledButton.styleFrom(
+                            backgroundColor: cfg.color,
+                            foregroundColor: Colors.white,
+                            minimumSize:
+                                const Size(compactWidth, AppSizes.liveTap),
+                            fixedSize: const Size.fromWidth(compactWidth),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.m),
+                            textStyle: context.text.labelLarge?.copyWith(
+                                fontSize: 15, fontWeight: FontWeight.w700),
+                          )
+                        : FilledButton.styleFrom(
+                            backgroundColor: cfg.color,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(AppSizes.phaseButtonWidth,
+                                AppSizes.primaryAction),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.l + 4),
+                            textStyle: context.text.labelLarge?.copyWith(
+                                fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                     onPressed: () => cfg.action(context, service),
                     icon: Icon(cfg.icon, size: 24),
                     label: Text(cfg.label),
