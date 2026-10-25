@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Flutter 3.41.7 / Dart 3.11.5 |
+| Framework | Flutter 3.47.7 / Dart 3.13.5 |
 | Database | Drift 2.31 (type-safe SQLite wrapper) |
 | State Management | Riverpod 2.6.1 |
 | ID generation | uuid |

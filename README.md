@@ -73,7 +73,7 @@ Eine Synchronisation mit einem Server ist für später angedacht. Die Architektu
 
 | Bereich | Technologie |
 |---|---|
-| Framework | Flutter 3.41.7 / Dart 3.11.5 |
+| Framework | Flutter 3.47.7 / Dart 3.13.5 |
 | Datenbank | [Drift](https://drift.simonbinder.eu/) 2.31 (typsicherer SQLite-Wrapper), Schema-Version 6 |
 | State Management | [Riverpod](https://riverpod.dev/) 2.6.1 |
 | IDs | `uuid` |
@@ -149,7 +149,7 @@ Dazu kommen `Game` (Spieldaten), `Squad` (Aufstellungen), `EventPlayer` (beteili
 
 ## Loslegen
 
-Voraussetzung: [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.41.x.
+Voraussetzung: [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.47.x.
 
 ```bash
 cd src/
