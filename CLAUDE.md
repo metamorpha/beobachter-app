@@ -65,6 +65,7 @@ Key design decisions:
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
 | `02_us_ui_redesign.md` | User stories — Epic 6: UI-Modernisierung (US-601–606) |
+| `02_us_android.md` | User stories — Epic 7: Android-Smartphone (US-701–706) |
 | `03_ux_review.md` | UX feedback and decisions |
 | `04_ux_design.md` | Wireframes, user flows, UX principles |
 | `05_arch_review.md` | Architecture feasibility review |
@@ -86,6 +87,7 @@ Key design decisions:
 | `23_ui_redesign_plan.md` | UI redesign plan — theme, reachability, motion (presentation layer only) |
 | `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
 | `25_tor_erfassung_tests.md` | Goal capture via header buttons — US-215 (20 TCs) |
+| `26_android_smartphone_tests.md` | Android smartphone layout, wakelock, CI builds — US-701–706 (46 TCs) |
 
 ### src/lib/ structure
 
