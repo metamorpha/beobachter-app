@@ -168,7 +168,7 @@ Eine Beispiel-CSV für den Import liegt unter [`resources/`](resources/).
 
 ### Builds (GitHub Actions)
 
-Windows und Android werden in zwei getrennten Workflows gebaut. Beide laufen bei jedem Push auf `main` und lassen sich unter **Actions** einzeln über **Run workflow** starten:
+Windows und Android werden in zwei getrennten Workflows gebaut. Beide laufen bei jedem Push auf `main` und bei jedem Pull Request gegen `main`, sodass ein PR vor dem Merge für beide Plattformen geprüft ist. Zusätzlich lassen sie sich unter **Actions** einzeln über **Run workflow** starten:
 
 | Workflow | Datei | Artefakt |
 |---|---|---|

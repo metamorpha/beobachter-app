@@ -65,8 +65,8 @@
 - [x] Spielliste, Spiel-Setup und Nachbereitung laufen im Hochformat
 - [x] Die Spielliste ist einspaltig; Badge „Läuft", Fortsetzen (US-109) und Löschen funktionieren wie bisher
 - [x] Im Spiel-Setup stehen Spieldaten und Aufstellungen untereinander; die Bildschirmtastatur verdeckt kein aktives Eingabefeld
-- [ ] Der CSV-Import (US-105) öffnet die Android-Dateiauswahl und importiert wie unter Windows
-  *Offen: manueller Test auf einem Gerät (TC-7046). Parser und Import-Logik sind unverändert.*
+- [x] Der CSV-Import (US-105) öffnet die Android-Dateiauswahl und importiert wie unter Windows
+  *Geprüft am 2026-10-26 auf einem Pixel 8 Pro (TC-7046).*
 - [x] Dialoge passen ihre Breite dem Bildschirm an (kein horizontales Abschneiden)
 
 ---
@@ -113,6 +113,8 @@
 **Akzeptanzkriterien:**
 - [x] Es gibt zwei getrennte Workflows: `build-windows.yml` (bestehend) und `build-android.yml` (neu)
 - [x] Beide laufen bei jedem Push auf `main` und lassen sich zusätzlich einzeln manuell starten (`workflow_dispatch`)
+- [x] Beide laufen außerdem bei jedem Pull Request gegen `main`, damit ein PR vor dem Merge für beide Plattformen gebaut und getestet ist
+  *Ergänzt am 2026-10-26 (TC-7077).*
 - [x] Ein Fehler in einem Workflow beeinflusst den anderen nicht
 - [x] Der Android-Workflow führt `flutter analyze` und `flutter test` aus und baut anschließend `flutter build apk --release` mit Flutter 3.47.7
   *Hinweis: Lokal ist kein Android-SDK installiert; der erste echte APK-Build läuft in der CI (TC-7073).*

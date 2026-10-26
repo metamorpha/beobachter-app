@@ -406,6 +406,14 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 
 ---
 
+### TC-7077: Beide Workflows bei Pull Request (**manuell**)
+
+**Schritte:** Pull Request von einem Feature-Branch gegen `main` öffnen; danach einen weiteren Commit auf den Branch pushen.
+
+**Erwartetes Ergebnis:** „Build Windows" und „Build Android" erscheinen als getrennte Checks im PR und laufen nach dem neuen Commit erneut; das Android-Artefakt steht im jeweiligen Lauf zum Download bereit.
+
+---
+
 ## Übersicht
 
 | Bereich | TCs | davon manuell |
@@ -416,8 +424,8 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 | US-703 Spielliste/Setup | 6 | 1 |
 | US-704 Nachbereitung | 4 | 0 |
 | US-705 Grundlagen | 5 | 5 |
-| US-706 CI | 6 | 6 |
-| **Summe** | **46** | **13** |
+| US-706 CI | 7 | 7 |
+| **Summe** | **47** | **14** |
 
 Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spielliste, Spiel-Setup, Szenenliste und Statistik (390 × 844); Live-Screen, Erfassungsformular und Seitenleiste „Letzte Ereignisse" (844 × 390).
 
@@ -427,3 +435,9 @@ Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spiellist
 - Regression: `flutter analyze` ohne Befunde, `flutter test` 297 Tests grün; die 8 Tablet-Goldens unverändert (TC-7002).
 - TC-7003: keine Änderungen unter `domain/`, `data/`, `core/` und in `providers.dart`.
 - Offen (manuell, Gerät bzw. GitHub nötig): TC-7046, TC-7061 – TC-7065, TC-7071 – TC-7076.
+
+## Ergebnis (2026-10-26)
+
+- TC-7046 bestanden: Die App wurde auf einem Pixel 8 Pro installiert, und der CSV-Import funktioniert.
+- TC-7077 neu: `pull_request`-Auslöser für beide Workflows ergänzt; die Prüfung erfolgt mit dem zugehörigen PR.
+- Weiterhin offen (manuell): TC-7061 – TC-7065, TC-7071 – TC-7076.
