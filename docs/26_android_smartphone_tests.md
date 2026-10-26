@@ -439,5 +439,7 @@ Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spiellist
 ## Ergebnis (2026-10-26)
 
 - TC-7046 bestanden: Die App wurde auf einem Pixel 8 Pro installiert, und der CSV-Import funktioniert.
-- TC-7077 neu: `pull_request`-Auslöser für beide Workflows ergänzt; die Prüfung erfolgt mit dem zugehörigen PR.
-- Weiterhin offen (manuell): TC-7061 – TC-7065, TC-7071 – TC-7076.
+- TC-7064 bestanden: Die Display-Sperre funktioniert auf dem Pixel 8 Pro.
+- TC-7073 bestanden: „Build Android“ ist grün (inkl. Analyse und Tests); das Artefakt `beobachter-app-android` enthält die APK.
+- TC-7077 bestanden: Im PR laufen „Build Windows“ und „Build Android“ als getrennte Checks, beide grün. Der Commit mit diesem Eintrag stößt beide erneut an.
+- Weiterhin offen (manuell): TC-7061 – TC-7063, TC-7065, TC-7071, TC-7072, TC-7074 – TC-7076.
