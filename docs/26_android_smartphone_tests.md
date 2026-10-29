@@ -450,4 +450,9 @@ Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spiellist
 - TC-7065 bestanden: Der Live-Screen bleibt quer, die übrigen Screens bleiben hoch, und kein Inhalt liegt unter Kamera-Loch oder Gestenleiste (Pixel 8 Pro).
 - TC-7061 (Berechtigungen): Ein neuer Schritt „Check permissions“ in `build-android.yml` liest die Berechtigungen der fertigen APK mit `aapt2 dump permissions` aus und schreibt sie in die Zusammenfassung des Laufs. Unerwartete Berechtigungen erzeugen eine Warnung. Das Ergebnis steht mit dem nächsten Lauf fest.
 - TC-7061 bestanden: Laut „Check permissions“ fordert die Release-APK keine Berechtigungen an.
-- Weiterhin offen (manuell): TC-7071, TC-7072 (nach dem Merge), TC-7075, TC-7076.
+- TC-7071 bestanden: Nach dem Merge laufen „Build Windows“ und „Build Android“ getrennt auf `main`.
+- TC-7072 bestanden: Beim manuellen Start über „Run workflow“ läuft jeweils nur der gewählte Workflow.
+- TC-7075 bewusst nicht geprüft: Wie der Workflow ohne Secrets reagiert, ist im Schritt „Configure release signing“ nachvollziehbar (Warnung, kein Abbruch). Vor dem Eintragen der Secrets lief der Build bereits auf diesem Weg und war grün.
+- TC-7076 bewusst nicht geprüft: Die beiden Workflows sind getrennte Dateien ohne gemeinsame Jobs oder Abhängigkeiten, laufen auf verschiedenen Runnern (`ubuntu-latest` bzw. `windows-latest`) und erscheinen im PR als getrennte Checks.
+
+**Abschluss:** Alle 47 Testfälle sind bearbeitet. 45 sind bestanden, TC-7075 und TC-7076 wurden bewusst nicht ausgeführt.
