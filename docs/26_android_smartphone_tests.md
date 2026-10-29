@@ -442,4 +442,8 @@ Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spiellist
 - TC-7064 bestanden: Die Display-Sperre funktioniert auf dem Pixel 8 Pro.
 - TC-7073 bestanden: „Build Android“ ist grün (inkl. Analyse und Tests); das Artefakt `beobachter-app-android` enthält die APK.
 - TC-7077 bestanden: Im PR laufen „Build Windows“ und „Build Android“ als getrennte Checks, beide grün. Der Commit mit diesem Eintrag stößt beide erneut an.
-- Weiterhin offen (manuell): TC-7061 – TC-7063, TC-7065, TC-7071, TC-7072, TC-7074 – TC-7076.
+- Release-Signatur eingerichtet (Secrets hinterlegt); „Build Android“ läuft ohne Warnung „Keine Release-Signatur“.
+- TC-7062 bestanden: Auf dem Pixel 8 Pro ließ sich eine neue APK über die alte installieren; die Spieldaten blieben erhalten.
+- TC-7074 bestanden: Das Update zwischen zwei CI-Läufen hat geklappt, beide APKs tragen also denselben Release-Schlüssel (Android lehnt ein Update mit anderer Signatur ab).
+- TC-7061 teilweise: App-Name „Beobachter“ und grünes Icon auf dem Homescreen bestätigt; die Berechtigungsprüfung (`aapt dump permissions`) steht noch aus.
+- Weiterhin offen (manuell): TC-7061 (Berechtigungen), TC-7063, TC-7065, TC-7071, TC-7072, TC-7075, TC-7076.
