@@ -3,6 +3,8 @@ name: Build Android
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -61,6 +63,33 @@ jobs:
       - name: Build APK
         working-directory: src
         run: flutter build apk --release
+
+      # Die App soll ohne Netzwerk- oder Speicher-Berechtigung auskommen (US-705,
+      # TC-7061). Plugins können beim Zusammenführen des Manifests Berechtigungen
+      # einbringen – daher die fertige APK prüfen. Die von androidx automatisch
+      # angelegte App-interne DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION ist
+      # unkritisch und wird ignoriert. Unerwartete Berechtigungen erzeugen eine
+      # Warnung, brechen den Build aber nicht ab.
+      - name: Check permissions
+        working-directory: src
+        run: |
+          AAPT2="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/aapt2"
+          PERMS=$("$AAPT2" dump permissions build/app/outputs/flutter-apk/app-release.apk \
+            | grep '^uses-permission' | grep -o "name='[^']*'" | cut -d"'" -f2 \
+            | grep -v 'DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION$' || true)
+          {
+            echo "### Berechtigungen der APK"
+            if [ -z "$PERMS" ]; then
+              echo "Keine Berechtigungen angefordert."
+            else
+              echo "$PERMS" | sed 's/^/- `/; s/$/`/'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$PERMS" ]; then
+            echo "::warning title=Unerwartete Berechtigungen::Die APK fordert an: $(echo $PERMS | tr ' ' ',')"
+          else
+            echo "Keine Berechtigungen angefordert."
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -87,7 +87,7 @@ Key design decisions:
 | `23_ui_redesign_plan.md` | UI redesign plan — theme, reachability, motion (presentation layer only) |
 | `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
 | `25_tor_erfassung_tests.md` | Goal capture via header buttons — US-215 (20 TCs) |
-| `26_android_smartphone_tests.md` | Android smartphone layout, wakelock, CI builds — US-701–706 (46 TCs) |
+| `26_android_smartphone_tests.md` | Android smartphone layout, wakelock, CI builds — US-701–706 (47 TCs) |
 
 ### src/lib/ structure
 

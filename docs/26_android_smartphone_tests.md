@@ -406,6 +406,14 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 
 ---
 
+### TC-7077: Beide Workflows bei Pull Request (**manuell**)
+
+**Schritte:** Pull Request von einem Feature-Branch gegen `main` öffnen; danach einen weiteren Commit auf den Branch pushen.
+
+**Erwartetes Ergebnis:** „Build Windows" und „Build Android" erscheinen als getrennte Checks im PR und laufen nach dem neuen Commit erneut; das Android-Artefakt steht im jeweiligen Lauf zum Download bereit.
+
+---
+
 ## Übersicht
 
 | Bereich | TCs | davon manuell |
@@ -416,8 +424,8 @@ b) und c) Tablet-Layout (Seitenpanel „Letzte Ereignisse" sichtbar, keine recht
 | US-703 Spielliste/Setup | 6 | 1 |
 | US-704 Nachbereitung | 4 | 0 |
 | US-705 Grundlagen | 5 | 5 |
-| US-706 CI | 6 | 6 |
-| **Summe** | **46** | **13** |
+| US-706 CI | 7 | 7 |
+| **Summe** | **47** | **14** |
 
 Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spielliste, Spiel-Setup, Szenenliste und Statistik (390 × 844); Live-Screen, Erfassungsformular und Seitenleiste „Letzte Ereignisse" (844 × 390).
 
@@ -427,3 +435,19 @@ Zusätzlich neue Golden-Tests in `test/golden/phone_golden_test.dart`: Spiellist
 - Regression: `flutter analyze` ohne Befunde, `flutter test` 297 Tests grün; die 8 Tablet-Goldens unverändert (TC-7002).
 - TC-7003: keine Änderungen unter `domain/`, `data/`, `core/` und in `providers.dart`.
 - Offen (manuell, Gerät bzw. GitHub nötig): TC-7046, TC-7061 – TC-7065, TC-7071 – TC-7076.
+
+## Ergebnis (2026-10-26)
+
+- TC-7046 bestanden: Die App wurde auf einem Pixel 8 Pro installiert, und der CSV-Import funktioniert.
+- TC-7064 bestanden: Die Display-Sperre funktioniert auf dem Pixel 8 Pro.
+- TC-7073 bestanden: „Build Android“ ist grün (inkl. Analyse und Tests); das Artefakt `beobachter-app-android` enthält die APK.
+- TC-7077 bestanden: Im PR laufen „Build Windows“ und „Build Android“ als getrennte Checks, beide grün. Der Commit mit diesem Eintrag stößt beide erneut an.
+- Release-Signatur eingerichtet (Secrets hinterlegt); „Build Android“ läuft ohne Warnung „Keine Release-Signatur“.
+- TC-7062 bestanden: Auf dem Pixel 8 Pro ließ sich eine neue APK über die alte installieren; die Spieldaten blieben erhalten.
+- TC-7074 bestanden: Das Update zwischen zwei CI-Läufen hat geklappt, beide APKs tragen also denselben Release-Schlüssel (Android lehnt ein Update mit anderer Signatur ab).
+- TC-7061 teilweise: App-Name „Beobachter“ und grünes Icon auf dem Homescreen bestätigt; die Berechtigungsprüfung (`aapt dump permissions`) steht noch aus.
+- TC-7063 bestanden: Die Spieluhr lief nach Hintergrund und Prozess-Ende korrekt weiter (Pixel 8 Pro).
+- TC-7065 bestanden: Der Live-Screen bleibt quer, die übrigen Screens bleiben hoch, und kein Inhalt liegt unter Kamera-Loch oder Gestenleiste (Pixel 8 Pro).
+- TC-7061 (Berechtigungen): Ein neuer Schritt „Check permissions“ in `build-android.yml` liest die Berechtigungen der fertigen APK mit `aapt2 dump permissions` aus und schreibt sie in die Zusammenfassung des Laufs. Unerwartete Berechtigungen erzeugen eine Warnung. Das Ergebnis steht mit dem nächsten Lauf fest.
+- TC-7061 bestanden: Laut „Check permissions“ fordert die Release-APK keine Berechtigungen an.
+- Weiterhin offen (manuell): TC-7071, TC-7072 (nach dem Merge), TC-7075, TC-7076.

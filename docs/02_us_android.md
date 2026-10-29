@@ -65,8 +65,8 @@
 - [x] Spielliste, Spiel-Setup und Nachbereitung laufen im Hochformat
 - [x] Die Spielliste ist einspaltig; Badge „Läuft", Fortsetzen (US-109) und Löschen funktionieren wie bisher
 - [x] Im Spiel-Setup stehen Spieldaten und Aufstellungen untereinander; die Bildschirmtastatur verdeckt kein aktives Eingabefeld
-- [ ] Der CSV-Import (US-105) öffnet die Android-Dateiauswahl und importiert wie unter Windows
-  *Offen: manueller Test auf einem Gerät (TC-7046). Parser und Import-Logik sind unverändert.*
+- [x] Der CSV-Import (US-105) öffnet die Android-Dateiauswahl und importiert wie unter Windows
+  *Geprüft am 2026-10-26 auf einem Pixel 8 Pro (TC-7046).*
 - [x] Dialoge passen ihre Breite dem Bildschirm an (kein horizontales Abschneiden)
 
 ---
@@ -94,13 +94,15 @@
 
 **Akzeptanzkriterien:**
 - [x] Die App heißt auf dem Homescreen „Beobachter" und hat ein eigenes App-Icon
-- [ ] Die App benötigt keine Netzwerk- oder Speicher-Berechtigung (Offline-Betrieb, CSV über die Systemdateiauswahl)
-  *Offen: Das App-Manifest fordert keine Berechtigung an; ob Plugins (z. B. `file_picker`) beim Zusammenführen eine hinzufügen, prüft TC-7061 an der gebauten APK.*
+  *Am 2026-10-29 auf einem Pixel 8 Pro bestätigt (TC-7061).*
+- [x] Die App benötigt keine Netzwerk- oder Speicher-Berechtigung (Offline-Betrieb, CSV über die Systemdateiauswahl)
+  *Am 2026-10-29 an der Release-APK geprüft: Es werden keine Berechtigungen angefordert (TC-7061). Der Schritt „Check permissions“ im Android-Workflow prüft das bei jedem Build erneut.*
 - [x] Die APK ist mit einem festen Release-Schlüssel signiert, sodass eine neue Version über die alte installiert werden kann und die lokalen Spieldaten erhalten bleiben
   *Umsetzung: Signierung über `android/key.properties`, in der CI aus GitHub-Secrets erzeugt. Der Schlüssel selbst muss einmalig angelegt werden (README).*
+  *Am 2026-10-29 auf einem Pixel 8 Pro geprüft: Das Update über die alte Version funktioniert ohne Datenverlust (TC-7062, TC-7074).*
   *Hinweis: Ein Play Store ist dafür nicht nötig. Der Schlüssel wird einmalig selbst erzeugt und als GitHub-Secret hinterlegt. Ohne festen Schlüssel signiert jeder CI-Lauf mit einem anderen Debug-Schlüssel — dann muss die App vor jedem Update deinstalliert werden, und die Spieldaten gehen verloren.*
-- [ ] Nach Hintergrund oder Neustart durch Android läuft die Spieluhr korrekt weiter (US-501, zeitstempelbasiert)
-  *Offen: manueller Test auf einem Gerät (TC-7063). Die Uhr-Logik ist unverändert.*
+- [x] Nach Hintergrund oder Neustart durch Android läuft die Spieluhr korrekt weiter (US-501, zeitstempelbasiert)
+  *Am 2026-10-29 auf einem Pixel 8 Pro geprüft (TC-7063).*
 
 ---
 
@@ -113,6 +115,8 @@
 **Akzeptanzkriterien:**
 - [x] Es gibt zwei getrennte Workflows: `build-windows.yml` (bestehend) und `build-android.yml` (neu)
 - [x] Beide laufen bei jedem Push auf `main` und lassen sich zusätzlich einzeln manuell starten (`workflow_dispatch`)
+- [x] Beide laufen außerdem bei jedem Pull Request gegen `main`, damit ein PR vor dem Merge für beide Plattformen gebaut und getestet ist
+  *Ergänzt am 2026-10-26 (TC-7077).*
 - [x] Ein Fehler in einem Workflow beeinflusst den anderen nicht
 - [x] Der Android-Workflow führt `flutter analyze` und `flutter test` aus und baut anschließend `flutter build apk --release` mit Flutter 3.47.7
   *Hinweis: Lokal ist kein Android-SDK installiert; der erste echte APK-Build läuft in der CI (TC-7073).*
