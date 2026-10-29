@@ -95,8 +95,8 @@
 **Akzeptanzkriterien:**
 - [x] Die App heißt auf dem Homescreen „Beobachter" und hat ein eigenes App-Icon
   *Am 2026-10-29 auf einem Pixel 8 Pro bestätigt (TC-7061).*
-- [ ] Die App benötigt keine Netzwerk- oder Speicher-Berechtigung (Offline-Betrieb, CSV über die Systemdateiauswahl)
-  *Offen: Das App-Manifest fordert keine Berechtigung an. Ob Plugins (z. B. `file_picker`) beim Zusammenführen eine hinzufügen, prüft TC-7061 an der gebauten APK. Dafür listet der Schritt „Check permissions“ im Android-Workflow die Berechtigungen bei jedem Build auf.*
+- [x] Die App benötigt keine Netzwerk- oder Speicher-Berechtigung (Offline-Betrieb, CSV über die Systemdateiauswahl)
+  *Am 2026-10-29 an der Release-APK geprüft: Es werden keine Berechtigungen angefordert (TC-7061). Der Schritt „Check permissions“ im Android-Workflow prüft das bei jedem Build erneut.*
 - [x] Die APK ist mit einem festen Release-Schlüssel signiert, sodass eine neue Version über die alte installiert werden kann und die lokalen Spieldaten erhalten bleiben
   *Umsetzung: Signierung über `android/key.properties`, in der CI aus GitHub-Secrets erzeugt. Der Schlüssel selbst muss einmalig angelegt werden (README).*
   *Am 2026-10-29 auf einem Pixel 8 Pro geprüft: Das Update über die alte Version funktioniert ohne Datenverlust (TC-7062, TC-7074).*
