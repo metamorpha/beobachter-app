@@ -273,6 +273,7 @@ Future<ProviderContainer> pumpGoldenScreen(
   required Size size,
   GamePhase phase = GamePhase.zweiteHalbzeit,
   List<Override> overrides = const [],
+  Future<void> Function(ProviderContainer c)? afterSeed,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -289,6 +290,7 @@ Future<ProviderContainer> pumpGoldenScreen(
     await db.close();
   });
   await seedGoldenData(c, phase: phase);
+  await afterSeed?.call(c);
 
   await tester.pumpWidget(
     UncontrolledProviderScope(

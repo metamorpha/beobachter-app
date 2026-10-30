@@ -12,6 +12,8 @@ class Games extends Table {
   TextColumn get spieltag => text().nullable()();
   TextColumn get coachingNote => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
+  TextColumn get homeKitColor => text().nullable()(); // KitColor.name
+  TextColumn get awayKitColor => text().nullable()(); // KitColor.name
 
   @override
   Set<Column> get primaryKey => {id};

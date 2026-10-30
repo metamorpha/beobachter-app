@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/enums/kit_color.dart';
 import '../../domain/enums/team_side.dart';
 import '../providers/providers.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/form_factor.dart';
+import '../theme/kit_colors.dart';
+import 'kit_color_picker.dart';
 import 'phone_dialog.dart';
 import 'squad_input.dart';
+import 'team_dot.dart';
 
-/// Aufstellungen beider Teams während des Spiels korrigieren (US-110).
-/// Jede Änderung wird sofort gespeichert; „Fertig" schließt nur.
+/// Aufstellungen und Trikotfarben beider Teams während des Spiels korrigieren
+/// (US-110, US-111). Jede Änderung wird sofort gespeichert; „Fertig" schließt
+/// nur.
 class SquadEditDialog extends ConsumerStatefulWidget {
   final String gameId;
 
@@ -71,23 +76,34 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
   void _remove(TeamSide team, int number) =>
       _save(team, _numbers[team]!.where((n) => n != number).toList());
 
-  Widget _teamColumn(TeamSide team) {
+  Future<void> _selectKit(TeamSide team, KitColor kit) async {
+    await ref
+        .read(gameRepositoryProvider)
+        .updateKitColor(widget.gameId, team, kit);
+    // Kopfzeile, Tor-Buttons und Chips färben sich über teamKitsProvider neu
+    ref.invalidate(gameProvider(widget.gameId));
+    ref.invalidate(gamesProvider);
+  }
+
+  Widget _teamColumn(TeamSide team, TeamKits kits) {
     final isHome = team == TeamSide.home;
-    final color = context.colors.team(team);
+    final color = kits.color(context, team);
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
+              TeamDot(color: color),
               const SizedBox(width: AppSpacing.s),
               Text(isHome ? 'Heim' : 'Gast', style: context.text.titleMedium),
             ],
+          ),
+          const SizedBox(height: AppSpacing.m),
+          KitColorPicker(
+            team: team,
+            selected: kits.of(team),
+            onSelected: (k) => _selectKit(team, k),
           ),
           const SizedBox(height: AppSpacing.m),
           SquadInput(
@@ -104,12 +120,22 @@ class _SquadEditDialogState extends ConsumerState<SquadEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final teams = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final kits = ref.watch(teamKitsProvider(widget.gameId)) ?? TeamKits.none;
+    final teams = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _teamColumn(TeamSide.home),
-        const SizedBox(width: AppSpacing.xl),
-        _teamColumn(TeamSide.away),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _teamColumn(TeamSide.home, kits),
+            const SizedBox(width: AppSpacing.xl),
+            _teamColumn(TeamSide.away, kits),
+          ],
+        ),
+        if (kits.clash) ...[
+          const SizedBox(height: AppSpacing.l),
+          const KitClashHint(),
+        ],
       ],
     );
     final done = FilledButton(

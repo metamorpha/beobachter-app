@@ -59,7 +59,7 @@ Key design decisions:
 | File | Content |
 |------|---------|
 | `01_epics.md` | MVP epics, prioritized for live-game use |
-| `02_us_spielverwaltung.md` | User stories — Epic 1: Spielverwaltung (US-101–108) |
+| `02_us_spielverwaltung.md` | User stories — Epic 1: Spielverwaltung (US-101–111) |
 | `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–215) |
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–305) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
@@ -88,13 +88,14 @@ Key design decisions:
 | `24_ui_redesign_tests.md` | UI redesign test cases — US-601–606 (32 TCs) |
 | `25_tor_erfassung_tests.md` | Goal capture via header buttons — US-215 (20 TCs) |
 | `26_android_smartphone_tests.md` | Android smartphone layout, wakelock, CI builds — US-701–706 (47 TCs) |
+| `27_trikotfarben_tests.md` | Team kit colors — US-111 (22 TCs) |
 
 ### src/lib/ structure
 
 ```
 domain/
   entities/     Game · Event · EventPlayer · Squad · TimerState · Goal · Score
-  enums/        EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole · GoalKind
+  enums/        EventType · RefDecision · CardType · Assessment · TeamSide · PlayerRole · GoalKind · KitColor
   repositories/ Abstract interfaces (GameRepository, EventRepository, SquadRepository, TimerRepository, GoalRepository)
 data/
   database/
@@ -108,8 +109,8 @@ presentation/
   platform/     device_providers (isAndroid, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch)
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
-  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style · form_factor
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · select_tile · section_header · stat_card · phone_dialog
+  theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style · form_factor · kit_colors
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · kit_color_picker · team_dot · select_tile · section_header · stat_card · phone_dialog
 ```
 
 ## Commands
@@ -126,7 +127,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (297 tests incl. 15 golden, all green)
+# Run tests (319 tests incl. 17 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -150,6 +151,7 @@ flutter run
 | `TeamSide` | home · away |
 | `PlayerRole` | fouler · fouled |
 | `GoalKind` | regular · ownGoal · penalty |
+| `KitColor` | white · black · grey · red · burgundy · orange · yellow · green · lightBlue · blue · purple (Trikotfarbe, US-111) |
 
 ### Key entity: Event
 
@@ -181,7 +183,7 @@ Goal {
 }
 ```
 
-**Score** (`domain/entities/score.dart`) is always derived from goals, never stored (`Score.fromGoals`). DB schema is v7; the v6→v7 migration copies counted goal decisions into `goals` and turns all former `goalDecision` events into `custom` / „Torentscheidung". The `events.goal_scorer_*`/`own_goal` columns are legacy and unused.
+**Score** (`domain/entities/score.dart`) is always derived from goals, never stored (`Score.fromGoals`). DB schema is v8 (v8: `games.home_kit_color`/`away_kit_color`, US-111); the v6→v7 migration copies counted goal decisions into `goals` and turns all former `goalDecision` events into `custom` / „Torentscheidung". The `events.goal_scorer_*`/`own_goal` columns are legacy and unused.
 
 ## Implementation Status
 
@@ -200,7 +202,8 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Aufstellung im Live-Screen (US-110) | Done — `SquadEditDialog` über Button „Aufstellung"; `SquadInput` geteilt mit Spiel-Setup |
 | Tor-Erfassung (US-215) | Done — „+ Tor"-Buttons je Team in der Live-Kopfzeile, `GoalDialog`, Tabelle `goals`; DB schema v7 |
 | Android-Smartphone (US-701–706) | Done — Smartphone-Layout per `FormFactor.isPhone` (kürzere Seite < 600 dp, nicht per Plattform); Live-Screen quer mit Seitenleisten, Dialoge im Vollbild (`showAppDialog`); Display-Sperre über Kanal `de.beobachter/screen` in `MainActivity`; getrennte Workflows `build-windows.yml` / `build-android.yml` |
-| UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` |
+| Trikotfarben (US-111) | Done — `KitColorPicker` je Team in Setup und Dialog „Aufstellung"; `Game.homeKitColor`/`awayKitColor`, DB schema v8; Farben über `teamKitsProvider(gameId)` → `TeamKits.color(context, side)`, Fallback `AppColors.home/away`; helle Farben mit Rand (`AppColors.needsOutline`) |
+| UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` (Teamfarben über `TeamKits`) |
 
 ## Development Pipeline
 

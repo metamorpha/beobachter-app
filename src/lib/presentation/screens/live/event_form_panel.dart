@@ -15,6 +15,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
+import '../../theme/kit_colors.dart';
 import '../../widgets/assessment_grid.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/select_tile.dart';
@@ -429,7 +430,8 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
         : team == TeamSide.away
         ? awayNumbers
         : <int>[];
-    final teamColor = team != null ? context.colors.team(team) : null;
+    final kits = ref.watch(teamKitsProvider(widget.gameId)) ?? TeamKits.none;
+    final teamColor = team != null ? kits.color(context, team) : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -521,7 +523,8 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
       dense: true,
       width: 64,
       selected: isSelected,
-      color: context.colors.team(side),
+      color: (ref.watch(teamKitsProvider(widget.gameId)) ?? TeamKits.none)
+          .color(context, side),
       onTap: () => onChanged(isSelected ? null : side),
     );
   }

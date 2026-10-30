@@ -114,6 +114,28 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _homeKitColorMeta = const VerificationMeta(
+    'homeKitColor',
+  );
+  @override
+  late final GeneratedColumn<String> homeKitColor = GeneratedColumn<String>(
+    'home_kit_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _awayKitColorMeta = const VerificationMeta(
+    'awayKitColor',
+  );
+  @override
+  late final GeneratedColumn<String> awayKitColor = GeneratedColumn<String>(
+    'away_kit_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -126,6 +148,8 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
     spieltag,
     coachingNote,
     createdAt,
+    homeKitColor,
+    awayKitColor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -214,6 +238,24 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('home_kit_color')) {
+      context.handle(
+        _homeKitColorMeta,
+        homeKitColor.isAcceptableOrUnknown(
+          data['home_kit_color']!,
+          _homeKitColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('away_kit_color')) {
+      context.handle(
+        _awayKitColorMeta,
+        awayKitColor.isAcceptableOrUnknown(
+          data['away_kit_color']!,
+          _awayKitColorMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -263,6 +305,14 @@ class $GamesTable extends Games with TableInfo<$GamesTable, GameRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      homeKitColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_kit_color'],
+      ),
+      awayKitColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}away_kit_color'],
+      ),
     );
   }
 
@@ -283,6 +333,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
   final String? spieltag;
   final String? coachingNote;
   final DateTime createdAt;
+  final String? homeKitColor;
+  final String? awayKitColor;
   const GameRow({
     required this.id,
     required this.date,
@@ -294,6 +346,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     this.spieltag,
     this.coachingNote,
     required this.createdAt,
+    this.homeKitColor,
+    this.awayKitColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -318,6 +372,12 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       map['coaching_note'] = Variable<String>(coachingNote);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || homeKitColor != null) {
+      map['home_kit_color'] = Variable<String>(homeKitColor);
+    }
+    if (!nullToAbsent || awayKitColor != null) {
+      map['away_kit_color'] = Variable<String>(awayKitColor);
+    }
     return map;
   }
 
@@ -341,6 +401,12 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           ? const Value.absent()
           : Value(coachingNote),
       createdAt: Value(createdAt),
+      homeKitColor: homeKitColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(homeKitColor),
+      awayKitColor: awayKitColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(awayKitColor),
     );
   }
 
@@ -360,6 +426,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       spieltag: serializer.fromJson<String?>(json['spieltag']),
       coachingNote: serializer.fromJson<String?>(json['coachingNote']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      homeKitColor: serializer.fromJson<String?>(json['homeKitColor']),
+      awayKitColor: serializer.fromJson<String?>(json['awayKitColor']),
     );
   }
   @override
@@ -376,6 +444,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
       'spieltag': serializer.toJson<String?>(spieltag),
       'coachingNote': serializer.toJson<String?>(coachingNote),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'homeKitColor': serializer.toJson<String?>(homeKitColor),
+      'awayKitColor': serializer.toJson<String?>(awayKitColor),
     };
   }
 
@@ -390,6 +460,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     Value<String?> spieltag = const Value.absent(),
     Value<String?> coachingNote = const Value.absent(),
     DateTime? createdAt,
+    Value<String?> homeKitColor = const Value.absent(),
+    Value<String?> awayKitColor = const Value.absent(),
   }) => GameRow(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -401,6 +473,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     spieltag: spieltag.present ? spieltag.value : this.spieltag,
     coachingNote: coachingNote.present ? coachingNote.value : this.coachingNote,
     createdAt: createdAt ?? this.createdAt,
+    homeKitColor: homeKitColor.present ? homeKitColor.value : this.homeKitColor,
+    awayKitColor: awayKitColor.present ? awayKitColor.value : this.awayKitColor,
   );
   GameRow copyWithCompanion(GamesCompanion data) {
     return GameRow(
@@ -422,6 +496,12 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           ? data.coachingNote.value
           : this.coachingNote,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      homeKitColor: data.homeKitColor.present
+          ? data.homeKitColor.value
+          : this.homeKitColor,
+      awayKitColor: data.awayKitColor.present
+          ? data.awayKitColor.value
+          : this.awayKitColor,
     );
   }
 
@@ -437,7 +517,9 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           ..write('liga: $liga, ')
           ..write('spieltag: $spieltag, ')
           ..write('coachingNote: $coachingNote, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('homeKitColor: $homeKitColor, ')
+          ..write('awayKitColor: $awayKitColor')
           ..write(')'))
         .toString();
   }
@@ -454,6 +536,8 @@ class GameRow extends DataClass implements Insertable<GameRow> {
     spieltag,
     coachingNote,
     createdAt,
+    homeKitColor,
+    awayKitColor,
   );
   @override
   bool operator ==(Object other) =>
@@ -468,7 +552,9 @@ class GameRow extends DataClass implements Insertable<GameRow> {
           other.liga == this.liga &&
           other.spieltag == this.spieltag &&
           other.coachingNote == this.coachingNote &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.homeKitColor == this.homeKitColor &&
+          other.awayKitColor == this.awayKitColor);
 }
 
 class GamesCompanion extends UpdateCompanion<GameRow> {
@@ -482,6 +568,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
   final Value<String?> spieltag;
   final Value<String?> coachingNote;
   final Value<DateTime> createdAt;
+  final Value<String?> homeKitColor;
+  final Value<String?> awayKitColor;
   final Value<int> rowid;
   const GamesCompanion({
     this.id = const Value.absent(),
@@ -494,6 +582,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     this.spieltag = const Value.absent(),
     this.coachingNote = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.homeKitColor = const Value.absent(),
+    this.awayKitColor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GamesCompanion.insert({
@@ -507,6 +597,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     this.spieltag = const Value.absent(),
     this.coachingNote = const Value.absent(),
     required DateTime createdAt,
+    this.homeKitColor = const Value.absent(),
+    this.awayKitColor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        date = Value(date),
@@ -522,6 +614,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     Expression<String>? spieltag,
     Expression<String>? coachingNote,
     Expression<DateTime>? createdAt,
+    Expression<String>? homeKitColor,
+    Expression<String>? awayKitColor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -535,6 +629,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
       if (spieltag != null) 'spieltag': spieltag,
       if (coachingNote != null) 'coaching_note': coachingNote,
       if (createdAt != null) 'created_at': createdAt,
+      if (homeKitColor != null) 'home_kit_color': homeKitColor,
+      if (awayKitColor != null) 'away_kit_color': awayKitColor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -550,6 +646,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     Value<String?>? spieltag,
     Value<String?>? coachingNote,
     Value<DateTime>? createdAt,
+    Value<String?>? homeKitColor,
+    Value<String?>? awayKitColor,
     Value<int>? rowid,
   }) {
     return GamesCompanion(
@@ -563,6 +661,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
       spieltag: spieltag ?? this.spieltag,
       coachingNote: coachingNote ?? this.coachingNote,
       createdAt: createdAt ?? this.createdAt,
+      homeKitColor: homeKitColor ?? this.homeKitColor,
+      awayKitColor: awayKitColor ?? this.awayKitColor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -600,6 +700,12 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (homeKitColor.present) {
+      map['home_kit_color'] = Variable<String>(homeKitColor.value);
+    }
+    if (awayKitColor.present) {
+      map['away_kit_color'] = Variable<String>(awayKitColor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -619,6 +725,8 @@ class GamesCompanion extends UpdateCompanion<GameRow> {
           ..write('spieltag: $spieltag, ')
           ..write('coachingNote: $coachingNote, ')
           ..write('createdAt: $createdAt, ')
+          ..write('homeKitColor: $homeKitColor, ')
+          ..write('awayKitColor: $awayKitColor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3243,6 +3351,8 @@ typedef $$GamesTableCreateCompanionBuilder =
       Value<String?> spieltag,
       Value<String?> coachingNote,
       required DateTime createdAt,
+      Value<String?> homeKitColor,
+      Value<String?> awayKitColor,
       Value<int> rowid,
     });
 typedef $$GamesTableUpdateCompanionBuilder =
@@ -3257,6 +3367,8 @@ typedef $$GamesTableUpdateCompanionBuilder =
       Value<String?> spieltag,
       Value<String?> coachingNote,
       Value<DateTime> createdAt,
+      Value<String?> homeKitColor,
+      Value<String?> awayKitColor,
       Value<int> rowid,
     });
 
@@ -3395,6 +3507,16 @@ class $$GamesTableFilterComposer extends Composer<_$AppDatabase, $GamesTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeKitColor => $composableBuilder(
+    column: $table.homeKitColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get awayKitColor => $composableBuilder(
+    column: $table.awayKitColor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3557,6 +3679,16 @@ class $$GamesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get homeKitColor => $composableBuilder(
+    column: $table.homeKitColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get awayKitColor => $composableBuilder(
+    column: $table.awayKitColor,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$GamesTableAnnotationComposer
@@ -3605,6 +3737,16 @@ class $$GamesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get homeKitColor => $composableBuilder(
+    column: $table.homeKitColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get awayKitColor => $composableBuilder(
+    column: $table.awayKitColor,
+    builder: (column) => column,
+  );
 
   Expression<T> eventsRefs<T extends Object>(
     Expression<T> Function($$EventsTableAnnotationComposer a) f,
@@ -3750,6 +3892,8 @@ class $$GamesTableTableManager
                 Value<String?> spieltag = const Value.absent(),
                 Value<String?> coachingNote = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> homeKitColor = const Value.absent(),
+                Value<String?> awayKitColor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GamesCompanion(
                 id: id,
@@ -3762,6 +3906,8 @@ class $$GamesTableTableManager
                 spieltag: spieltag,
                 coachingNote: coachingNote,
                 createdAt: createdAt,
+                homeKitColor: homeKitColor,
+                awayKitColor: awayKitColor,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3776,6 +3922,8 @@ class $$GamesTableTableManager
                 Value<String?> spieltag = const Value.absent(),
                 Value<String?> coachingNote = const Value.absent(),
                 required DateTime createdAt,
+                Value<String?> homeKitColor = const Value.absent(),
+                Value<String?> awayKitColor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GamesCompanion.insert(
                 id: id,
@@ -3788,6 +3936,8 @@ class $$GamesTableTableManager
                 spieltag: spieltag,
                 coachingNote: coachingNote,
                 createdAt: createdAt,
+                homeKitColor: homeKitColor,
+                awayKitColor: awayKitColor,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

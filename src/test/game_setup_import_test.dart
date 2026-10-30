@@ -9,6 +9,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'package:beobachter_app/domain/entities/game.dart';
 import 'package:beobachter_app/domain/enums/team_side.dart';
+import 'package:beobachter_app/domain/enums/kit_color.dart';
 import 'package:beobachter_app/domain/repositories/game_repository.dart';
 import 'package:beobachter_app/domain/repositories/squad_repository.dart';
 import 'package:beobachter_app/presentation/providers/providers.dart';
@@ -76,6 +77,12 @@ class _FakeGameRepository implements GameRepository {
 
   @override
   Future<void> updateCoachingNote(String gameId, String? note) async {}
+  @override
+  Future<void> updateKitColor(
+    String gameId,
+    TeamSide team,
+    KitColor kit,
+  ) async {}
 }
 
 class _FakeSquadRepository implements SquadRepository {
@@ -236,6 +243,9 @@ void main() {
           reason: 'updateGame muss nach Import aufgerufen werden');
       expect(gameRepo.lastUpdated!.homeTeamName, 'VfB Stuttgart');
       expect(gameRepo.lastUpdated!.awayTeamName, 'FC Bayern');
+      // TC-111-06: Der Import setzt keine Trikotfarben
+      expect(gameRepo.lastUpdated!.homeKitColor, isNull);
+      expect(gameRepo.lastUpdated!.awayKitColor, isNull);
     });
 
     testWidgets(

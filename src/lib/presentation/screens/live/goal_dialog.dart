@@ -11,9 +11,11 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/form_factor.dart';
+import '../../theme/kit_colors.dart';
 import '../../widgets/phone_dialog.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/select_tile.dart';
+import '../../widgets/team_dot.dart';
 
 /// Tor erfassen oder bearbeiten (US-215). Das Team steht durch den
 /// gedrückten Button fest; Torart und Torschütze sind optional.
@@ -147,16 +149,15 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
     if (mounted) Navigator.pop(context);
   }
 
+  TeamKits get _kits =>
+      ref.watch(teamKitsProvider(widget.gameId)) ?? TeamKits.none;
+
   @override
   Widget build(BuildContext context) {
-    final teamColor = context.colors.team(widget.team);
+    final teamColor = _kits.color(context, widget.team);
     final title = Row(
       children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: teamColor, shape: BoxShape.circle),
-        ),
+        TeamDot(color: teamColor, size: 12),
         const SizedBox(width: AppSpacing.s),
         Expanded(
           child: Column(
@@ -264,7 +265,7 @@ class _GoalDialogState extends ConsumerState<GoalDialog> {
             )
             .valueOrNull ??
         const <int>[];
-    final color = context.colors.team(scorerTeam);
+    final color = _kits.color(context, scorerTeam);
     final suffix = _kind == GoalKind.ownGoal ? ' · Eigentor' : '';
 
     return Column(

@@ -6,6 +6,8 @@ import 'package:beobachter_app/domain/entities/event.dart';
 import 'package:beobachter_app/domain/entities/event_player.dart';
 import 'package:beobachter_app/domain/entities/game.dart';
 import 'package:beobachter_app/domain/enums/event_type.dart';
+import 'package:beobachter_app/domain/enums/kit_color.dart';
+import 'package:beobachter_app/domain/enums/team_side.dart';
 import 'package:beobachter_app/domain/repositories/event_repository.dart';
 import 'package:beobachter_app/domain/repositories/game_repository.dart';
 import 'package:beobachter_app/presentation/providers/providers.dart';
@@ -107,6 +109,12 @@ class _FakeGameRepository implements GameRepository {
     lastCoachingNoteGameId = gameId;
     lastCoachingNote = note;
   }
+  @override
+  Future<void> updateKitColor(
+    String gameId,
+    TeamSide team,
+    KitColor kit,
+  ) async {}
 }
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────

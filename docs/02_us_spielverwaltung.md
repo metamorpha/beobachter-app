@@ -168,3 +168,30 @@
 - [x] Nach dem Schließen zeigt das Ereignisformular die neuen Nummern als Kader-Chips
 - [x] Bereits erfasste Szenen bleiben unverändert, auch wenn eine Nummer entfernt wird
 - [x] Der Button ist auch im abgeschlossenen Spiel verfügbar
+
+---
+
+### US-111 · Trikotfarben der Teams festlegen
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** bei der Erfassung der Aufstellungen jedem Team seine Trikotfarbe zuweisen,  
+**damit** ich Heim und Gast in der App auf einen Blick so erkenne, wie ich sie auf dem Platz sehe, statt immer Blau gegen Rot.
+
+**Akzeptanzkriterien:**
+- [x] Im Spiel-Setup steht in der Karte „Aufstellungen" je Team eine Farbauswahl. Eine Farbe wählt man mit einem Tap
+- [x] Die Auswahl ist eine feste Palette: Weiß, Schwarz, Grau, Rot, Bordeaux, Orange, Gelb, Grün, Hellblau, Blau, Lila. Pro Team gibt es genau eine Farbe, Zweifarbigkeit wird nicht unterstützt
+- [x] Die gewählte Farbe ist mit Haken und Rahmen markiert
+- [x] Ohne Auswahl gelten die bisherigen Farben (Heim Blau, Gast Rot). Bereits gespeicherte Spiele und per CSV importierte Spiele (US-105) sehen unverändert aus
+- [x] Im Dialog „Aufstellung" des Live-Screens (US-110) lässt sich die Farbe ändern. Wie bei den Nummern wird die Änderung sofort gespeichert
+- [x] Die Teamfarbe erscheint überall, wo bisher Heim-Blau bzw. Gast-Rot verwendet wird:
+  - Team-Punkte und „+ Tor"-Buttons in der Live-Kopfzeile
+  - Tor-Dialog
+  - Kader-Chips im Ereignisformular
+  - Aufstellungseingabe im Setup und im Live-Dialog
+  - Spielerrangliste und Torliste in der Nachbearbeitung
+- [x] Helle Farben (Weiß, Gelb, Hellblau) haben einen sichtbaren Rand, und die Schrift darauf ist dunkel. So bleiben sie auf hellem Hintergrund lesbar
+- [x] Haben beide Teams dieselbe Farbe, zeigt die App einen Hinweis („Beide Teams haben dieselbe Trikotfarbe"). Speichern bleibt möglich
+- [x] Farben mit fester Bedeutung (Karten, Bewertung korrekt/falsch, Coaching) bleiben unabhängig von den Trikotfarben
+- [x] Die Farbauswahl funktioniert im Smartphone-Layout (US-701 ff.) ohne horizontales Scrollen
+
+**Nicht im Umfang:** Torwartfarben, zweifarbige Trikots, freie Farbwahl.

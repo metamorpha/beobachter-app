@@ -6,12 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/pressebericht_csv_parser.dart';
 import '../../../domain/entities/game.dart';
+import '../../../domain/enums/kit_color.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/form_factor.dart';
+import '../../theme/kit_colors.dart';
+import '../../widgets/kit_color_picker.dart';
 import '../../widgets/squad_input.dart';
+import '../../widgets/team_dot.dart';
 import '../live/live_screen.dart';
 
 class GameSetupScreen extends ConsumerStatefulWidget {
@@ -31,6 +35,7 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
   late final TextEditingController _spieltagCtrl;
   List<int> _homeNumbers = [];
   List<int> _awayNumbers = [];
+  late TeamKits _kits;
   DateTime? _importedDate;
   List<String> _importWarnings = [];
 
@@ -42,6 +47,7 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
     _locationCtrl = TextEditingController(text: widget.game.location ?? '');
     _ligaCtrl = TextEditingController(text: widget.game.liga ?? '');
     _spieltagCtrl = TextEditingController(text: widget.game.spieltag ?? '');
+    _kits = TeamKits.fromGame(widget.game);
     _loadSquads();
   }
 
@@ -57,6 +63,8 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final homeColor = _kits.color(context, TeamSide.home);
+    final awayColor = _kits.color(context, TeamSide.away);
     final gameData = _SetupCard(
       title: 'Spieldaten',
       icon: Icons.info_outline_rounded,
@@ -67,10 +75,9 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelText: 'Heimmannschaft',
-            prefixIcon: Icon(
-              Icons.circle,
-              size: 12,
-              color: context.colors.home,
+            prefixIcon: Center(
+              widthFactor: 1,
+              child: TeamDot(color: homeColor, size: 12),
             ),
           ),
         ),
@@ -81,10 +88,9 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelText: 'Gastmannschaft',
-            prefixIcon: Icon(
-              Icons.circle,
-              size: 12,
-              color: context.colors.away,
+            prefixIcon: Center(
+              widthFactor: 1,
+              child: TeamDot(color: awayColor, size: 12),
             ),
           ),
         ),
@@ -127,21 +133,37 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
       title: 'Aufstellungen',
       icon: Icons.groups_outlined,
       children: [
-        _SectionTitle('Aufstellung Heim', color: context.colors.home),
+        _SectionTitle('Aufstellung Heim', color: homeColor),
+        KitColorPicker(
+          team: TeamSide.home,
+          selected: _kits.home,
+          onSelected: (k) => _selectKit(TeamSide.home, k),
+        ),
+        const SizedBox(height: AppSpacing.m),
         SquadInput(
           numbers: _homeNumbers,
-          teamColor: context.colors.home,
+          teamColor: homeColor,
           onAdd: (n) => _addNumber(TeamSide.home, n),
           onRemove: (n) => _removeNumber(TeamSide.home, n),
         ),
         const SizedBox(height: AppSpacing.xl),
-        _SectionTitle('Aufstellung Gast', color: context.colors.away),
+        _SectionTitle('Aufstellung Gast', color: awayColor),
+        KitColorPicker(
+          team: TeamSide.away,
+          selected: _kits.away,
+          onSelected: (k) => _selectKit(TeamSide.away, k),
+        ),
+        const SizedBox(height: AppSpacing.m),
         SquadInput(
           numbers: _awayNumbers,
-          teamColor: context.colors.away,
+          teamColor: awayColor,
           onAdd: (n) => _addNumber(TeamSide.away, n),
           onRemove: (n) => _removeNumber(TeamSide.away, n),
         ),
+        if (_kits.clash) ...[
+          const SizedBox(height: AppSpacing.l),
+          const KitClashHint(),
+        ],
       ],
     );
 
@@ -382,6 +404,8 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
           ? null
           : _spieltagCtrl.text.trim(),
       createdAt: widget.game.createdAt,
+      homeKitColor: _kits.home,
+      awayKitColor: _kits.away,
     );
     await ref.read(gameRepositoryProvider).updateGame(importedGame);
     ref.invalidate(gamesProvider);
@@ -419,6 +443,20 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
     );
   }
 
+  /// Wie die Rückennummern sofort gespeichert (US-111).
+  Future<void> _selectKit(TeamSide team, KitColor kit) async {
+    setState(() {
+      _kits = team == TeamSide.home
+          ? TeamKits(home: kit, away: _kits.away)
+          : TeamKits(home: _kits.home, away: kit);
+    });
+    await ref
+        .read(gameRepositoryProvider)
+        .updateKitColor(widget.game.id, team, kit);
+    ref.invalidate(gameProvider(widget.game.id));
+    ref.invalidate(gamesProvider);
+  }
+
   Future<void> _startGame() async {
     final updatedGame = Game(
       id: widget.game.id,
@@ -434,8 +472,11 @@ class _GameSetupScreenState extends ConsumerState<GameSetupScreen> {
           ? null
           : _spieltagCtrl.text.trim(),
       createdAt: widget.game.createdAt,
+      homeKitColor: _kits.home,
+      awayKitColor: _kits.away,
     );
     await ref.read(gameRepositoryProvider).updateGame(updatedGame);
+    ref.invalidate(gameProvider(widget.game.id));
     ref.invalidate(gamesProvider);
     if (mounted) {
       Navigator.pushReplacement(
@@ -640,11 +681,7 @@ class _SectionTitle extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: AppSpacing.s),
     child: Row(
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
+        TeamDot(color: color),
         const SizedBox(width: AppSpacing.s),
         Text(text, style: context.text.titleMedium),
       ],

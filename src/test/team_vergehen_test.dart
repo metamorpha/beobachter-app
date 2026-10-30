@@ -349,11 +349,26 @@ void main() {
           created_at INTEGER NOT NULL
         );
       ''');
+      // v8-Migration ergänzt games um Trikotfarben (US-111)
+      raw.execute('''
+        CREATE TABLE games (
+          id TEXT NOT NULL PRIMARY KEY,
+          date INTEGER NOT NULL,
+          kickoff_time INTEGER,
+          location TEXT,
+          home_team_name TEXT NOT NULL DEFAULT '',
+          away_team_name TEXT NOT NULL DEFAULT '',
+          liga TEXT,
+          spieltag TEXT,
+          coaching_note TEXT,
+          created_at INTEGER NOT NULL
+        );
+      ''');
       raw.execute('PRAGMA user_version = 5;');
     }));
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 7);
+    expect(db.schemaVersion, 8);
     final rows = await db.select(db.eventPlayers).get();
     expect(rows, hasLength(1));
     expect(rows.single.id, 'p1');
