@@ -19,9 +19,11 @@ import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
 import '../../theme/form_factor.dart';
+import '../../theme/kit_colors.dart';
 import '../../widgets/phone_dialog.dart';
 import '../../widgets/pitch_canvas.dart';
 import '../../widgets/squad_edit_dialog.dart';
+import '../../widgets/team_dot.dart';
 import '../../widgets/timer_display.dart';
 import '../review/review_screen.dart';
 import 'event_form_panel.dart';
@@ -616,6 +618,8 @@ class _Scoreboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final kits =
+        ref.watch(teamKitsProvider(game.id)) ?? TeamKits.fromGame(game);
     final home = game.homeTeamName.isEmpty ? 'Heim' : game.homeTeamName;
     final away = game.awayTeamName.isEmpty ? 'Gast' : game.awayTeamName;
     final abgeschlossen =
@@ -644,7 +648,7 @@ class _Scoreboard extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _TeamDot(color: context.colors.home),
+                TeamDot(color: kits.color(context, TeamSide.home)),
                 const SizedBox(width: AppSpacing.xs + 2),
                 Flexible(
                   child: Text(
@@ -667,7 +671,7 @@ class _Scoreboard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs + 2),
-                _TeamDot(color: context.colors.away),
+                TeamDot(color: kits.color(context, TeamSide.away)),
               ],
             ),
           ),
@@ -699,7 +703,7 @@ class _Scoreboard extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _TeamDot(color: context.colors.home),
+                  TeamDot(color: kits.color(context, TeamSide.home)),
                   const SizedBox(width: AppSpacing.s),
                   Flexible(
                     child: Text(
@@ -711,7 +715,7 @@ class _Scoreboard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s),
-                  _TeamDot(color: context.colors.away),
+                  TeamDot(color: kits.color(context, TeamSide.away)),
                 ],
               ),
               const SizedBox(height: 2),
@@ -747,7 +751,9 @@ class _GoalButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = context.colors.team(team);
+    final kits =
+        ref.watch(teamKitsProvider(game.id)) ?? TeamKits.fromGame(game);
+    final color = kits.color(context, team);
     final name = team == TeamSide.home ? game.homeTeamName : game.awayTeamName;
     return Tooltip(
       message: 'Tor ${team.label}',
@@ -760,6 +766,7 @@ class _GoalButton extends ConsumerWidget {
           ),
           backgroundColor: color,
           foregroundColor: AppColors.onColor(color),
+          side: teamColorOutline(context, color),
         ),
         onPressed: enabled
             ? () {
@@ -779,19 +786,6 @@ class _GoalButton extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _TeamDot extends StatelessWidget {
-  final Color color;
-
-  const _TeamDot({required this.color});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 10,
-    height: 10,
-    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-  );
 }
 
 /// Aktionsleiste unten links: Phasen-Button, Aufstellung, Szenen (US-602).
@@ -906,6 +900,7 @@ class _RecentEvents extends ConsumerWidget {
     final events = ref.watch(eventsProvider(gameId)).valueOrNull ?? [];
     final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? [];
     final goalScores = Score.runningByGoalId(goals);
+    final kits = ref.watch(teamKitsProvider(gameId)) ?? TeamKits.fromGame(game);
 
     // Ereignisse und Tore chronologisch (Phase, dann Zeit), neuestes zuerst;
     // Liste füllt die Panelhöhe und scrollt (US-213)
@@ -994,7 +989,7 @@ class _RecentEvents extends ConsumerWidget {
                     return _RecentRow(
                       key: Key('recent_goal_${g.id}'),
                       time: g.elapsedLabel,
-                      dotColor: context.colors.team(g.team),
+                      dotColor: kits.color(context, g.team),
                       label: _goalLabel(g, goalScores[g.id]),
                       bold: true,
                       onTap: () => GoalDialog.edit(context, g, teamName: name),
@@ -1060,14 +1055,9 @@ class _RecentRow extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                width: 10,
-                height: 10,
-                margin: const EdgeInsets.only(right: AppSpacing.s + 2),
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.s + 2),
+                child: TeamDot(color: dotColor),
               ),
               Expanded(
                 child: Text(

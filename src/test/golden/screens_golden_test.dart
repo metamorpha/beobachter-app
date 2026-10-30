@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:beobachter_app/domain/enums/game_phase.dart';
+import 'package:beobachter_app/domain/enums/kit_color.dart';
+import 'package:beobachter_app/domain/enums/team_side.dart';
+import 'package:beobachter_app/presentation/providers/providers.dart';
 import 'package:beobachter_app/presentation/screens/game_list/game_list_screen.dart';
 import 'package:beobachter_app/presentation/screens/game_setup/game_setup_screen.dart';
 import 'package:beobachter_app/presentation/screens/live/live_screen.dart';
@@ -26,7 +29,21 @@ Future<ProviderContainer> _pump(
   WidgetTester tester,
   Widget home, {
   GamePhase phase = GamePhase.zweiteHalbzeit,
-}) => pumpGoldenScreen(tester, home, size: _size, phase: phase);
+  Future<void> Function(ProviderContainer c)? afterSeed,
+}) => pumpGoldenScreen(
+  tester,
+  home,
+  size: _size,
+  phase: phase,
+  afterSeed: afterSeed,
+);
+
+/// Heim Weiß, Gast Schwarz — prüft Rand und Schriftfarbe (US-111).
+Future<void> _whiteVsBlack(ProviderContainer c) async {
+  final games = c.read(gameRepositoryProvider);
+  await games.updateKitColor('g1', TeamSide.home, KitColor.white);
+  await games.updateKitColor('g1', TeamSide.away, KitColor.black);
+}
 
 Future<void> _snap(String name) => snapGolden(name);
 
@@ -47,6 +64,29 @@ void main() {
     testWidgets('Live-Screen', (tester) async {
       await _pump(tester, LiveScreen(game: goldenGame));
       await _snap('live');
+    });
+
+    testWidgets('Spiel-Setup mit Trikotfarben', (tester) async {
+      await _pump(
+        tester,
+        GameSetupScreen(
+          game: goldenGame.copyWith(
+            homeKitColor: KitColor.white,
+            awayKitColor: KitColor.black,
+          ),
+        ),
+        afterSeed: _whiteVsBlack,
+      );
+      await _snap('game_setup_kits');
+    });
+
+    testWidgets('Live-Screen mit Trikotfarben', (tester) async {
+      await _pump(
+        tester,
+        LiveScreen(game: goldenGame),
+        afterSeed: _whiteVsBlack,
+      );
+      await _snap('live_kits');
     });
 
     testWidgets('Live-Screen mit Formular', (tester) async {

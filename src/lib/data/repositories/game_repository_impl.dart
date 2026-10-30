@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/game.dart';
+import '../../domain/enums/kit_color.dart';
+import '../../domain/enums/team_side.dart';
 import '../../domain/repositories/game_repository.dart';
 import '../database/app_database.dart';
 
@@ -23,6 +25,8 @@ class GameRepositoryImpl implements GameRepository {
       liga: Value(game.liga),
       spieltag: Value(game.spieltag),
       createdAt: Value(game.createdAt),
+      homeKitColor: Value(game.homeKitColor?.name),
+      awayKitColor: Value(game.awayKitColor?.name),
     );
     await _db.into(_db.games).insert(row);
     return _toEntity(await (_db.select(_db.games)
@@ -57,6 +61,8 @@ class GameRepositoryImpl implements GameRepository {
         awayTeamName: Value(game.awayTeamName),
         liga: Value(game.liga),
         spieltag: Value(game.spieltag),
+        homeKitColor: Value(game.homeKitColor?.name),
+        awayKitColor: Value(game.awayKitColor?.name),
       ),
     );
   }
@@ -73,6 +79,19 @@ class GameRepositoryImpl implements GameRepository {
     );
   }
 
+  @override
+  Future<void> updateKitColor(
+    String gameId,
+    TeamSide team,
+    KitColor kit,
+  ) async {
+    await (_db.update(_db.games)..where((t) => t.id.equals(gameId))).write(
+      team == TeamSide.home
+          ? GamesCompanion(homeKitColor: Value(kit.name))
+          : GamesCompanion(awayKitColor: Value(kit.name)),
+    );
+  }
+
   Game _toEntity(GameRow row) => Game(
         id: row.id,
         date: row.date,
@@ -84,5 +103,7 @@ class GameRepositoryImpl implements GameRepository {
         spieltag: row.spieltag,
         coachingNote: row.coachingNote,
         createdAt: row.createdAt,
+        homeKitColor: KitColorLabel.tryParse(row.homeKitColor),
+        awayKitColor: KitColorLabel.tryParse(row.awayKitColor),
       );
 }

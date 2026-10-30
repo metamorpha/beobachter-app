@@ -747,7 +747,7 @@ Die UI ist ausschließlich für **Tablet-Querformat in fester Größe** gestalte
 | Token | Bedeutung | Wert |
 |---|---|---|
 | `primary` | Markenfarbe, Start-Aktionen | Dunkelgrün `#1B6B3A` |
-| `home` / `away` | Heim / Gast | Blau `#1D4ED8` / Rot `#C2261D` |
+| `home` / `away` | Heim / Gast — Standard, solange keine Trikotfarbe gewählt ist (US-111) | Blau `#1D4ED8` / Rot `#C2261D` |
 | `correct` / `wrong` | Bewertung korrekt / falsch | Grün `#15803D` / Rot `#B91C1C` |
 | `yellowCard` · `yellowRedCard` · `redCard` | Karten | `#FACC15` · `#EA580C` · `#B91C1C` |
 | `coaching` | Coaching-Stern | Amber `#F59E0B` |
@@ -1134,3 +1134,108 @@ Live-Screen — App dreht ins Querformat
 | Seitenleiste „Letzte Ereignisse" | Gleitet von rechts ein, Spielfeld wird abgedunkelt |
 | Zurück-Taste | Schließt oberstes Element; im Live-Screen sonst Nachfrage (siehe Flow 7) |
 | „Bewegung reduzieren" aktiv | Alle Animationen entfallen, wie bisher |
+
+---
+
+## Flow 8 — Trikotfarben festlegen (US-111)
+
+Jedes Team bekommt genau eine Trikotfarbe aus einer festen Palette. Die App verwendet sie überall dort, wo bisher die festen Tokens `home` (Blau) und `away` (Rot) stehen. Ist keine Farbe gesetzt, gelten weiter diese beiden Tokens. Altdaten und CSV-Importe ändern sich dadurch nicht.
+
+```
+Spiel-Setup → Karte „Aufstellungen"
+   ├─ AUFSTELLUNG HEIM
+   │    Trikotfarbe: ○ ○ ○ ● ○ …        ← 1 Tap, sofort sichtbar in Überschrift & Chips
+   │    [Rückennummer] [+]   #1 #4 …
+   └─ AUFSTELLUNG GAST
+        Trikotfarbe: ○ ○ ● ○ ○ …
+        [Rückennummer] [+]   #10 …
+   ↓ (gleiche Farbe gewählt?)
+   ⚠ „Beide Teams haben dieselbe Trikotfarbe" — Hinweis, kein Blockieren
+   ↓
+[ ▶ Spiel starten ]  → Farben gespeichert mit dem Spiel
+
+Live-Screen → „Aufstellung" (US-110)
+   └─ gleiche Farbauswahl je Team über den Nummern; jede Änderung wird sofort gespeichert
+      und wirkt sofort in Kopfzeile, Tor-Buttons und Kader-Chips
+```
+
+### Palette
+
+| Farbe | Wert | Rand nötig | Schrift darauf |
+|---|---|---|---|
+| Weiß | `#FFFFFF` | ja | dunkel |
+| Schwarz | `#1A1A1A` | nein | weiß |
+| Grau | `#6B7280` | nein | weiß |
+| Rot | `#C2261D` (= bisher `away`) | nein | weiß |
+| Bordeaux | `#7F1D1D` | nein | weiß |
+| Orange | `#F97316` | nein | dunkel |
+| Gelb | `#FDE047` | ja | dunkel |
+| Grün | `#16A34A` | nein | weiß |
+| Hellblau | `#7DD3FC` | ja | dunkel |
+| Blau | `#1D4ED8` (= bisher `home`) | nein | weiß |
+| Lila | `#7C3AED` | nein | weiß |
+
+- Die Schriftfarbe ergibt sich wie bisher aus `AppColors.onColor()`. Für Weiß, Gelb und Hellblau kommt ein 1,5-dp-Rand in `outline` dazu: an Farbflächen, Team-Punkten, Kader-Chips und „+ Tor"-Buttons.
+- Orange, Gelb und Grün weichen bewusst leicht von den Karten- und Bewertungsfarben ab. Diese Fachfarben (`yellowCard`, `correct` …) bleiben unverändert.
+
+### Wireframe — Spiel-Setup, Karte „Aufstellungen"
+
+```
+┌──────────────────────────────────────────────┐
+│ 👥 Aufstellungen                             │
+│                                              │
+│ ● AUFSTELLUNG HEIM                           │  ← Punkt in Heimfarbe
+│ Trikotfarbe                                  │
+│ (◯)(●)(●)(●)(●)(●)(●)(●)(●)[✓●](●)           │  ← gewählte Farbe: Haken + Rahmen
+│ [Rückennummer      ] [+]                     │
+│ [#1 ✕] [#4 ✕] [#7 ✕]                         │  ← Chips in Heimfarbe
+│                                              │
+│ ● AUFSTELLUNG GAST                           │
+│ Trikotfarbe                                  │
+│ (◯)(●)(●)[✓●](●)(●)(●)(●)(●)(●)(●)           │
+│ [Rückennummer      ] [+]                     │
+│ [#10 ✕]                                      │
+│                                              │
+│ ⚠ Beide Teams haben dieselbe Trikotfarbe     │  ← nur bei Gleichheit, Warnfarbe
+└──────────────────────────────────────────────┘
+```
+
+- Farbflächen sind rund, 40 dp groß, 8 dp Abstand, in einem `Wrap`. Auf dem Smartphone brechen sie in zwei Zeilen um, ohne horizontales Scrollen.
+- Jede Fläche hat den Farbnamen als Tooltip bzw. Semantics-Label, z. B. „Trikotfarbe Heim: Weiß".
+- Ein erneuter Tap auf die gewählte Farbe ändert nichts. Zurück auf „keine Farbe" geht es nicht, weil das nicht nötig ist: Die Standardfarbe Blau bzw. Rot ist selbst Teil der Palette.
+- Im Setup wird die Farbe wie die Rückennummern sofort gespeichert, nicht erst mit „Spiel starten".
+- Zu Beginn ist keine Farbe markiert. Angezeigt werden die Standardfarben (Heim Blau, Gast Rot).
+
+### Wireframe — Dialog „Aufstellung" im Live-Screen
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ Aufstellung                                                        │
+├──────────────────────────────────┬─────────────────────────────────┤
+│ ● Heim                           │ ● Gast                          │
+│ (◯)(●)(●)[✓●](●)(●)              │ (◯)[✓●](●)(●)(●)(●)             │
+│ (●)(●)(●)(●)(●)                  │ (●)(●)(●)(●)(●)                 │
+│ [Rückennummer] [+]               │ [Rückennummer] [+]              │
+│ #1 #4 #7 #9 …                    │ #10 #11 …                       │
+├──────────────────────────────────┴─────────────────────────────────┤
+│ ⚠ Beide Teams haben dieselbe Trikotfarbe        (nur bei Gleichheit)│
+│                                                       [ Fertig ]   │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+- Auf dem Smartphone ist der Dialog im Vollbild (`showAppDialog`, Querformat). Die Teams stehen wie auf dem Tablet nebeneinander, die Farbflächen brechen in zwei Zeilen um.
+
+### Wo die Trikotfarbe wirkt
+
+| Stelle | Element |
+|---|---|
+| Spiel-Setup | Punkt im Namensfeld, Abschnittsüberschrift, Kader-Chips |
+| Live-Kopfzeile | Team-Punkte neben den Namen, „+ Tor"-Buttons (Füllung) |
+| Tor-Dialog | Team-Punkt im Titel, Kader-Chips |
+| Ereignisformular | Kader-Chips für Täter/Gefoulten |
+| „Letzte Ereignisse" | Team-Punkt bei Toren |
+| Aufstellung-Dialog | Team-Punkt, Kader-Chips |
+| Nachbereitung | Team-Badges in Spieler-Ranking und Torliste |
+| Nachbereitung | Spaltenköpfe „H"/„G" der Tabelle „Vergehen pro Team" in Teamfarbe. Bei hellen Farben (Weiß, Gelb, Hellblau) ist die Schrift dunkel (`onSurface`), damit sie lesbar bleibt |
+
+Unverändert bleiben Karten, die Bewertung korrekt/falsch, Coaching, die Phasen-Buttons und das Spielfeld.

@@ -604,11 +604,26 @@ void main() {
           jersey_number INTEGER
         );
       ''');
+      // v8-Migration ergänzt games um Trikotfarben (US-111)
+      raw.execute('''
+        CREATE TABLE games (
+          id TEXT NOT NULL PRIMARY KEY,
+          date INTEGER NOT NULL,
+          kickoff_time INTEGER,
+          location TEXT,
+          home_team_name TEXT NOT NULL DEFAULT '',
+          away_team_name TEXT NOT NULL DEFAULT '',
+          liga TEXT,
+          spieltag TEXT,
+          coaching_note TEXT,
+          created_at INTEGER NOT NULL
+        );
+      ''');
       raw.execute('PRAGMA user_version = 6;');
     }));
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 7);
+    expect(db.schemaVersion, 8);
     final goals = await GoalRepositoryImpl(db).getGoals('g1');
     expect(goals, hasLength(2));
     final tor = goals.firstWhere((g) => g.id == 'tor');
@@ -674,6 +689,21 @@ void main() {
           role TEXT NOT NULL,
           team TEXT NOT NULL,
           jersey_number INTEGER NOT NULL
+        );
+      ''');
+      // v8-Migration ergänzt games um Trikotfarben (US-111)
+      raw.execute('''
+        CREATE TABLE games (
+          id TEXT NOT NULL PRIMARY KEY,
+          date INTEGER NOT NULL,
+          kickoff_time INTEGER,
+          location TEXT,
+          home_team_name TEXT NOT NULL DEFAULT '',
+          away_team_name TEXT NOT NULL DEFAULT '',
+          liga TEXT,
+          spieltag TEXT,
+          coaching_note TEXT,
+          created_at INTEGER NOT NULL
         );
       ''');
       raw.execute('PRAGMA user_version = 4;');

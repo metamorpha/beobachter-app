@@ -1,3 +1,5 @@
+import '../enums/kit_color.dart';
+
 class Game {
   final String id;
   final DateTime date;
@@ -10,6 +12,10 @@ class Game {
   final String? coachingNote;
   final DateTime createdAt;
 
+  /// Trikotfarben (US-111) — `null` = Standardfarbe (Heim Blau, Gast Rot).
+  final KitColor? homeKitColor;
+  final KitColor? awayKitColor;
+
   const Game({
     required this.id,
     required this.date,
@@ -21,6 +27,8 @@ class Game {
     this.spieltag,
     this.coachingNote,
     required this.createdAt,
+    this.homeKitColor,
+    this.awayKitColor,
   });
 
   Game copyWith({
@@ -31,6 +39,8 @@ class Game {
     String? awayTeamName,
     String? liga,
     String? spieltag,
+    KitColor? homeKitColor,
+    KitColor? awayKitColor,
   }) =>
       Game(
         id: id,
@@ -43,5 +53,7 @@ class Game {
         spieltag: spieltag ?? this.spieltag,
         coachingNote: coachingNote,
         createdAt: createdAt,
+        homeKitColor: homeKitColor ?? this.homeKitColor,
+        awayKitColor: awayKitColor ?? this.awayKitColor,
       );
 }

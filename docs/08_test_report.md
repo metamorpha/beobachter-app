@@ -300,3 +300,13 @@ Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind im
 - Gesamtsuite: **252 Tests, alle grün** (213 bestehende, 31 Redesign, 8 Golden)
 - Integrationstests auf macOS: alle 4 Dateien grün (einzeln gestartet; mehrere Dateien in einem Lauf scheitern am Tool mit „Error waiting for a debug connection")
 - Offen: manueller Geräte-Check TC-6064 (iPad, Android-Tablet, Surface, draußen bei Tageslicht)
+
+---
+
+## Trikotfarben (US-111)
+
+- 20 neue Tests in `test/trikotfarben_test.dart` (TC-111-01 – TC-111-19), TC-111-06 als Zusatzprüfung im CSV-Import-Test
+- 2 neue Goldens (`game_setup_kits`, `live_kits`); `game_setup` und `phone_game_setup` neu erzeugt (Farbauswahl ergänzt), alle übrigen Goldens unverändert
+- Migrationstests v4/v5/v6 legen jetzt eine `games`-Tabelle an, weil die v8-Migration Spalten ergänzt
+- Gesamtsuite: **319 Tests, alle grün** (davon 17 Golden)
+- Offen: Sichtprüfung der hellen Farben auf einem echten Gerät

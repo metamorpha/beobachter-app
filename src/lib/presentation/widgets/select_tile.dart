@@ -63,8 +63,9 @@ class _SelectTileState extends State<SelectTile> {
         : (widget.unselectedColor != null
               ? AppColors.onColor(widget.unselectedColor!)
               : scheme.onSurface);
+    // Helle Akzente (z. B. weiße Trikotfarbe, US-111) brauchen einen Rand
     final border = widget.selected
-        ? accent
+        ? (AppColors.needsOutline(accent) ? scheme.outline : accent)
         : (widget.unselectedColor != null
               ? Colors.transparent
               : scheme.outlineVariant);

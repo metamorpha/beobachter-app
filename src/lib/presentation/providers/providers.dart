@@ -24,6 +24,7 @@ import '../../domain/repositories/goal_repository.dart';
 import '../../domain/repositories/squad_repository.dart';
 import '../../domain/repositories/timer_repository.dart';
 import '../../core/timer_service.dart';
+import '../theme/kit_colors.dart';
 
 // ── Database ──────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,17 @@ final goalsProvider = FutureProvider.family<List<Goal>, String>((ref, gameId) {
 final scoreProvider = Provider.family<Score, String>((ref, gameId) {
   final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? const [];
   return Score.fromGoals(goals);
+});
+
+/// Einzelnes Spiel — Quelle der Trikotfarben; nach Änderungen invalidieren.
+final gameProvider = FutureProvider.family<Game?, String>((ref, gameId) {
+  return ref.watch(gameRepositoryProvider).getGame(gameId);
+});
+
+/// Trikotfarben eines Spiels (US-111); `null` solange noch nicht geladen.
+final teamKitsProvider = Provider.family<TeamKits?, String>((ref, gameId) {
+  final game = ref.watch(gameProvider(gameId)).valueOrNull;
+  return game == null ? null : TeamKits.fromGame(game);
 });
 
 // ── Squad ─────────────────────────────────────────────────────────────────────

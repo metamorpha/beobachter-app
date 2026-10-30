@@ -265,3 +265,15 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 ### Golden-Tests
 
 `test/golden/screens_golden_test.dart` rendert acht Screens mit echter Inter-Schrift und Material Icons bei 1280 × 800 und echten Schatten (`debugDisableShadows = false`). Neu erzeugen: `flutter test --update-goldens --tags golden`. Referenzbilder stammen von macOS und werden nur dort erzeugt und geprüft; auf anderen Plattformen (z. B. Windows für Surface) werden die Golden-Tests mit Begründung übersprungen, weil die Schriftdarstellung minimal abweicht.
+
+---
+
+## Trikotfarben (US-111)
+
+- **Datenmodell:** `Game.homeKitColor` / `awayKitColor` (`KitColor?`) liegen in der Tabelle `games` (Schema v8), nicht in `squads`, weil ein Spiel nicht immer einen Kader-Datensatz hat. Gespeichert wird `KitColor.name`. Unbekannte Werte werden beim Laden zu `null` (`KitColorLabel.tryParse`).
+- **Speichern:** `GameRepository.updateKitColor()` schreibt sofort, im Spiel-Setup und im Dialog „Aufstellung" gleichermaßen, analog zu den Rückennummern. `updateGame()` nimmt die Farben mit, damit „Spiel starten" und der CSV-Import sie nicht überschreiben.
+- **Provider:** `gameProvider(gameId)` lädt das einzelne Spiel. `teamKitsProvider(gameId)` leitet daraus `TeamKits` ab und ist `null`, solange noch nichts geladen ist. Screens, die das `Game` bereits kennen (Live-Kopfzeile, „Letzte Ereignisse"), überbrücken das erste Laden mit `TeamKits.fromGame(game)`, damit beim Öffnen nichts kurz blau/rot aufblitzt. Nach jeder Farbänderung werden `gameProvider` und `gamesProvider` invalidiert.
+- **Darstellung:** `TeamKits.color(context, side)` liefert die Trikotfarbe oder fällt auf `AppColors.home` / `away` zurück. Die Hex-Werte stehen in `presentation/theme/kit_colors.dart`.
+- **Helle Farben:** `AppColors.needsOutline()` (Luminanz > 0,5, trifft Weiß, Gelb, Hellblau) entscheidet über einen 1,5-dp-Rand (`teamColorOutline`). Betroffen sind `TeamDot`, `TeamBadge`, Kader-Chips, „+ Tor"-Buttons und ausgewählte `SelectTile`s. Die Spalten „H"/„G" der Vergehen-Tabelle sind dann in `onSurface` statt in Teamfarbe gesetzt, der Ranking-Balken in `outline`.
+- **Widgets:** `KitColorPicker` + `KitClashHint` (`widgets/kit_color_picker.dart`), `TeamDot` + `TeamBadge` (`widgets/team_dot.dart`) ersetzen die bisher verstreuten Farbpunkte.
+- **Tests:** `test/trikotfarben_test.dart` (TC-111-01 – 19), TC-111-06 in `game_setup_import_test.dart`, Goldens `game_setup_kits` und `live_kits`. Migrationstests ab v4–v6 legen jetzt eine `games`-Tabelle an, weil die v8-Migration Spalten ergänzt.

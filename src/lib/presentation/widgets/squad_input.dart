@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_spacing.dart';
+import '../theme/kit_colors.dart';
 
 /// Rückennummern-Eingabe mit Chips — gemeinsam für Spiel-Setup und
 /// Aufstellungs-Dialog im Live-Screen (US-102, US-110).
@@ -98,7 +99,8 @@ class _SquadInputState extends State<SquadInput> {
                       ),
                     ),
                     backgroundColor: widget.teamColor,
-                    side: BorderSide.none,
+                    side: teamColorOutline(context, widget.teamColor) ??
+                        BorderSide.none,
                     deleteIconColor: onTeam.withValues(alpha: 0.8),
                     onDeleted: () => widget.onRemove(n),
                   ),

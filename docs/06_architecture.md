@@ -56,6 +56,8 @@ Die App folgt einer **3-Schichten-Architektur** mit Repository-Pattern. Der Repo
 │ location: String?            │
 │ homeTeamName: String         │
 │ awayTeamName: String         │
+│ homeKitColor: KitColor?      │
+│ awayKitColor: KitColor?      │
 │ createdAt: DateTime          │
 └──────────────┬───────────────┘
                │ 1
@@ -145,6 +147,13 @@ enum Assessment {
 enum TeamSide { home, away }
 enum PlayerRole { fouler, fouled }
 
+// Trikotfarbe je Team (US-111); null = Standardfarbe (Heim Blau, Gast Rot).
+// Darstellungswerte (Color) liegen in presentation/theme/kit_colors.dart.
+enum KitColor {
+  white, black, grey, red, burgundy, orange,
+  yellow, green, lightBlue, blue, purple,
+}
+
 enum GamePhase {
   bereit,
   ersteHalbzeit,                          // MM:SS, auto-advance → NS nach 45 Min
@@ -172,13 +181,18 @@ SQLite-Datenbankdatei im App-internen Verzeichnis (kein Cloud-Zugriff, kein Back
 
 ### Migrationsstrategie
 
-Drift unterstützt deklarative Schemamigration. Jede Schemaänderung erhält eine Versionnummer. Aktuell: `schemaVersion = 3`.
+Drift unterstützt deklarative Schemamigration. Jede Schemaänderung erhält eine Versionnummer. Aktuell: `schemaVersion = 8`.
 
 | Version | Änderung |
 |---------|---------|
 | 1 | Initiales Schema (games, events, event_players, squads, timer_states) |
 | 2 | `games`: +`liga`, +`spieltag` (CSV-Import) |
 | 3 | `timer_states`: +`phase`; `events`: +`game_phase` (Spielphasen) |
+| 4 | `games`: +`coaching_note` |
+| 5 | `events`: +`goal_scorer_team`, +`goal_scorer_number`, +`own_goal` (heute ungenutzt) |
+| 6 | `event_players.jersey_number` nullable (US-404, Tabellen-Neuaufbau) |
+| 7 | Tabelle `goals`; Torentscheidungen migriert (US-215) |
+| 8 | `games`: +`home_kit_color`, +`away_kit_color` (`KitColor.name`, nullable; US-111) |
 
 ### Schreibstrategie
 
@@ -225,6 +239,8 @@ abstract class GameRepository {
   Future<Game?> getGame(String id);
   Future<void> updateGame(Game game);
   Future<void> deleteGame(String id);
+  Future<void> updateCoachingNote(String gameId, String? note);
+  Future<void> updateKitColor(String gameId, TeamSide team, KitColor kit); // US-111
 }
 
 abstract class EventRepository {

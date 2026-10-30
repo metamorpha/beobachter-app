@@ -17,9 +17,11 @@ import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
 import '../../theme/form_factor.dart';
+import '../../theme/kit_colors.dart';
 import '../../widgets/phone_dialog.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/stat_card.dart';
+import '../../widgets/team_dot.dart';
 import '../../widgets/heatmap_canvas.dart';
 import '../game_setup/game_setup_screen.dart';
 import '../live/event_form_panel.dart';
@@ -1269,6 +1271,7 @@ class _PlayerRanking extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final kits = ref.watch(teamKitsProvider(gameId)) ?? TeamKits.none;
     final rankingAsync = ref.watch(playerRankingProvider(gameId));
 
     return rankingAsync.when(
@@ -1288,7 +1291,7 @@ class _PlayerRanking extends ConsumerWidget {
           itemBuilder: (ctx, i) {
             final entry = ranking[i];
             final isHome = entry.team == TeamSide.home;
-            final teamColor = context.colors.team(entry.team);
+            final teamColor = kits.color(context, entry.team);
             final teamLabel = isHome ? 'H' : 'G';
             return Row(
               children: [
@@ -1301,21 +1304,7 @@ class _PlayerRanking extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: teamColor,
-                    borderRadius: BorderRadius.circular(AppRadius.s - 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    teamLabel,
-                    style: context.text.labelMedium?.copyWith(
-                      color: AppColors.onColor(teamColor),
-                    ),
-                  ),
-                ),
+                TeamBadge(color: teamColor, label: teamLabel),
                 const SizedBox(width: AppSpacing.s),
                 SizedBox(
                   width: 52,
@@ -1332,7 +1321,10 @@ class _PlayerRanking extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: entry.count / maxCount,
                       minHeight: 10,
-                      color: teamColor,
+                      // Helle Trikotfarbe wäre auf der Spur kaum sichtbar
+                      color: AppColors.needsOutline(teamColor)
+                          ? context.scheme.outline
+                          : teamColor,
                       backgroundColor: context.scheme.surfaceContainer,
                     ),
                   ),
@@ -1374,6 +1366,7 @@ class _GoalList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final kits = ref.watch(teamKitsProvider(gameId)) ?? TeamKits.none;
     final goals = ref.watch(goalsProvider(gameId)).valueOrNull ?? [];
     if (goals.isEmpty) {
       return Text(
@@ -1396,7 +1389,7 @@ class _GoalList extends ConsumerWidget {
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
       itemBuilder: (_, i) {
         final g = sorted[i];
-        final teamColor = context.colors.team(g.team);
+        final teamColor = kits.color(context, g.team);
         final scorer = [
           if (g.scorerNumber != null)
             '#${g.scorerNumber}'
@@ -1415,20 +1408,9 @@ class _GoalList extends ConsumerWidget {
                 ),
               ),
             ),
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: teamColor,
-                borderRadius: BorderRadius.circular(AppRadius.s - 2),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                g.team == TeamSide.home ? 'H' : 'G',
-                style: context.text.labelMedium?.copyWith(
-                  color: AppColors.onColor(teamColor),
-                ),
-              ),
+            TeamBadge(
+              color: teamColor,
+              label: g.team == TeamSide.home ? 'H' : 'G',
             ),
             const SizedBox(width: AppSpacing.s),
             Text(
@@ -1460,8 +1442,12 @@ class _TeamFoulsTable extends ConsumerWidget {
 
   static const _cellWidth = 40.0;
 
+  static Color _readable(BuildContext context, Color teamColor) =>
+      AppColors.needsOutline(teamColor) ? context.scheme.onSurface : teamColor;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final kits = ref.watch(teamKitsProvider(gameId)) ?? TeamKits.none;
     final foulsAsync = ref.watch(teamFoulsProvider(gameId));
 
     return foulsAsync.when(
@@ -1529,7 +1515,8 @@ class _TeamFoulsTable extends ConsumerWidget {
                         team == TeamSide.home ? 'H' : 'G',
                         textAlign: TextAlign.right,
                         style: context.text.labelMedium?.copyWith(
-                          color: context.colors.team(team),
+                          // Weiß/Gelb wären als Schrift nicht lesbar (US-111)
+                          color: _readable(context, kits.color(context, team)),
                         ),
                       ),
                     ),

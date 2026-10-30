@@ -115,6 +115,7 @@ Widget _buildPanelApp({
         eventRepositoryProvider.overrideWithValue(eventRepo),
         homeSquadProvider(_gameId).overrideWith((_) async => []),
         awaySquadProvider(_gameId).overrideWith((_) async => []),
+        gameProvider(_gameId).overrideWith((_) async => null),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -144,6 +145,7 @@ Widget _buildPanelWithPreloadedTimer({
         eventRepositoryProvider.overrideWithValue(eventRepo),
         homeSquadProvider(_gameId).overrideWith((_) async => []),
         awaySquadProvider(_gameId).overrideWith((_) async => []),
+        gameProvider(_gameId).overrideWith((_) async => null),
       ],
       child: MaterialApp(
         home: Scaffold(

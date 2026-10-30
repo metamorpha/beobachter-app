@@ -82,6 +82,10 @@ class AppColors extends ThemeExtension<AppColors> {
           ? Colors.white
           : const Color(0xFF1A1A1A);
 
+  /// Helle Flächen (z. B. weiße Trikotfarbe) brauchen einen Rand (US-111).
+  static bool needsOutline(Color background) =>
+      background.computeLuminance() > 0.5;
+
   @override
   AppColors copyWith() => this;
 
