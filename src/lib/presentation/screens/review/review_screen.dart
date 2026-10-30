@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/event.dart';
+import '../../../domain/entities/event_player.dart';
 import '../../../domain/entities/game.dart';
 import '../../../domain/entities/score.dart';
 import '../../../domain/entities/team_fouls.dart';
 import '../../../domain/enums/assessment.dart';
+import '../../../domain/enums/card_type.dart';
 import '../../../domain/enums/event_type.dart';
+import '../../../domain/enums/game_phase.dart';
 import '../../../domain/enums/goal_kind.dart';
+import '../../../domain/enums/player_role.dart';
 import '../../../domain/enums/ref_decision.dart';
 import '../../../domain/enums/team_side.dart';
 import '../../platform/preferred_orientation.dart';
@@ -19,6 +23,7 @@ import '../../theme/event_type_style.dart';
 import '../../theme/form_factor.dart';
 import '../../theme/kit_colors.dart';
 import '../../widgets/phone_dialog.dart';
+import '../../widgets/scene_info.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/stat_card.dart';
 import '../../widgets/team_dot.dart';
@@ -93,7 +98,7 @@ class ReviewScreen extends ConsumerWidget {
         ),
         body: TabBarView(
           children: [
-            _SceneListTab(gameId: game.id),
+            _SceneListTab(game: game),
             _CoachingTab(game: game),
             _StatsTab(gameId: game.id),
           ],
@@ -126,9 +131,11 @@ class _TabLabel extends StatelessWidget {
 // ── Szenenliste ──────────────────────────────────────────────────────────────
 
 class _SceneListTab extends ConsumerWidget {
-  final String gameId;
+  final Game game;
 
-  const _SceneListTab({required this.gameId});
+  const _SceneListTab({required this.game});
+
+  String get gameId => game.id;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -163,7 +170,7 @@ class _SceneListTab extends ConsumerWidget {
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: AppSpacing.s),
                 itemBuilder: (ctx, i) =>
-                    _SceneTile(event: filtered[i], gameId: gameId),
+                    _SceneTile(event: filtered[i], game: game),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -464,12 +471,19 @@ class _AssessmentPill extends StatelessWidget {
 
 class _SceneTile extends ConsumerWidget {
   final Event event;
-  final String gameId;
+  final Game game;
 
-  const _SceneTile({required this.event, required this.gameId});
+  const _SceneTile({required this.event, required this.game});
+
+  String get gameId => game.id;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final phone = FormFactor.isPhone(context);
+    final players =
+        ref.watch(eventPlayersProvider(gameId)).valueOrNull?[event.id] ??
+        const <EventPlayer>[];
+    final kits = ref.watch(teamKitsProvider(gameId)) ?? TeamKits.fromGame(game);
     return Card(
       child: InkWell(
         onTap: () => _showDetail(context, ref, event),
@@ -501,42 +515,23 @@ class _SceneTile extends ConsumerWidget {
                         ),
                         Flexible(
                           child: Text(
-                            event.type.label,
+                            event.typeLabel,
                             overflow: TextOverflow.ellipsis,
                             style: context.text.titleMedium,
                           ),
                         ),
-                        // Smartphone: Entscheidung in eigener Zeile (US-704)
-                        if (event.refDecision != null &&
-                            !FormFactor.isPhone(context)) ...[
-                          Text(
-                            '  ·  ',
-                            style: context.text.bodyMedium?.copyWith(
-                              color: context.scheme.onSurfaceVariant,
-                            ),
-                          ),
-                          Flexible(
-                            child: Text(
-                              event.refDecision!.label,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.text.bodyLarge,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                    if (event.refDecision != null &&
-                        FormFactor.isPhone(context))
-                      Text(
-                        event.refDecision!.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.text.bodyMedium?.copyWith(
-                          color: context.scheme.onSurfaceVariant,
-                        ),
-                      ),
+                    // Fouler und Fortsetzung (US-308)
+                    SceneInfoLine(
+                      event: event,
+                      players: players,
+                      game: game,
+                      kits: kits,
+                      stacked: phone,
+                    ),
                     // Smartphone: Bewertung und Notiz untereinander (US-704)
-                    if (FormFactor.isPhone(context)) ...[
+                    if (phone) ...[
                       if (event.assessment != null) ...[
                         const SizedBox(height: AppSpacing.xs + 2),
                         Row(
@@ -587,17 +582,9 @@ class _SceneTile extends ConsumerWidget {
                 ),
               ),
               if (event.card != null)
-                Container(
-                  width: 18,
-                  height: 26,
-                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
-                  decoration: BoxDecoration(
-                    color: context.colors.card(event.card!),
-                    borderRadius: BorderRadius.circular(3),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x33000000), blurRadius: 2),
-                    ],
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                  child: _CardChip(card: event.card!),
                 ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
@@ -685,26 +672,24 @@ class _SceneTile extends ConsumerWidget {
   }
 
   void _showDetail(BuildContext context, WidgetRef ref, Event event) {
-    // Smartphone: Sheet darf mit Tastatur wachsen (US-704)
-    final phone = FormFactor.isPhone(context);
+    // Sheet wächst mit Inhalt und Tastatur, scrollt bei Bedarf
+    // (US-704 Smartphone, US-308 alle Szeneninfos)
     showModalBottomSheet(
       context: context,
-      isScrollControlled: phone,
-      useSafeArea: phone,
-      builder: (_) => phone
-          ? SingleChildScrollView(
-              child: _EventDetailSheet(event: event, gameId: gameId),
-            )
-          : _EventDetailSheet(event: event, gameId: gameId),
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => SingleChildScrollView(
+        child: _EventDetailSheet(event: event, game: game),
+      ),
     );
   }
 }
 
 class _EventDetailSheet extends ConsumerStatefulWidget {
   final Event event;
-  final String gameId;
+  final Game game;
 
-  const _EventDetailSheet({required this.event, required this.gameId});
+  const _EventDetailSheet({required this.event, required this.game});
 
   @override
   ConsumerState<_EventDetailSheet> createState() => _EventDetailSheetState();
@@ -712,6 +697,8 @@ class _EventDetailSheet extends ConsumerStatefulWidget {
 
 class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   late final TextEditingController _coachingCtrl;
+
+  String get _gameId => widget.game.id;
 
   @override
   void initState() {
@@ -723,6 +710,16 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final e = widget.event;
+    final players =
+        ref.watch(eventPlayersProvider(_gameId)).valueOrNull?[e.id] ??
+        const <EventPlayer>[];
+    final kits =
+        ref.watch(teamKitsProvider(_gameId)) ?? TeamKits.fromGame(widget.game);
+    final fouler = playerWithRole(players, PlayerRole.fouler);
+    final fouled = playerWithRole(players, PlayerRole.fouled);
+    final phase = e.gamePhase.label;
+
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.xl,
@@ -735,29 +732,70 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "${widget.event.minute}' — ${widget.event.type.label}",
+            '${e.elapsedLabel} — ${e.typeLabel}',
             style: context.text.headlineSmall,
           ),
-          const SizedBox(height: AppSpacing.s),
-          if (widget.event.refDecision != null)
+          if (phase.isNotEmpty)
             Text(
-              'Entscheidung: ${widget.event.refDecision!.label}',
-              style: context.text.bodyLarge,
-            ),
-          if (widget.event.assessment != null)
-            Text(
-              'Bewertung: ${widget.event.assessment!.label}',
-              style: context.text.bodyLarge,
-            ),
-          if (widget.event.sceneNote != null) ...[
-            const SizedBox(height: AppSpacing.s),
-            Text(
-              'Notiz: ${widget.event.sceneNote}',
-              style: context.text.bodyLarge?.copyWith(
+              phase,
+              style: context.text.bodyMedium?.copyWith(
                 color: context.scheme.onSurfaceVariant,
               ),
             ),
-          ],
+          const SizedBox(height: AppSpacing.m),
+          // Alle erfassten Infos; nicht erfasste Felder entfallen (US-308)
+          if (fouler != null)
+            _DetailRow(
+              label: 'Fouler',
+              child: ScenePlayer(
+                player: fouler,
+                game: widget.game,
+                kits: kits,
+                style: context.text.bodyLarge,
+              ),
+            ),
+          if (fouled != null)
+            _DetailRow(
+              label: 'Gefoult',
+              child: ScenePlayer(
+                player: fouled,
+                game: widget.game,
+                kits: kits,
+                style: context.text.bodyLarge,
+              ),
+            ),
+          if (e.refDecision != null)
+            _DetailRow(
+              label: 'Fortsetzung',
+              child: Text(e.refDecision!.label, style: context.text.bodyLarge),
+            ),
+          if (e.card != null)
+            _DetailRow(
+              label: 'Karte',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _CardChip(card: e.card!, width: 12, height: 17),
+                  const SizedBox(width: AppSpacing.s),
+                  Text(e.card!.label, style: context.text.bodyLarge),
+                ],
+              ),
+            ),
+          if (e.assessment != null)
+            _DetailRow(
+              label: 'Bewertung',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(child: _AssessmentPill(assessment: e.assessment!)),
+                ],
+              ),
+            ),
+          if (e.sceneNote != null)
+            _DetailRow(
+              label: 'Szenennotiz',
+              child: Text(e.sceneNote!, style: context.text.bodyLarge),
+            ),
           const SizedBox(height: AppSpacing.l),
           Text('Coaching-Notiz:', style: context.text.titleSmall),
           const SizedBox(height: AppSpacing.s),
@@ -790,7 +828,7 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
     final repo = ref.read(eventRepositoryProvider);
     await repo.updateCoachingNote(widget.event.id, note);
     await repo.updateCoachingFlag(widget.event.id, true);
-    ref.invalidate(eventsProvider(widget.gameId));
+    ref.invalidate(eventsProvider(_gameId));
     if (mounted) Navigator.pop(context);
   }
 
@@ -798,6 +836,60 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   void dispose() {
     _coachingCtrl.dispose();
     super.dispose();
+  }
+}
+
+/// Zeile „Label · Wert" im Detail-Sheet (US-308).
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _DetailRow({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 112,
+            child: Text(
+              label,
+              style: context.text.bodyLarge?.copyWith(
+                color: context.scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: child),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartensymbol (Gelb/GR/Rot).
+class _CardChip extends StatelessWidget {
+  final CardType card;
+  final double width;
+  final double height;
+
+  const _CardChip({required this.card, this.width = 18, this.height = 26});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: context.colors.card(card),
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 2)],
+      ),
+    );
   }
 }
 
@@ -856,7 +948,7 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
                   )
                 else
                   ...coaching.map(
-                    (e) => _CoachingItem(event: e, gameId: widget.game.id),
+                    (e) => _CoachingItem(event: e, game: widget.game),
                   ),
               ],
             ),
@@ -931,9 +1023,11 @@ class _OverallNoteSection extends StatelessWidget {
 
 class _CoachingItem extends ConsumerStatefulWidget {
   final Event event;
-  final String gameId;
+  final Game game;
 
-  const _CoachingItem({required this.event, required this.gameId});
+  const _CoachingItem({required this.event, required this.game});
+
+  String get gameId => game.id;
 
   @override
   ConsumerState<_CoachingItem> createState() => _CoachingItemState();
@@ -969,6 +1063,12 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
   @override
   Widget build(BuildContext context) {
     final e = widget.event;
+    final players =
+        ref.watch(eventPlayersProvider(widget.gameId)).valueOrNull?[e.id] ??
+        const <EventPlayer>[];
+    final kits =
+        ref.watch(teamKitsProvider(widget.gameId)) ??
+        TeamKits.fromGame(widget.game);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s),
       child: Card(
@@ -982,7 +1082,7 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row: minute · type · decision · assessment · flag
+              // Kopfzeile: Spielzeit · Typ · Karte · Bewertung · Flag (US-308)
               Row(
                 children: [
                   _MinuteBadge(event: e),
@@ -990,8 +1090,8 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
                   Expanded(
                     child: Text(
                       [
-                        e.type.label,
-                        if (e.refDecision != null) e.refDecision!.label,
+                        e.typeLabel,
+                        if (e.card != null) e.card!.label,
                         if (e.assessment != null) e.assessment!.label,
                       ].join(' · '),
                       style: context.text.titleMedium,
@@ -1019,6 +1119,14 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Fouler und Fortsetzung (US-308)
+                    SceneInfoLine(
+                      event: e,
+                      players: players,
+                      game: widget.game,
+                      kits: kits,
+                      stacked: FormFactor.isPhone(context),
+                    ),
                     // Scene note (read-only, from live capture)
                     if (e.sceneNote != null) ...[
                       const SizedBox(height: AppSpacing.xs),

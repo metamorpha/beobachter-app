@@ -377,7 +377,8 @@ void main() {
           const [],
         ),
       );
-      expect(find.text('SR-Ball'), findsOneWidget);
+      // Seit US-308 mit Präfix „Fortsetzung:"
+      expect(find.text('Fortsetzung: SR-Ball'), findsOneWidget);
     });
 
     for (final (name, width, size) in [

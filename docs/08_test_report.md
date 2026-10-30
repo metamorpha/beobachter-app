@@ -317,3 +317,12 @@ Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind im
 - Goldens `live_form` und `review_edit` neu erzeugt (Gefoulten-Zeile entfällt, Kachel „SR-Ball"); alle übrigen Goldens unverändert
 - Gesamtsuite: **335 Tests, alle grün** (davon 17 Golden)
 - Offen: manuelle Prüfung auf Tablet und Android-Smartphone (TC-216/217-M1)
+
+## Szeneninfos in Nachbereitung und Coaching (US-308)
+
+- 14 neue Tests in `test/szeneninfos_test.dart` (TC-308-01 – 16; 03/04 und 10/12 jeweils zusammengefasst)
+- TC-217-06 angepasst: Szenenliste zeigt „Fortsetzung: SR-Ball"
+- Neues Golden `review_detail`; `review_scenes`, `review_coaching`, `review_edit`, `phone_review_scenes` neu erzeugt
+- Gefundener Fehler: Detail-Sheet lief auf dem Tablet über — behoben (scrollbar, wächst mit Inhalt)
+- Gesamtsuite: **350 Tests, alle grün** (davon 18 Golden)
+- Offen: manuelle Prüfung auf Tablet und Android-Smartphone

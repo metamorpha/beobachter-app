@@ -1302,3 +1302,86 @@ Ersetzt in Flow 2 den Schritt „Gefoulter (Rückennummer)" und in den Interakti
 
 - Alte Ereignisse mit Gefoulten zeigen beim Bearbeiten nur den Fouler. Die Gefoulten-Angabe bleibt unsichtbar gespeichert und wird beim erneuten Speichern unverändert mitgeschrieben.
 - „SR-Ball" erscheint in der Nachbereitung überall dort, wo die Entscheidung einer Szene angezeigt wird (Szenenliste), mit dem Text „SR-Ball" — wie jede andere Entscheidung. „Letzte Ereignisse" zeigt wie bisher keine Entscheidung.
+
+---
+
+## Flow 10 — Vollständige Szeneninfos in der Nachbereitung (US-308)
+
+```
+Nachbereitung
+  │
+  ├── Tab „Szenen"
+  │     Szenenkarte zeigt zusätzlich: Fouler · Fortsetzung
+  │     │
+  │     └── Tap auf Karte → Detail-Sheet mit allen Infos + Coaching-Notiz
+  │
+  └── Tab „Coaching"
+        Pro markierter Szene: Kopfzeile + Infozeile (Fouler · Fortsetzung)
+        + Szenennotiz + Coaching-Notiz (inline)
+```
+
+Keine neue Interaktion — nur mehr Information auf bestehenden Flächen. Beschriftung „Fortsetzung" (im Formular heißt dasselbe Feld „Entscheidung"). Fouler-Darstellung überall gleich: `TeamDot` in Trikotfarbe (US-111) + Teamname + „#Nr." (ohne Nummer nur Team).
+
+### Wireframe — Szenenkarte Tablet
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ ┌────┐  ● Fußfoul                                     ▮   ✎   ☆     │
+│ │23' │  ● SV Musterstadt #7  ·  Fortsetzung: Freistoß  (Karte)       │
+│ └────┘  [✓ Korrekt · Trivial]  Szenennotiz in einer Zeile …          │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+- Zeile 1: Typ (bzw. eigene Bezeichnung bei „Sonstiges").
+- Zeile 2 (neu): Fouler und Fortsetzung, `bodyMedium`, Farbe `onSurfaceVariant`; fehlt eins, entfällt der Trenner; fehlen beide, entfällt die Zeile.
+- Zeile 3: Bewertung + Szenennotiz wie bisher.
+
+### Wireframe — Szenenkarte Smartphone
+
+```
+┌──────────────────────────────────────────┐
+│ ┌───┐ ● Fußfoul                ▮  ✎  ☆   │
+│ │23'│ ● SV Musterstadt #7                │
+│ └───┘ Fortsetzung: Freistoß              │
+│       [✓ Korrekt · Trivial]              │
+│       Szenennotiz …                      │
+└──────────────────────────────────────────┘
+```
+
+### Wireframe — Detail-Sheet
+
+```
+┌──────────────────────────────────────────────────┐
+│ 23:45 — Fußfoul                                  │
+│ 1. Halbzeit                                      │
+│                                                  │
+│ Fouler        ● SV Musterstadt #7                │
+│ Gefoult       ● FC Beispiel #4     (nur Altdaten)│
+│ Fortsetzung   Freistoß                           │
+│ Karte         ▮ Gelb                             │
+│ Bewertung     [✓ Korrekt · Trivial]              │
+│ Szenennotiz   vollständiger, mehrzeiliger Text … │
+│                                                  │
+│ Coaching-Notiz:                                  │
+│ ┌──────────────────────────────────────────────┐ │
+│ └──────────────────────────────────────────────┘ │
+│                                   [✓ Speichern]  │
+└──────────────────────────────────────────────────┘
+```
+
+- Zweispaltig: Label (feste Breite, `onSurfaceVariant`) · Wert. Nicht erfasste Felder entfallen.
+
+### Wireframe — Coaching-Eintrag
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ ┌────┐  Fußfoul · ▮ Gelb · Korrekt · Trivial                     ★   │
+│ └────┘                                                              │
+│         ● SV Musterstadt #7  ·  Fortsetzung: Freistoß                │
+│         📋 Szenennotiz (vollständig)                                  │
+│         [ Coaching-Notiz …                                        ]  │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+- Kopfzeile: Typ · Karte · Bewertung (Fortsetzung wandert in die Infozeile).
+- Auf dem Smartphone bricht die Infozeile um (Fouler und Fortsetzung untereinander).

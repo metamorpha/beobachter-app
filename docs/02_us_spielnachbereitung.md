@@ -98,3 +98,33 @@
 - [x] Ein Tap auf „Coaching-Ansicht" zeigt nur die markierten Szenen, chronologisch
 - [x] Pro Eintrag werden angezeigt: Spielzeit, Ereignistyp, Entscheidung, Bewertung, Coaching-Notiz
 - [x] Die Coaching-Ansicht ist auch ohne Internetverbindung zugänglich
+
+---
+
+### US-308 · Vollständige Szeneninfos in Szenenliste und Coaching-Ansicht
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** in der Szenenliste und in der Coaching-Ansicht zu jeder Szene sehen, welcher Spieler das Vergehen begangen hat und wie das Spiel fortgesetzt wurde — und im Detail alle erfassten Infos der Szene,  
+**damit** ich die Szene im Nachgang und im Coaching-Gespräch ohne Öffnen des Bearbeiten-Formulars vollständig nachvollziehen kann.
+
+**Akzeptanzkriterien:**
+
+*Szenenliste (Karte pro Szene)*
+- [x] Der Fouler wird angezeigt: Teamfarbe (Punkt in Trikotfarbe, US-111) + Teamname + Rückennummer, z. B. „● SV Musterstadt #7"; ohne Rückennummer nur Team („● SV Musterstadt"); ohne erfassten Spieler entfällt die Angabe
+- [x] Die Fortsetzung (`refDecision`) wird mit Präfix angezeigt, z. B. „Fortsetzung: Freistoß"; bei eigenem Typ (`custom`) wird die eigene Bezeichnung statt „Sonstiges" angezeigt
+- [x] Karte (Gelb/GR/Rot), Bewertung, Szenennotiz und Coaching-Flag bleiben wie bisher sichtbar
+- [x] Smartphone (US-704): Fouler und Fortsetzung stehen in eigenen Zeilen, nichts wird horizontal abgeschnitten außer der Szenennotiz (1 Zeile)
+
+*Detailansicht (Tap auf Szene in der Szenenliste)*
+- [x] Zeigt alle Infos: Spielzeit inkl. Halbzeit/Nachspielzeit (`elapsedLabel`) und Spielphase, Ereignistyp (bzw. eigene Bezeichnung), Fouler, Fortsetzung, Karte, Bewertung, Szenennotiz (vollständig, mehrzeilig), Coaching-Notiz (bearbeitbar wie bisher)
+- [x] Nicht erfasste Felder werden ausgelassen (keine leeren Zeilen / „–")
+- [x] Altdaten mit Gefoultem (US-216) zeigen zusätzlich „Gefoult: ● Team #Nr."
+
+*Coaching-Ansicht (pro markierter Szene)*
+- [x] Zeigt dieselben Infos wie die Detailansicht: Spielzeit, Ereignistyp, Fouler, Fortsetzung, Karte, Bewertung, Szenennotiz, Coaching-Notiz (inline bearbeitbar wie in US-306)
+- [x] Die Kopfzeile bleibt kompakt (Spielzeit · Typ · Karte · Bewertung · ⭐); Fouler und Fortsetzung stehen in einer Infozeile darunter
+
+*Allgemein*
+- [x] Gemeinsame Darstellung von Fouler/Fortsetzung in einem wiederverwendbaren Widget (keine doppelte Logik zwischen Szenenliste, Detail und Coaching)
+- [x] Kein Schemawechsel — Spielerdaten kommen aus `event_players` (bereits vorhanden, `getPlayersForGame`)
+- [x] Offline verfügbar, keine zusätzliche Ladezeit spürbar (Spieler werden einmal pro Spiel geladen, nicht pro Szene)
