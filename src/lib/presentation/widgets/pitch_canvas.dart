@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/event.dart';
@@ -167,10 +169,15 @@ void paintPitch(
       h / 2,
     );
     canvas.drawCircle(spot, 3, dot);
+    // Teilkreis: Radius aus dem Abstand Punkt→Strafraumlinie (real 5,5 m zu
+    // 9,15 m), damit die Enden bei jedem Seitenverhältnis genau auf der
+    // Strafraumlinie liegen.
+    final toBoxLine = boxW * 0.3;
+    final halfAngle = math.acos(5.5 / 9.15);
     canvas.drawArc(
-      Rect.fromCircle(center: spot, radius: h * 0.12),
-      left ? -0.93 : 3.14159 - 0.93,
-      1.86,
+      Rect.fromCircle(center: spot, radius: toBoxLine * 9.15 / 5.5),
+      (left ? 0 : math.pi) - halfAngle,
+      2 * halfAngle,
       false,
       line,
     );
