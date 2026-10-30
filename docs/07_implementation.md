@@ -277,3 +277,9 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 - **Helle Farben:** `AppColors.needsOutline()` (Luminanz > 0,5, trifft Weiß, Gelb, Hellblau) entscheidet über einen 1,5-dp-Rand (`teamColorOutline`). Betroffen sind `TeamDot`, `TeamBadge`, Kader-Chips, „+ Tor"-Buttons und ausgewählte `SelectTile`s. Die Spalten „H"/„G" der Vergehen-Tabelle sind dann in `onSurface` statt in Teamfarbe gesetzt, der Ranking-Balken in `outline`.
 - **Widgets:** `KitColorPicker` + `KitClashHint` (`widgets/kit_color_picker.dart`), `TeamDot` + `TeamBadge` (`widgets/team_dot.dart`) ersetzen die bisher verstreuten Farbpunkte.
 - **Tests:** `test/trikotfarben_test.dart` (TC-111-01 – 19), TC-111-06 in `game_setup_import_test.dart`, Goldens `game_setup_kits` und `live_kits`. Migrationstests ab v4–v6 legen jetzt eine `games`-Tabelle an, weil die v8-Migration Spalten ergänzt.
+
+## Nur Fouler, SR-Ball (US-216, US-217)
+
+- **Nur Fouler:** `EventFormPanel` zeigt im Abschnitt „Spieler" nur noch die Fouler-Zeile (`_foulerRow`). `PlayerRole.fouled` bleibt im Enum und in der Datenbank, damit Altdaten lesbar bleiben. Gefoulte aus `initialPlayers` werden in `_legacyFouled` gehalten und beim Speichern unverändert mitgeschrieben, weil `updateEvent()` alle Spieler eines Ereignisses neu schreibt.
+- **SR-Ball:** neuer Wert `RefDecision.droppedBall` („SR-Ball") direkt nach `throwIn`. Die Entscheidung wird wie alle anderen als `name` gespeichert, deshalb gibt es keinen Schemawechsel (bleibt v8). Das Grid nimmt den Wert automatisch über `RefDecision.values` auf; die Szenenliste zeigt `label`.
+- **Tests:** `test/fouler_sr_ball_test.dart` (16 Tests), Goldens `live_form` und `review_edit` neu erzeugt.

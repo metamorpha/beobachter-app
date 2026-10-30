@@ -338,3 +338,39 @@
 - [x] Die DB-Migration (Schema v6 → v7) übernimmt jedes bisher gezählte Tor (Torentscheidung + Entscheidung Tor + Team) als Tor mit gleicher Spielzeit, Phase, Torschütze und Torart (Eigentor bleibt Eigentor)
 - [x] Der Spielstand jedes bestehenden Spiels ist nach der Migration identisch zu vorher
 
+
+---
+
+### US-216 · Nur den Fouler erfassen
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** bei einem Ereignis nur noch den Fouler angeben,  
+**damit** die Erfassung schneller geht und ich keine Angabe mache, die später nicht ausgewertet wird.
+
+> Ändert US-203: Die Angabe des Gefoulten entfällt.
+
+**Akzeptanzkriterien:**
+- [x] Im Ereignisformular gibt es im Abschnitt „Spieler" nur noch die Zeile **„Fouler"** (Team + Rückennummer); die Zeile „Gefoulter" entfällt
+- [x] Bedienung der Fouler-Zeile bleibt unverändert: Team wählen, Rückennummer per Kader-Chip oder Zahleneingabe, alles optional
+- [x] Das gilt beim Erfassen im Live-Screen und beim nachträglichen Bearbeiten (US-209), auf Tablet und Smartphone
+- [x] Bereits gespeicherte Angaben zum Gefoulten bleiben in der Datenbank erhalten und gehen auch beim Bearbeiten und erneuten Speichern eines Ereignisses nicht verloren
+- [x] Vergehen pro Team (US-404) und Spieler-Ranking zählen weiterhin nur den Fouler — die Werte bestehender Spiele ändern sich nicht
+- [x] Keine Änderung des Datenbankschemas
+
+---
+
+### US-217 · SR-Ball als Spielfortsetzung
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** den Schiedsrichter-Ball als Entscheidung auswählen können,  
+**damit** ich auch Spielunterbrechungen erfassen kann, die mit einem SR-Ball fortgesetzt werden.
+
+> Ergänzt US-204 um eine zwölfte Entscheidungsoption.
+
+**Akzeptanzkriterien:**
+- [x] Im Entscheidungs-Grid gibt es die Kachel **„SR-Ball"**, direkt nach „Einwurf"
+- [x] Sie verhält sich wie die anderen Entscheidungen: ein Tap wählt aus, erneuter Tap hebt die Auswahl auf, die Auswahl ist optional
+- [x] Die Spaltenzahl des Grids ergibt sich wie bisher aus der verfügbaren Breite (höchstens 6); es entsteht kein horizontaler Überlauf, auf Tablet und Smartphone
+- [x] Die Entscheidung wird gespeichert, überlebt einen App-Neustart und ist beim Bearbeiten (US-209) vorausgewählt
+- [x] In der Spielnachbereitung erscheint „SR-Ball" überall, wo die Entscheidung einer Szene angezeigt wird
+- [x] Keine Änderung des Datenbankschemas (Entscheidung wird wie bisher als Text gespeichert)

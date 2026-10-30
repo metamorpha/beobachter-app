@@ -132,7 +132,8 @@ enum RefDecision {
   cornerKick,       // Ecke
   goalKick,         // Abstoß
   throwIn,          // Einwurf
-  goal,             // Tor/Anstoß
+  droppedBall,      // SR-Ball (US-217)
+  goal,             // Tor/Anstoß — nur migrierte Altdaten (US-215)
 }
 
 enum CardType { yellow, yellowRed, red }
@@ -145,7 +146,7 @@ enum Assessment {
 }
 
 enum TeamSide { home, away }
-enum PlayerRole { fouler, fouled }
+enum PlayerRole { fouler, fouled }  // fouled: nur Altdaten, nicht mehr erfassbar (US-216)
 
 // Trikotfarbe je Team (US-111); null = Standardfarbe (Heim Blau, Gast Rot).
 // Darstellungswerte (Color) liegen in presentation/theme/kit_colors.dart.

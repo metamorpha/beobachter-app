@@ -310,3 +310,10 @@ Die App ist bereit für einen Pilottest auf dem Platz. Alle MVP-Features sind im
 - Migrationstests v4/v5/v6 legen jetzt eine `games`-Tabelle an, weil die v8-Migration Spalten ergänzt
 - Gesamtsuite: **319 Tests, alle grün** (davon 17 Golden)
 - Offen: Sichtprüfung der hellen Farben auf einem echten Gerät
+
+## Nur Fouler, SR-Ball (US-216, US-217)
+
+- 16 neue Tests in `test/fouler_sr_ball_test.dart` (TC-216-01 – 08, TC-217-01 – 08)
+- Goldens `live_form` und `review_edit` neu erzeugt (Gefoulten-Zeile entfällt, Kachel „SR-Ball"); alle übrigen Goldens unverändert
+- Gesamtsuite: **335 Tests, alle grün** (davon 17 Golden)
+- Offen: manuelle Prüfung auf Tablet und Android-Smartphone (TC-216/217-M1)

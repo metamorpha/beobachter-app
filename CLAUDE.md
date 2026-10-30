@@ -60,7 +60,7 @@ Key design decisions:
 |------|---------|
 | `01_epics.md` | MVP epics, prioritized for live-game use |
 | `02_us_spielverwaltung.md` | User stories — Epic 1: Spielverwaltung (US-101–111) |
-| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–215) |
+| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–217) |
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–305) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
@@ -89,6 +89,7 @@ Key design decisions:
 | `25_tor_erfassung_tests.md` | Goal capture via header buttons — US-215 (20 TCs) |
 | `26_android_smartphone_tests.md` | Android smartphone layout, wakelock, CI builds — US-701–706 (47 TCs) |
 | `27_trikotfarben_tests.md` | Team kit colors — US-111 (22 TCs) |
+| `28_fouler_sr_ball_tests.md` | Fouler only, dropped ball decision — US-216/217 (17 TCs) |
 
 ### src/lib/ structure
 
@@ -127,7 +128,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (319 tests incl. 17 golden, all green)
+# Run tests (335 tests incl. 17 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -145,11 +146,11 @@ flutter run
 | Enum | Values |
 |------|--------|
 | `EventType` | footFoul · bodyFoul · handball · unsporting · violent · offside · advantage · custom |
-| `RefDecision` | freeKick · **indirectFreeKick** · penalty · advantage · playOn · yellowCard · yellowRedCard · redCard · cornerKick · goalKick · throwIn · goal (nur migrierte Altdaten, nicht wählbar) |
+| `RefDecision` | freeKick · **indirectFreeKick** · penalty · advantage · playOn · yellowCard · yellowRedCard · redCard · cornerKick · goalKick · throwIn · **droppedBall** („SR-Ball", US-217) · goal (nur migrierte Altdaten, nicht wählbar) |
 | `CardType` | yellow · yellowRed · red |
 | `Assessment` | correctExpected · correctComplex · wrongExpected · wrongComplex |
 | `TeamSide` | home · away |
-| `PlayerRole` | fouler · fouled |
+| `PlayerRole` | fouler · fouled (nur Altdaten — erfasst wird nur noch der Fouler, US-216) |
 | `GoalKind` | regular · ownGoal · penalty |
 | `KitColor` | white · black · grey · red · burgundy · orange · yellow · green · lightBlue · blue · purple (Trikotfarbe, US-111) |
 
@@ -203,6 +204,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Tor-Erfassung (US-215) | Done — „+ Tor"-Buttons je Team in der Live-Kopfzeile, `GoalDialog`, Tabelle `goals`; DB schema v7 |
 | Android-Smartphone (US-701–706) | Done — Smartphone-Layout per `FormFactor.isPhone` (kürzere Seite < 600 dp, nicht per Plattform); Live-Screen quer mit Seitenleisten, Dialoge im Vollbild (`showAppDialog`); Display-Sperre über Kanal `de.beobachter/screen` in `MainActivity`; getrennte Workflows `build-windows.yml` / `build-android.yml` |
 | Trikotfarben (US-111) | Done — `KitColorPicker` je Team in Setup und Dialog „Aufstellung"; `Game.homeKitColor`/`awayKitColor`, DB schema v8; Farben über `teamKitsProvider(gameId)` → `TeamKits.color(context, side)`, Fallback `AppColors.home/away`; helle Farben mit Rand (`AppColors.needsOutline`) |
+| Nur Fouler, SR-Ball (US-216/217) | Done — Ereignisformular erfasst nur den Fouler; alte Gefoulten-Einträge bleiben beim Bearbeiten erhalten (`_legacyFouled`); `RefDecision.droppedBall` „SR-Ball" nach Einwurf; kein Schemawechsel |
 | UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` (Teamfarben über `TeamKits`) |
 
 ## Development Pipeline

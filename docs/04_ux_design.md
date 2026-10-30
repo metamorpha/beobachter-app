@@ -1239,3 +1239,66 @@ Live-Screen → „Aufstellung" (US-110)
 | Nachbereitung | Spaltenköpfe „H"/„G" der Tabelle „Vergehen pro Team" in Teamfarbe. Bei hellen Farben (Weiß, Gelb, Hellblau) ist die Schrift dunkel (`onSurface`), damit sie lesbar bleibt |
 
 Unverändert bleiben Karten, die Bewertung korrekt/falsch, Coaching, die Phasen-Buttons und das Spielfeld.
+
+---
+
+## Flow 9 — Ereignisformular: nur Fouler, SR-Ball (US-216, US-217)
+
+```
+Live-Screen
+  │
+  ▼ Tap auf Spielfeld
+  │
+  ▼
+Ereignisformular
+  │
+  ├── [Minimal-Pfad: 3 Taps — unverändert]
+  │     1. Ereignistyp  →  2. Entscheidung  →  3. [Speichern]
+  │
+  └── [Erweiterter Pfad: bis zu 7 Taps — vorher 8]
+        1. Ereignistyp
+        2. Fouler (Team + Rückennummer)
+        3. Entscheidung (jetzt auch „SR-Ball")
+        4. Karte (optional)
+        5. Bewertung 2×2-Grid
+        6. Notiz aufklappen + tippen (optional)
+        7. [Speichern]
+```
+
+Ersetzt in Flow 2 den Schritt „Gefoulter (Rückennummer)" und in den Interaktions-Spezifikationen „Spielerauswahl" die Angabe „Zwei Zeilen: Fouler und Gefoulter" — es gibt nur noch die Zeile „Fouler".
+
+### Wireframe — Ereignisformular Tablet (Ausschnitt, Panel ca. 40 % Breite)
+
+```
+├────────────────────────────────────────────┤
+│ SPIELER                                    │
+│ Fouler    [Heim|Gast] # 7 9 10 …           │  einzige Zeile; Bedienung unverändert
+├────────────────────────────────────────────┤
+│ ENTSCHEIDUNG                               │
+│ [Freistoß][Indir. FS][Strafstoß][Vorteil][Weiter]│
+│ [Gelb    ][GR       ][Rot      ][Ecke   ][Abstoß]│
+│ [Einwurf ][SR-Ball  ]                            │
+├────────────────────────────────────────────┤
+```
+
+- „SR-Ball" steht als letzte Kachel direkt nach „Einwurf" — die Spielfortsetzungen bleiben zusammen (Ecke · Abstoß · Einwurf · SR-Ball).
+- Die Spaltenzahl ergibt sich wie bisher aus der Panelbreite (Kachel ≥ 76 dp, höchstens 6 Spalten). Bei 5 Spalten (Tablet 1280 dp) bleibt es bei 3 Zeilen, bei 6 Spalten werden es genau 2 volle Zeilen.
+- Gleiche Kachel-Optik wie die übrigen Entscheidungen (dunkle Auswahlfarbe, Tap = wählen, erneuter Tap = abwählen).
+
+### Wireframe — Erfassungsformular Smartphone (Ausschnitt, Querformat)
+
+```
+│ SPIELER                                                                    │
+│ Fouler  [Heim|Gast]  # 7 9 10 …                                            │
+│ ENTSCHEIDUNG                                                               │
+│ [Freistoß][Indir. FS][Strafstoß][Vorteil][Weiter][Gelb]                    │  max. 6 Spalten
+│ [GR      ][Rot      ][Ecke     ][Abstoß ][Einwurf][SR-Ball]                │
+```
+
+- Die Gefoulten-Zeile, die bisher rechts neben dem Fouler stand, entfällt; das Formular wird dadurch nicht höher.
+- Das Grid bricht wie bisher nach Breite um; kein horizontaler Überlauf.
+
+### Bestehende Daten
+
+- Alte Ereignisse mit Gefoulten zeigen beim Bearbeiten nur den Fouler. Die Gefoulten-Angabe bleibt unsichtbar gespeichert und wird beim erneuten Speichern unverändert mitgeschrieben.
+- „SR-Ball" erscheint in der Nachbereitung überall dort, wo die Entscheidung einer Szene angezeigt wird (Szenenliste), mit dem Text „SR-Ball" — wie jede andere Entscheidung. „Letzte Ereignisse" zeigt wie bisher keine Entscheidung.
