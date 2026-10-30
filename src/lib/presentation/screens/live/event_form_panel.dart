@@ -56,8 +56,10 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
   bool _saving = false;
   late int? _foulerNumber;
   late TeamSide? _foulerTeam;
-  late int? _fouledNumber;
-  late TeamSide? _fouledTeam;
+
+  /// Gefoulte aus Altdaten — nicht mehr erfassbar, beim Speichern
+  /// unverändert mitgeschrieben (US-216).
+  late final List<EventPlayer> _legacyFouled;
 
   // Zeitstempel wird beim Öffnen eingefroren (UX-Spec: Tap-Zeitpunkt, nicht Save-Zeitpunkt)
   late final int _elapsedMs;
@@ -96,12 +98,10 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     // Spieler aus initialPlayers vorausfüllen (Edit-Modus)
     final fouler =
         widget.initialPlayers.where((p) => p.role == PlayerRole.fouler).firstOrNull;
-    final fouled =
-        widget.initialPlayers.where((p) => p.role == PlayerRole.fouled).firstOrNull;
     _foulerTeam = fouler?.team;
     _foulerNumber = fouler?.jerseyNumber;
-    _fouledTeam = fouled?.team;
-    _fouledNumber = fouled?.jerseyNumber;
+    _legacyFouled =
+        widget.initialPlayers.where((p) => p.role == PlayerRole.fouled).toList();
 
     if (_isEditMode) {
       _elapsedMs = e!.elapsedMs;
@@ -279,9 +279,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
           _divider(),
           const SectionHeader('Spieler'),
           const SizedBox(height: AppSpacing.s),
-          _playerRow(PlayerRole.fouler),
-          const SizedBox(height: AppSpacing.s),
-          _playerRow(PlayerRole.fouled),
+          _foulerRow(),
         ],
         _divider(),
         const SectionHeader('Entscheidung'),
@@ -383,34 +381,22 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
     );
   }
 
-  Widget _playerRow(PlayerRole role) {
-    final isFouler = role == PlayerRole.fouler;
+  /// Nur noch der Fouler wird erfasst (US-216).
+  Widget _foulerRow() {
     return _teamNumberRow(
-      label: role.label,
-      keyPrefix: role.name,
-      team: isFouler ? _foulerTeam : _fouledTeam,
-      number: isFouler ? _foulerNumber : _fouledNumber,
+      label: PlayerRole.fouler.label,
+      keyPrefix: PlayerRole.fouler.name,
+      team: _foulerTeam,
+      number: _foulerNumber,
       onTeamChanged: (t) => setState(() {
-        if (isFouler) {
-          _foulerTeam = t;
-          _foulerNumber = null;
-        } else {
-          _fouledTeam = t;
-          _fouledNumber = null;
-        }
+        _foulerTeam = t;
+        _foulerNumber = null;
       }),
-      onNumberChanged: (n) => setState(() {
-        if (isFouler) {
-          _foulerNumber = n;
-        } else {
-          _fouledNumber = n;
-        }
-      }),
+      onNumberChanged: (n) => setState(() => _foulerNumber = n),
     );
   }
 
-  /// Team-Auswahl + Rückennummer (Freitext und Kader-Chips) — gemeinsam für
-  /// Fouler und Gefoulten.
+  /// Team-Auswahl + Rückennummer (Freitext und Kader-Chips).
   Widget _teamNumberRow({
     required String label,
     required TeamSide? team,
@@ -609,15 +595,7 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
         jerseyNumber: _foulerNumber,
       ));
     }
-    if (_fouledTeam != null) {
-      players.add(EventPlayer(
-        id: '',
-        eventId: '',
-        role: PlayerRole.fouled,
-        team: _fouledTeam!,
-        jerseyNumber: _fouledNumber,
-      ));
-    }
+    players.addAll(_legacyFouled);
 
     final repo = ref.read(eventRepositoryProvider);
     final sceneNote = _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
