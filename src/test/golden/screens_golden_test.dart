@@ -117,6 +117,18 @@ void main() {
       await _snap('review_edit');
     });
 
+    testWidgets('Nachbereitung — Szenendetails', (tester) async {
+      await _pump(tester, ReviewScreen(game: goldenGame));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Card),
+          matching: find.text('Oberkörperverg.'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _snap('review_detail');
+    });
+
     testWidgets('Nachbereitung — Coaching', (tester) async {
       await _pump(tester, ReviewScreen(game: goldenGame));
       await tester.tap(find.text('Coaching'));

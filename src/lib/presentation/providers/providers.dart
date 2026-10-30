@@ -175,6 +175,24 @@ final teamFoulsProvider =
   return TeamFouls.fromEvents(events, players);
 });
 
+// ── Spieler je Szene (US-308) ─────────────────────────────────────────────────
+
+/// Beteiligte Spieler, gruppiert nach Ereignis-ID — einmal pro Spiel geladen.
+/// Hängt an [eventsProvider], damit Änderungen am Fouler sofort sichtbar sind.
+final eventPlayersProvider =
+    FutureProvider.family<Map<String, List<EventPlayer>>, String>(
+  (ref, gameId) async {
+    await ref.watch(eventsProvider(gameId).future);
+    final players =
+        await ref.watch(eventRepositoryProvider).getPlayersForGame(gameId);
+    final byEvent = <String, List<EventPlayer>>{};
+    for (final p in players) {
+      (byEvent[p.eventId] ??= []).add(p);
+    }
+    return byEvent;
+  },
+);
+
 // ── Scene Filter ──────────────────────────────────────────────────────────────
 
 class SceneFilter {

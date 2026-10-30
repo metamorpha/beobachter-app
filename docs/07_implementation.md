@@ -283,3 +283,12 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 - **Nur Fouler:** `EventFormPanel` zeigt im Abschnitt „Spieler" nur noch die Fouler-Zeile (`_foulerRow`). `PlayerRole.fouled` bleibt im Enum und in der Datenbank, damit Altdaten lesbar bleiben. Gefoulte aus `initialPlayers` werden in `_legacyFouled` gehalten und beim Speichern unverändert mitgeschrieben, weil `updateEvent()` alle Spieler eines Ereignisses neu schreibt.
 - **SR-Ball:** neuer Wert `RefDecision.droppedBall` („SR-Ball") direkt nach `throwIn`. Die Entscheidung wird wie alle anderen als `name` gespeichert, deshalb gibt es keinen Schemawechsel (bleibt v8). Das Grid nimmt den Wert automatisch über `RefDecision.values` auf; die Szenenliste zeigt `label`.
 - **Tests:** `test/fouler_sr_ball_test.dart` (16 Tests), Goldens `live_form` und `review_edit` neu erzeugt.
+
+## Szeneninfos in Nachbereitung und Coaching (US-308)
+
+- **Gemeinsames Widget:** `widgets/scene_info.dart` mit `SceneInfoLine` (Fouler · „Fortsetzung: …", `stacked` auf dem Smartphone, entfällt wenn beides fehlt), `ScenePlayer` (`TeamDot` in Trikotfarbe + „Teamname #Nr."), `playerText()` (leerer Teamname → „Heim"/„Gast") und `Event.typeLabel` (eigene Bezeichnung bei `custom`).
+- **Daten:** `eventPlayersProvider(gameId)` lädt `getPlayersForGame` einmal und gruppiert nach `eventId`. Der Provider hängt an `eventsProvider`, deshalb reicht das bestehende `invalidate(eventsProvider)` nach dem Bearbeiten. Kein Schemawechsel.
+- **Szenenliste:** neue Infozeile unter dem Typ; die Entscheidung steht nicht mehr neben dem Typ, sondern als „Fortsetzung: …" in der Infozeile.
+- **Detail-Sheet:** zweispaltige Zeilen (`_DetailRow`) für Fouler, Gefoult (nur Altdaten), Fortsetzung, Karte, Bewertung, Szenennotiz; Kopf mit `elapsedLabel` und Spielphase. Das Sheet ist jetzt auch auf dem Tablet `isScrollControlled` und scrollbar (vorher lief es mit allen Infos über).
+- **Coaching:** Kopfzeile Typ · Karte · Bewertung; Fouler und Fortsetzung in der Infozeile darunter.
+- **Hinweis:** Wird eine Karte als Entscheidung gewählt (`RefDecision.yellowCard` …), steht dort „Fortsetzung: Gelb" — so wie erfasst.
