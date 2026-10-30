@@ -222,6 +222,16 @@ Run the full pipeline:
 ./run.sh
 ```
 
+## Git Workflow
+
+**MANDATORY — no exceptions:**
+
+- **Ein Branch pro Bug bzw. Feature**, immer frisch von aktuellem `main` (`git fetch` + `main` per fast-forward auf `origin/main` bringen, dann abzweigen). Namensschema: `feature/<kurzname>` bzw. `fix/<kurzname>`.
+- **Höchstens ein offener Feature-Branch.** Ein neues Feature wird erst begonnen, wenn der vorherige Feature-Branch per PR in `main` gemergt ist.
+- Nie Änderungen für ein anderes Thema auf einem bestehenden Branch committen — liegt ungewollt Arbeit auf dem falschen Branch, per `git stash` auf den richtigen Branch mitnehmen.
+- Gemergte Branches werden lokal und remote gelöscht.
+- Integration in `main` nur per Pull Request.
+
 ## Feature Development Rules
 
 **MANDATORY sequence for every new feature — no exceptions:**
