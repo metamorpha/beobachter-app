@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/form_factor.dart';
 import 'device_providers.dart';
 
-/// Legt auf Android-Smartphones die Ausrichtung des umschlossenen Screens fest:
-/// Live-Screen quer, alle anderen hoch (US-701, US-703). Tablets und Windows
-/// bleiben unberührt.
+/// Legt auf Smartphones (Android, iPhone) die Ausrichtung des umschlossenen
+/// Screens fest: Live-Screen quer, alle anderen hoch (US-701, US-703, US-804).
+/// Tablets (auch iPad) und Windows bleiben unberührt.
 ///
 /// Geschachtelte Screens bilden einen Stapel: Wird der oberste Screen
 /// geschlossen, gilt wieder die Ausrichtung des darunterliegenden.
@@ -42,7 +42,7 @@ class _PreferredOrientationState extends ConsumerState<PreferredOrientation> {
     super.didChangeDependencies();
     // Nur einmal entscheiden — beim Drehen ändert sich die kürzere Seite nicht
     if (_active != null) return;
-    _active = ref.read(isAndroidProvider) && FormFactor.isPhone(context);
+    _active = ref.read(isMobileProvider) && FormFactor.isPhone(context);
     if (_active!) {
       PreferredOrientation._stack.add(this);
       _apply(widget.landscape);

@@ -489,7 +489,7 @@ void main() {
       tester,
       (g) => GameSetupScreen(game: g),
       size: const Size(390, 844),
-      overrides: [isAndroidProvider.overrideWithValue(true)],
+      overrides: [isMobileProvider.overrideWithValue(true)],
     );
     expect(tester.takeException(), isNull);
     for (final kit in KitColor.values) {
@@ -508,7 +508,7 @@ void main() {
       tester,
       (g) => LiveScreen(game: g),
       size: const Size(844, 390),
-      overrides: [isAndroidProvider.overrideWithValue(true)],
+      overrides: [isMobileProvider.overrideWithValue(true)],
     );
     await tester.tap(find.byKey(const Key('btn_aufstellung')));
     await tester.pumpAndSettle();

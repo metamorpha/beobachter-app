@@ -23,6 +23,7 @@ import 'package:beobachter_app/presentation/screens/live/event_form_panel.dart';
 import 'package:beobachter_app/presentation/screens/live/live_screen.dart';
 import 'package:beobachter_app/presentation/screens/review/review_screen.dart';
 import 'package:beobachter_app/presentation/theme/app_theme.dart';
+import 'package:beobachter_app/presentation/theme/form_factor.dart';
 
 /// Android-Smartphone (US-701 – US-706), Testfälle aus
 /// `docs/26_android_smartphone_tests.md`.
@@ -32,6 +33,11 @@ import 'package:beobachter_app/presentation/theme/app_theme.dart';
 const _phoneLandscape = Size(844, 390);
 const _phonePortrait = Size(390, 844);
 const _tablet = Size(1280, 800);
+// iOS (US-804/805): kleinstes iPhone (SE) und iPad Air hoch/quer
+const _iPhoneSeLandscape = Size(667, 375);
+const _iPhoneSePortrait = Size(375, 667);
+const _iPadPortrait = Size(820, 1180);
+const _iPadLandscape = Size(1180, 820);
 
 // ── Fakes ────────────────────────────────────────────────────────────────────
 
@@ -91,7 +97,7 @@ class _Env {
 Future<_Env> _setUp(
   WidgetTester tester, {
   required Size size,
-  bool android = true,
+  bool mobile = true,
   GamePhase phase = GamePhase.zweiteHalbzeit,
   Game? game,
   List<Event> events = const [],
@@ -133,7 +139,7 @@ Future<_Env> _setUp(
   final c = ProviderContainer(
     overrides: [
       databaseProvider.overrideWithValue(db),
-      isAndroidProvider.overrideWithValue(android),
+      isMobileProvider.overrideWithValue(mobile),
       screenWakeLockProvider.overrideWithValue(wakeLock),
     ],
   );
@@ -229,7 +235,7 @@ void main() {
     });
 
     testWidgets('TC-7004c: Tablet-Layout unter Windows', (tester) async {
-      final env = await _setUp(tester, size: _tablet, android: false);
+      final env = await _setUp(tester, size: _tablet, mobile: false);
       await _pumpApp(env, LiveScreen(game: _game()));
       expect(find.text('Letzte Ereignisse'), findsOneWidget);
       expect(find.byKey(const Key('btn_ereignisse')), findsNothing);
@@ -345,8 +351,8 @@ void main() {
     testWidgets('TC-7012: Keine Ausrichtungs-Vorgabe auf Tablet/Windows', (
       tester,
     ) async {
-      for (final android in [true, false]) {
-        final env = await _setUp(tester, size: _tablet, android: android);
+      for (final mobile in [true, false]) {
+        final env = await _setUp(tester, size: _tablet, mobile: mobile);
         await _pumpLiveOverList(env, _game());
         await _systemBack(tester);
         expect(env.orientations, isEmpty);
@@ -678,7 +684,7 @@ void main() {
       final env = await _setUp(
         tester,
         size: _tablet,
-        android: false,
+        mobile: false,
         phase: GamePhase.ersteHalbzeit,
       );
       await _pumpLiveOverList(env, _game());
@@ -768,7 +774,7 @@ void main() {
     testWidgets('TC-7036: Kein Schalter, keine Wirkung unter Windows', (
       tester,
     ) async {
-      final env = await _setUp(tester, size: _tablet, android: false);
+      final env = await _setUp(tester, size: _tablet, mobile: false);
       await _pumpLiveOverList(env, _game());
       expect(find.byKey(const Key('btn_display')), findsNothing);
       await _systemBack(tester);
@@ -947,5 +953,134 @@ void main() {
       expect(lefts, hasLength(1), reason: 'eine Spalte');
       expect(tester.takeException(), isNull);
     });
+  });
+
+  // ── US-803–805 · iOS (iPhone & iPad) ───────────────────────────────────────
+  // Plattform-Weiche ist `isMobileProvider` (Android oder iOS); das Layout
+  // richtet sich nur nach der Größe (`FormFactor.isPhone`).
+
+  group('US-803–805 · iOS (iPhone & iPad)', () {
+    testWidgets('TC-803-01: Display-Kanal wie unter Android', (tester) async {
+      final calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('de.beobachter/screen'),
+        (call) async {
+          calls.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('de.beobachter/screen'),
+          null,
+        ),
+      );
+
+      const lock = MethodChannelScreenWakeLock();
+      await lock.enable();
+      await lock.disable();
+
+      expect(calls.map((c) => (c.method, c.arguments)), [
+        ('setKeepScreenOn', true),
+        ('setKeepScreenOn', false),
+      ]);
+    });
+
+    testWidgets('TC-804-01: iPhone SE – Live-Screen quer, Liste hochkant', (
+      tester,
+    ) async {
+      final env = await _setUp(
+        tester,
+        size: _iPhoneSePortrait,
+        phase: GamePhase.abgeschlossen,
+      );
+      await _pumpLiveOverList(env, _game());
+      expect(env.orientations.first, _portrait);
+      expect(env.orientations.last, _landscape);
+      expect(tester.takeException(), isNull);
+
+      await _systemBack(tester);
+      expect(env.orientations.last, _portrait);
+    });
+
+    for (final phase in GamePhase.values) {
+      testWidgets('TC-804-02: iPhone SE quer ohne Overflow (${phase.name})', (
+        tester,
+      ) async {
+        final game = _game(
+          home: 'Sportvereinigung Westfalia 1911',
+          away: 'Fußballclub Ruhrtal-Hohenlimburg',
+        );
+        final env = await _setUp(
+          tester,
+          size: _iPhoneSeLandscape,
+          phase: phase,
+          game: game,
+        );
+        // Wie in der App: über der Spielliste, also mit Zurück-Pfeil
+        await _pumpLiveOverList(env, game);
+        expect(tester.takeException(), isNull);
+        expect(env.wakeLock.calls, ['enable']);
+        // Verkürzte Tor-Buttons; Teamnamen nur, wenn noch Platz ist
+        Finder inHeader(Finder f) => find.descendant(
+          of: find.byKey(const Key('live_scoreboard')),
+          matching: f,
+        );
+        expect(inHeader(find.text('+')), findsNWidgets(2));
+      });
+    }
+
+    for (final (name, size) in [
+      ('hoch', _iPadPortrait),
+      ('quer', _iPadLandscape),
+    ]) {
+      testWidgets('TC-805-01: iPad $name – Tablet-Layout, freie Ausrichtung', (
+        tester,
+      ) async {
+        final env = await _setUp(
+          tester,
+          size: size,
+          phase: GamePhase.abgeschlossen,
+          events: [_event('e1', 12, EventType.footFoul)],
+        );
+        await _pumpLiveOverList(env, _game());
+        expect(
+          FormFactor.isPhone(tester.element(find.byType(LiveScreen))),
+          isFalse,
+        );
+        expect(tester.takeException(), isNull);
+
+        // US-803: Display-Schalter in der Aktionsleiste wie auf dem Tablet
+        expect(find.byKey(const Key('btn_display')), findsOneWidget);
+        expect(env.wakeLock.calls, ['enable']);
+
+        await _systemBack(tester);
+        expect(env.wakeLock.calls.last, 'disable');
+        expect(env.orientations, isEmpty);
+      });
+
+      testWidgets('TC-805-02: iPad $name – Liste, Setup, Nachbereitung', (
+        tester,
+      ) async {
+        final env = await _setUp(
+          tester,
+          size: size,
+          events: [_event('e1', 12, EventType.footFoul)],
+        );
+        await _pumpApp(env, const GameListScreen());
+        expect(tester.takeException(), isNull);
+
+        await _pumpApp(env, GameSetupScreen(game: _game()));
+        expect(tester.takeException(), isNull);
+
+        await _pumpApp(env, ReviewScreen(game: _game()));
+        for (final tab in ['Coaching', 'Statistik', 'Szenen']) {
+          await tester.tap(find.text(tab));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull, reason: tab);
+        }
+        expect(env.orientations, isEmpty);
+      });
+    }
   });
 }

@@ -1443,3 +1443,33 @@ Damit kostet eine diktierte Notiz im Ereignisformular **2 Taps** (Notiz aufklapp
 | Sonstiger Fehler | „Spracherkennung fehlgeschlagen" |
 
 Ist auf dem Gerät gar keine Spracherkennung vorhanden (Initialisierung schlägt fehl), wird das 🎤 nicht angezeigt — keine Fehlermeldung, das Feld sieht aus wie bisher.
+
+---
+
+## Flow 12 — iOS: iPhone & iPad (US-801–805)
+
+Auf iOS gibt es keine neuen Screens. Die Oberfläche folgt denselben Regeln wie unter Android, das Layout richtet sich nur nach der Bildschirmgröße (`FormFactor.isPhone`):
+
+| Gerät | Layout | Ausrichtung | Display-Schalter |
+|---|---|---|---|
+| iPhone | Smartphone-Layout (Flow 7) | Live-Screen quer, sonst hoch | in der Seitenleiste des Live-Screens |
+| iPad | Tablet-Layout | frei (hoch und quer) | in der Aktionsleiste, wie auf dem Android-Tablet |
+
+### Installation (TestFlight)
+
+```
+Einladungslink öffnen ──▶ App „TestFlight“ installieren ──▶ „Beobachter“ installieren
+                                                               │
+                         neuer Build in TestFlight ◀───────────┘  Updates automatisch,
+                                                                   Spieldaten bleiben
+```
+
+### Kleine iPhones quer (iPhone SE, 667 × 375)
+
+Die kompakte Kopfzeile des Live-Screens hat dort zu wenig Platz. Zuerst verschwinden die Teamnamen, und es bleibt nur der Spielstand. Wird es noch enger, zeigen die Tor-Buttons „⚽ +“ statt „⚽ + Tor“. Die Teamzuordnung bleibt über die Trikotfarbe der Buttons erkennbar.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ←  [⚽ +]  2 : 1  [⚽ +]      ( 2. Halbzeit )  68:00          │
+└──────────────────────────────────────────────────────────────┘
+```

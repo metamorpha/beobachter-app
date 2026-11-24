@@ -33,7 +33,7 @@ Future<void> _pump(WidgetTester tester, Widget home, Size size) =>
       home,
       size: size,
       overrides: [
-        isAndroidProvider.overrideWithValue(true),
+        isMobileProvider.overrideWithValue(true),
         screenWakeLockProvider.overrideWithValue(_NoWakeLock()),
       ],
     );

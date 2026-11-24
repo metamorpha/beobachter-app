@@ -46,8 +46,9 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
   /// Zählt Speichervorgänge; jeder neue Wert startet die Bestätigung (US-603).
   int _savedCount = 0;
 
-  /// Display-Sperre nur unter Android (US-702); beim Öffnen immer an.
-  late final bool _wakeLockAvailable = ref.read(isAndroidProvider);
+  /// Display-Sperre nur unter Android und iOS (US-702, US-803); beim Öffnen
+  /// immer an.
+  late final bool _wakeLockAvailable = ref.read(isMobileProvider);
   late final ScreenWakeLock _wakeLock = ref.read(screenWakeLockProvider);
   bool _keepScreenOn = true;
 
@@ -524,7 +525,7 @@ class _DisplayButton extends StatelessWidget {
         onPressed: onPressed,
       );
     }
-    // Android-Tablet: zusätzlicher Button in der Aktionsleiste
+    // Tablet (Android, iPad): zusätzlicher Button in der Aktionsleiste
     return Tooltip(
       message: tooltip,
       child: IconButton.filledTonal(
@@ -609,6 +610,12 @@ class _SavedToast extends StatelessWidget {
 
 /// Kopfleiste: Tor-Buttons, Teams, Spielstand, Phase und Uhr (US-602, US-215).
 class _Scoreboard extends ConsumerWidget {
+  /// Darunter passen in der kompakten Kopfzeile keine Teamnamen mehr.
+  static const _compactNamesMinWidth = 200.0;
+
+  /// Darunter werden die Tor-Buttons der kompakten Kopfzeile verkürzt.
+  static const _compactNarrowWidth = 660.0;
+
   final Game game;
 
   /// Einzeilige Kopfzeile für das Smartphone (US-701).
@@ -634,60 +641,81 @@ class _Scoreboard extends ConsumerWidget {
       final nameStyle = context.text.titleSmall?.copyWith(
         color: context.scheme.onSurfaceVariant,
       );
-      return Row(
-        key: const Key('live_scoreboard'),
-        children: [
-          _GoalButton(
-            game: game,
-            team: TeamSide.home,
-            enabled: !abgeschlossen,
-            compact: true,
-          ),
-          const SizedBox(width: AppSpacing.s),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TeamDot(color: kits.color(context, TeamSide.home)),
-                const SizedBox(width: AppSpacing.xs + 2),
-                Flexible(
-                  child: Text(
-                    home,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: nameStyle,
-                  ),
+      return LayoutBuilder(
+        builder: (context, outer) {
+          // Kleine iPhones quer (SE, US-804): Tor-Buttons nur „⚽ +“
+          final narrow = outer.maxWidth < _compactNarrowWidth;
+          return Row(
+            key: const Key('live_scoreboard'),
+            children: [
+              _GoalButton(
+                game: game,
+                team: TeamSide.home,
+                enabled: !abgeschlossen,
+                compact: true,
+                short: narrow,
+              ),
+              const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final score = _ScoreDisplay(
+                      score: ref.watch(scoreProvider(game.id)),
+                      fontSize: 22,
+                    );
+                    // Sehr schmal (z. B. iPhone SE quer, US-804): nur der
+                    // Spielstand, notfalls verkleinert — die Tor-Buttons tragen
+                    // die Teamfarben.
+                    if (constraints.maxWidth < _compactNamesMinWidth) {
+                      return Center(
+                        child: FittedBox(fit: BoxFit.scaleDown, child: score),
+                      );
+                    }
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TeamDot(color: kits.color(context, TeamSide.home)),
+                        const SizedBox(width: AppSpacing.xs + 2),
+                        Flexible(
+                          child: Text(
+                            home,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: nameStyle,
+                          ),
+                        ),
+                        score,
+                        Flexible(
+                          child: Text(
+                            away,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: nameStyle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xs + 2),
+                        TeamDot(color: kits.color(context, TeamSide.away)),
+                      ],
+                    );
+                  },
                 ),
-                _ScoreDisplay(
-                  score: ref.watch(scoreProvider(game.id)),
-                  fontSize: 22,
-                ),
-                Flexible(
-                  child: Text(
-                    away,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: nameStyle,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xs + 2),
-                TeamDot(color: kits.color(context, TeamSide.away)),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s),
-          _GoalButton(
-            game: game,
-            team: TeamSide.away,
-            enabled: !abgeschlossen,
-            compact: true,
-          ),
-          const SizedBox(width: AppSpacing.m),
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.s),
-            child: TimerClock(gameId: game.id, compact: true),
-          ),
-        ],
+              ),
+              const SizedBox(width: AppSpacing.s),
+              _GoalButton(
+                game: game,
+                team: TeamSide.away,
+                enabled: !abgeschlossen,
+                compact: true,
+                short: narrow,
+              ),
+              const SizedBox(width: AppSpacing.m),
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.s),
+                child: TimerClock(gameId: game.id, compact: true),
+              ),
+            ],
+          );
+        },
       );
     }
 
@@ -742,11 +770,15 @@ class _GoalButton extends ConsumerWidget {
   final bool enabled;
   final bool compact;
 
+  /// Nur „+“ statt „+ Tor“ — für sehr schmale Kopfzeilen.
+  final bool short;
+
   const _GoalButton({
     required this.game,
     required this.team,
     required this.enabled,
     this.compact = false,
+    this.short = false,
   });
 
   @override
@@ -782,7 +814,7 @@ class _GoalButton extends ConsumerWidget {
               }
             : null,
         icon: const Icon(Icons.sports_soccer, size: 22),
-        label: const Text('+ Tor'),
+        label: Text(short ? '+' : '+ Tor'),
       ),
     );
   }
@@ -792,7 +824,7 @@ class _GoalButton extends ConsumerWidget {
 class _ActionBar extends StatelessWidget {
   final Game game;
 
-  /// Zusätzlicher Button am Ende, z. B. „Display" unter Android (US-702).
+  /// Zusätzlicher Button am Ende, z. B. „Display" unter Android/iOS (US-702).
   final Widget? trailing;
 
   const _ActionBar({required this.game, this.trailing});
