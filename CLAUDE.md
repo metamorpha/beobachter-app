@@ -92,7 +92,7 @@ Key design decisions:
 | `27_trikotfarben_tests.md` | Team kit colors — US-111 (22 TCs) |
 | `28_fouler_sr_ball_tests.md` | Fouler only, dropped ball decision — US-216/217 (17 TCs) |
 | `29_szeneninfos_tests.md` | Full scene info in scene list, detail sheet, coaching — US-308 (16 TCs) |
-| `30_spracheingabe_tests.md` | Dictate notes via speech input — US-218 (22 TCs) |
+| `30_spracheingabe_tests.md` | Dictate notes via speech input — US-218 (25 TCs) |
 
 ### src/lib/ structure
 
@@ -131,7 +131,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (368 tests incl. 18 golden, all green)
+# Run tests (371 tests incl. 18 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;

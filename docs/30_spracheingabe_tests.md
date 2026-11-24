@@ -128,6 +128,32 @@ Automatisierte Tests verwenden eine `FakeSpeechInput` (Provider-Override von `sp
 
 ---
 
+### TC-218-23: Getippter Text bleibt, Tastatur schließt beim Start
+
+**Vorbedingung:** Text „Eröffnung“ per Tastatur getippt, das Feld hat noch den Fokus und die Tastatur ist offen.
+
+**Aktion:** Tap auf 🎤, „Guten Abend“ diktieren.
+
+**Erwartetes Ergebnis:** Die Tastatur schließt sich beim Start und das Feld verliert den Fokus. Das Feld enthält „Eröffnung Guten Abend“, auch nachdem die Aufnahme geendet hat. Die Tastatur darf das Diktat nicht mit ihrem alten Textstand überschreiben.
+
+---
+
+### TC-218-24: Leeres Ergebnis löscht nichts
+
+**Aktion:** Die Erkennung liefert „Guten Abend“ und danach ein leeres Ergebnis.
+
+**Erwartetes Ergebnis:** Das Feld enthält weiterhin „Eröffnung Guten Abend“.
+
+---
+
+### TC-218-25: Coaching-Ansicht: getippter und diktierter Text
+
+**Aktion:** In der Coaching-Ansicht „Eröffnung:“ in die Allgemeine Notiz tippen, dann „Guten Abend“ diktieren, bis die Aufnahme endet.
+
+**Erwartetes Ergebnis:** Das Feld zeigt „Eröffnung: Guten Abend“, und genau dieser Text wird gespeichert.
+
+---
+
 ## Fehler & Verfügbarkeit
 
 ### TC-218-16: Keine Spracherkennung vorhanden

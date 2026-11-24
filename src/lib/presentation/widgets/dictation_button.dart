@@ -60,13 +60,17 @@ class _DictationButtonState extends ConsumerState<DictationButton>
       await _speech.stop();
       return;
     }
+    // Tastatur schließen: Solange das Feld den Fokus hat, kann die Tastatur
+    // ihren (alten) Textstand zurückschreiben und das Diktat überschreiben.
+    FocusManager.instance.primaryFocus?.unfocus();
     _base = widget.controller.text;
     _setListening(true);
     await _speech.listen(onResult: _onResult, onDone: _onDone);
   }
 
   void _onResult(String words) {
-    if (!mounted) return;
+    // Leere Ergebnisse (z. B. am Ende einer Aufnahme) löschen nichts
+    if (!mounted || words.trim().isEmpty) return;
     final text = DictationButton.append(_base, words);
     widget.controller.value = TextEditingValue(
       text: text,

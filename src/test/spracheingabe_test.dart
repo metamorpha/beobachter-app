@@ -328,6 +328,47 @@ void main() {
       expect(ctrl.text, 'Hand am Trikot, Vorteil zu spät');
     });
 
+    testWidgets('TC-218-23: getippter Text bleibt, Tastatur schließt beim Start',
+        (tester) async {
+      final speech = _FakeSpeech();
+      final ctrl = TextEditingController();
+      await tester.pumpWidget(_fieldsApp(speech, [ctrl]));
+      await tester.pump();
+
+      final field = find.byKey(const Key('field_0'));
+      await tester.tap(field);
+      await tester.enterText(field, 'Eröffnung');
+      await tester.pump();
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+
+      await tester.tap(_mic);
+      await tester.pump();
+
+      // Feld ohne Fokus → die Tastatur kann den Text nicht mehr überschreiben
+      expect(tester.testTextInput.hasAnyClients, isFalse);
+      speech.say('Guten Abend');
+      await tester.pump();
+      expect(ctrl.text, 'Eröffnung Guten Abend');
+    });
+
+    testWidgets('TC-218-24: leeres Ergebnis löscht das Diktat nicht',
+        (tester) async {
+      final speech = _FakeSpeech();
+      final ctrl = TextEditingController(text: 'Eröffnung');
+      await tester.pumpWidget(_fieldsApp(speech, [ctrl]));
+      await tester.pump();
+
+      await tester.tap(_mic);
+      await tester.pump();
+      speech
+        ..say('Guten Abend')
+        ..say('')
+        ..finish();
+      await tester.pumpAndSettle();
+
+      expect(ctrl.text, 'Eröffnung Guten Abend');
+    });
+
     testWidgets('TC-218-13: Schließen beendet die Aufnahme', (tester) async {
       final speech = _FakeSpeech();
       final ctrl = TextEditingController();
@@ -480,6 +521,41 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(eventRepo.lastCoachingNote, 'Laufweg ansprechen');
+    });
+
+    testWidgets('TC-218-25: Coaching – getippter und diktierter Text bleiben',
+        (tester) async {
+      final speech = _FakeSpeech();
+      final gameRepo = _FakeGameRepository();
+      await tester.pumpWidget(
+        _reviewApp(speech, _FakeEventRepository(), gameRepo),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Coaching'));
+      await tester.pumpAndSettle();
+
+      final field = find.byWidgetPredicate(
+        (w) =>
+            w is TextField &&
+            w.decoration?.hintText == 'Eröffnungsworte, allgemeines Fazit …',
+      );
+      await tester.tap(field);
+      await tester.enterText(field, 'Eröffnung:');
+      await tester.pump();
+
+      await tester.tap(_micIn('Eröffnungsworte, allgemeines Fazit …'));
+      await tester.pump();
+      speech.say('Guten Abend');
+      await tester.pump();
+      expect(gameRepo.lastCoachingNote, 'Eröffnung:');
+      speech.finish();
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(field).controller!.text,
+        'Eröffnung: Guten Abend',
+      );
+      expect(gameRepo.lastCoachingNote, 'Eröffnung: Guten Abend');
     });
 
     testWidgets('TC-218-12: Allgemeine Notiz wird automatisch gespeichert',
