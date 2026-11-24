@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Database | Drift 2.31 (type-safe SQLite wrapper) |
 | State Management | Riverpod 2.6.1 |
 | ID generation | uuid |
+| Spracheingabe | speech_to_text 7.5 (Systemerkennung iOS/Android/Windows, US-218) |
 | Platform targets | iOS · Android · Windows (Surface) |
 
 ## Architecture
@@ -60,7 +61,7 @@ Key design decisions:
 |------|---------|
 | `01_epics.md` | MVP epics, prioritized for live-game use |
 | `02_us_spielverwaltung.md` | User stories — Epic 1: Spielverwaltung (US-101–111) |
-| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–217) |
+| `02_us_live_erfassung.md` | User stories — Epic 2: Live-Ereigniserfassung (US-201–218) |
 | `02_us_spielnachbereitung.md` | User stories — Epic 3: Spielnachbereitung & Coaching (US-301–308) |
 | `02_us_statistik.md` | User stories — Epic 4: Statistik & Analyse (US-401–403) |
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
@@ -91,6 +92,7 @@ Key design decisions:
 | `27_trikotfarben_tests.md` | Team kit colors — US-111 (22 TCs) |
 | `28_fouler_sr_ball_tests.md` | Fouler only, dropped ball decision — US-216/217 (17 TCs) |
 | `29_szeneninfos_tests.md` | Full scene info in scene list, detail sheet, coaching — US-308 (16 TCs) |
+| `30_spracheingabe_tests.md` | Dictate notes via speech input — US-218 (26 TCs) |
 
 ### src/lib/ structure
 
@@ -108,11 +110,11 @@ core/
   timer_service.dart              Background-safe game clock
   pressebericht_csv_parser.dart  DFB/FLVW Pressebericht CSV parser
 presentation/
-  platform/     device_providers (isAndroid, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch)
+  platform/     device_providers (isAndroid, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch) · speech_input (SpeechInput, US-218)
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
   theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style · form_factor · kit_colors
-  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · kit_color_picker · team_dot · scene_info · select_tile · section_header · stat_card · phone_dialog
+  widgets/      pitch_canvas · heatmap_canvas · timer_display · assessment_grid · squad_input · squad_edit_dialog · kit_color_picker · team_dot · scene_info · dictation_button · select_tile · section_header · stat_card · phone_dialog
 ```
 
 ## Commands
@@ -129,7 +131,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (350 tests incl. 18 golden, all green)
+# Run tests (372 tests incl. 18 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -207,6 +209,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Trikotfarben (US-111) | Done — `KitColorPicker` je Team in Setup und Dialog „Aufstellung"; `Game.homeKitColor`/`awayKitColor`, DB schema v8; Farben über `teamKitsProvider(gameId)` → `TeamKits.color(context, side)`, Fallback `AppColors.home/away`; helle Farben mit Rand (`AppColors.needsOutline`) |
 | Nur Fouler, SR-Ball (US-216/217) | Done — Ereignisformular erfasst nur den Fouler; alte Gefoulten-Einträge bleiben beim Bearbeiten erhalten (`_legacyFouled`); `RefDecision.droppedBall` „SR-Ball" nach Einwurf; kein Schemawechsel |
 | Szeneninfos (US-308) | Done — Fouler (Teamfarbe + Name + #Nr.) und „Fortsetzung: …" in Szenenliste und Coaching-Ansicht, Detail-Sheet mit allen Feldern; gemeinsames Widget `SceneInfoLine`/`ScenePlayer` (`widgets/scene_info.dart`), Spieler über `eventPlayersProvider(gameId)` (einmal pro Spiel, hängt an `eventsProvider`); kein Schemawechsel |
+| Spracheingabe (US-218) | Done — Mikrofon (`DictationButton.suffix`) in Szenennotiz, Coaching-Notizen und Allgemeiner Notiz; `speech_to_text` über `speechInputProvider` (Systemerkennung, Deutsch, Text wird angehängt); ohne Erkennung kein Icon; Coaching-Notizen speichern nach dem Diktat sofort; kein Schemawechsel |
 | UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` (Teamfarben über `TeamKits`) |
 
 ## Development Pipeline

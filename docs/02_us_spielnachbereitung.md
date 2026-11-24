@@ -101,6 +101,10 @@
 
 ---
 
+> Spracheingabe für Coaching-Notizen: siehe US-218 in `02_us_live_erfassung.md`.
+
+---
+
 ### US-308 · Vollständige Szeneninfos in Szenenliste und Coaching-Ansicht
 
 **Als** Schiedsrichterbeobachter  

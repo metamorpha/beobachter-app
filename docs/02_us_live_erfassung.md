@@ -374,3 +374,34 @@
 - [x] Die Entscheidung wird gespeichert, überlebt einen App-Neustart und ist beim Bearbeiten (US-209) vorausgewählt
 - [x] In der Spielnachbereitung erscheint „SR-Ball" überall, wo die Entscheidung einer Szene angezeigt wird
 - [x] Keine Änderung des Datenbankschemas (Entscheidung wird wie bisher als Text gespeichert)
+
+---
+
+### US-218 · Notiz per Sprache diktieren
+
+**Als** Schiedsrichterbeobachter  
+**möchte ich** Notizen per Spracheingabe diktieren können statt sie zu tippen,  
+**damit** ich während des Spiels schneller erfasse und den Blick weniger lange vom Spielgeschehen nehme.
+
+> Ergänzt US-207 (Szenennotiz), US-304 (Coaching-Notiz) und US-307 (Allgemeine Coaching-Notiz).
+
+**Akzeptanzkriterien:**
+
+> Automatisiert geprüft mit simulierter Spracherkennung (`test/spracheingabe_test.dart`). Die Prüfung auf echten Geräten (TC-218-15, TC-218-20 bis TC-218-22 in `30_spracheingabe_tests.md`) steht noch aus.
+
+*Bedienung*
+- [x] Im Eingabefeld (rechts, als Feld-Icon) steht ein kleines Mikrofon-Symbol in diesen Feldern: Szenennotiz im Ereignisformular (Live und Bearbeiten, US-209), Coaching-Notiz im Szenen-Detail, Coaching-Notiz je Szene in der Coaching-Ansicht, Allgemeine Notiz in der Coaching-Ansicht
+- [x] Ein Tap auf das Mikrofon startet die Aufnahme; das Symbol wird rot, pulsiert und zeigt so deutlich, dass zugehört wird
+- [x] Ein zweiter Tap beendet die Aufnahme; nach einer Sprechpause von ca. 3 Sekunden endet sie auch automatisch
+- [x] Der erkannte Text erscheint schon während des Sprechens im Feld (Live-Vorschau)
+- [x] Der erkannte Text wird ans Ende angehängt (mit Leerzeichen getrennt); vorhandener Text bleibt immer erhalten
+- [x] Danach ist der Text ganz normal per Tastatur editierbar; Speichern funktioniert wie bisher (in der Coaching-Ansicht wird die diktierte Notiz automatisch gespeichert, wie beim Verlassen des Feldes)
+- [x] Es läuft immer nur eine Aufnahme gleichzeitig; Schließen des Formulars/Dialogs beendet eine laufende Aufnahme
+- [x] Die Spieluhr läuft während der Aufnahme unverändert weiter
+
+*Erkennung & Offline*
+- [x] Erkannt wird Deutsch über die Spracherkennung des Betriebssystems (iOS, Android, Windows); wenn möglich direkt auf dem Gerät (ohne Internet)
+- [x] Beim ersten Mal fragt das System nach der Mikrofon-Freigabe; wird sie verweigert, erscheint ein Hinweis „Mikrofon nicht freigegeben"
+- [x] Ist die Erkennung gerade nicht möglich (z. B. kein Internet und kein Offline-Sprachpaket), erscheint ein verständlicher Hinweis; die Tastatureingabe bleibt uneingeschränkt nutzbar
+- [x] Steht auf dem Gerät gar keine Spracherkennung zur Verfügung, wird das Mikrofon-Symbol nicht angezeigt
+- [x] Keine Änderung des Datenbankschemas; Notizen werden wie bisher als Text gespeichert

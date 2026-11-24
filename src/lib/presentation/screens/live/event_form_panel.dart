@@ -17,6 +17,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
 import '../../theme/kit_colors.dart';
 import '../../widgets/assessment_grid.dart';
+import '../../widgets/dictation_button.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/select_tile.dart';
 
@@ -541,8 +542,9 @@ class _EventFormPanelState extends ConsumerState<EventFormPanel> {
                   child: TextField(
                     controller: _noteCtrl,
                     maxLines: 3,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Szenennotiz …',
+                      suffixIcon: DictationButton.suffix(ref, _noteCtrl),
                     ),
                   ),
                 )

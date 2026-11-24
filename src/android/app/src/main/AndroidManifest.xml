@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Spracheingabe für Notizen (US-218) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Beobachter"
         android:name="${applicationName}"
@@ -40,6 +42,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Spracherkennung des Systems finden (US-218) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

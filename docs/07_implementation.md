@@ -292,3 +292,33 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 - **Detail-Sheet:** zweispaltige Zeilen (`_DetailRow`) für Fouler, Gefoult (nur Altdaten), Fortsetzung, Karte, Bewertung, Szenennotiz; Kopf mit `elapsedLabel` und Spielphase. Das Sheet ist jetzt auch auf dem Tablet `isScrollControlled` und scrollbar (vorher lief es mit allen Infos über).
 - **Coaching:** Kopfzeile Typ · Karte · Bewertung; Fouler und Fortsetzung in der Infozeile darunter.
 - **Hinweis:** Wird eine Karte als Entscheidung gewählt (`RefDecision.yellowCard` …), steht dort „Fortsetzung: Gelb" — so wie erfasst.
+
+## Spracheingabe für Notizen (US-218)
+
+- **Paket:** `speech_to_text` (7.5) nutzt die Spracherkennung des Betriebssystems: `SFSpeechRecognizer` (iOS), `android.speech.SpeechRecognizer` (Android) und unter Windows `speech_to_text_windows` (Beta im Paket). Es werden keine Sprachmodelle mitgeliefert.
+- **Abstraktion:** `SpeechInput` in `presentation/platform/speech_input.dart`, umgesetzt in `SpeechToTextInput` und über `speechInputProvider` bereitgestellt. Tests überschreiben den Provider mit einem Fake. `dictationAvailableProvider` prüft einmal pro App-Start, ob ein Mikrofon angezeigt wird:
+  - Android und iOS: immer. `initialize()` öffnet dort den Freigabe-Dialog und läuft deshalb erst beim ersten Tap.
+  - Windows: nur wenn `initialize()` klappt.
+  - Andere Plattformen (macOS, Tests): nie. Deshalb ändern sich die Goldens nicht.
+- **Sitzung:** Eine einzige `SpeechToText`-Instanz. Ein neues `listen()` bricht eine laufende Aufnahme ab (`cancel`) und meldet ihr `onDone`. Ein verspätetes `done` der abgebrochenen Aufnahme wird ignoriert, bis der Status `listening` der neuen Aufnahme kommt. Optionen: Locale `de_DE` oder die erste `de*`-Locale, `ListenMode.dictation`, Pause 3 s, höchstens 1 min.
+- **Offline:** `onDevice` wird bewusst nicht gesetzt.
+  - iOS 7.5: Das Plugin meldet bei fehlender Unterstützung einen Fehler und startet trotzdem. Ohne Netz nutzt iOS die Erkennung auf dem Gerät, sofern sie verfügbar ist.
+  - Android: Der Standard-Erkenner nutzt ohne Netz das Offline-Sprachpaket, sofern es installiert ist.
+  - Ist keine Erkennung möglich, liefert Android `error_network` oder `error_language_unavailable`. Das führt zum Hinweis „Spracherkennung nicht verfügbar …“.
+  - Die App selbst braucht keine `INTERNET`-Berechtigung, weil die Erkennung im Google-Dienst läuft.
+- **Widget:** `DictationButton` (`widgets/dictation_button.dart`) wird über `DictationButton.suffix(ref, controller, onFinished:)` als `suffixIcon` eingebaut. Ohne Spracherkennung ist das Ergebnis `null`, das Feld bleibt dann unverändert.
+  - Der Text wird über `DictationButton.append` angehängt.
+  - Während der Aufnahme pulsiert die Deckkraft. Bei „Bewegung reduzieren“ (`AppMotion.reduced`) ist das Icon statisch rot.
+  - `dispose()` stoppt die Aufnahme.
+  - Beim Start nimmt der Button dem Feld den Fokus (`primaryFocus?.unfocus()`). Sonst konnte die Tastatur, z. B. Gboard, ihren alten Textstand ohne das Diktat zurückschreiben. Das trat in der Coaching-Ansicht auf, wenn vorher getippt wurde.
+  - Leere Ergebnisse werden ignoriert.
+  - `_CoachingTab` bleibt beim Tab-Wechsel erhalten (`AutomaticKeepAliveClientMixin`). Vorher hielt nur ein fokussiertes Feld den Tab am Leben. Ohne Fokus, z. B. nach einem Diktat, wurde der Tab aus veralteten Daten neu aufgebaut, und die Notizen waren weg.
+  - Nach dem Speichern werden die Daten neu geladen: bei Szenen-Notizen `eventsProvider`, bei der Allgemeinen Notiz `gameProvider` und `gamesProvider`. Die Allgemeine Notiz startet mit dem Stand aus `gameProvider`.
+  - In der Coaching-Ansicht speichert `onFinished` sofort: `_saveNote` und `_saveOverallNote`. Das Speichern beim Fokusverlust liegt jetzt in `_save…OnBlur`.
+- **Berechtigungen:**
+  - Android: `RECORD_AUDIO` und `<queries>` für `android.speech.RecognitionService`.
+  - iOS: `NSMicrophoneUsageDescription` und `NSSpeechRecognitionUsageDescription`.
+  - Windows: keine Änderung. Die Windows-Spracherkennung („Online-Spracherkennung“ in den Datenschutzeinstellungen) muss aktiv sein.
+- **Grenzen:** Die Windows-Unterstützung des Pakets ist Beta. macOS wird nicht unterstützt, es fehlen Entitlements, und macOS ist auch keine Zielplattform.
+- **Tests:** `test/spracheingabe_test.dart` (22 Tests). Die Geräteprüfung folgt TC-218-15 und TC-218-20 bis TC-218-22.
+
