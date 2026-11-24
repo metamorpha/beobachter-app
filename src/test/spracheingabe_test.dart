@@ -98,6 +98,8 @@ class _FakeEventRepository implements EventRepository {
   @override
   Future<void> updateCoachingNote(String eventId, String? note) async {
     lastCoachingNote = note;
+    final i = _events.indexWhere((e) => e.id == eventId);
+    if (i >= 0) _events[i] = _events[i].copyWith(coachingNote: note);
   }
 
   @override
@@ -114,7 +116,14 @@ class _FakeGameRepository implements GameRepository {
   Future<List<Game>> getGames() async => [];
 
   @override
-  Future<Game?> getGame(String id) async => null;
+  Future<Game?> getGame(String id) async => Game(
+        id: id,
+        date: DateTime(2026, 10, 1),
+        homeTeamName: 'Heim',
+        awayTeamName: 'Gast',
+        createdAt: DateTime(2026, 10, 1),
+        coachingNote: lastCoachingNote,
+      );
 
   @override
   Future<void> updateGame(Game game) async {}
@@ -579,6 +588,63 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(gameRepo.lastCoachingNote, 'Gute Leistung');
+    });
+
+    testWidgets('TC-218-26: Diktierte Notizen bleiben nach Tab-Wechsel',
+        (tester) async {
+      final speech = _FakeSpeech();
+      await tester.pumpWidget(_reviewApp(
+        speech,
+        _FakeEventRepository([_coachingEvent()]),
+        _FakeGameRepository(),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Coaching'));
+      await tester.pumpAndSettle();
+
+      Future<void> dictate(String hint, String words) async {
+        await tester.tap(_micIn(hint));
+        await tester.pump();
+        speech
+          ..say(words)
+          ..finish();
+        await tester.pumpAndSettle();
+      }
+
+      String textOf(String hint) => tester
+          .widget<TextField>(find.byWidgetPredicate(
+            (w) => w is TextField && w.decoration?.hintText == hint,
+          ))
+          .controller!
+          .text;
+
+      await dictate('Eröffnungsworte, allgemeines Fazit …', 'Guten Abend');
+      await dictate('Coaching-Notiz …', 'Laufweg ansprechen');
+
+      for (final tab in ['Szenen', 'Statistik']) {
+        await tester.tap(find.text(tab));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Coaching'));
+        await tester.pumpAndSettle();
+
+        expect(textOf('Eröffnungsworte, allgemeines Fazit …'), 'Guten Abend',
+            reason: 'nach Wechsel zu $tab');
+        expect(textOf('Coaching-Notiz …'), 'Laufweg ansprechen',
+            reason: 'nach Wechsel zu $tab');
+      }
+
+      // Szenen-Detail zeigt die diktierte Coaching-Notiz
+      await tester.tap(find.text('Szenen'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+            of: find.byType(Card), matching: find.text('Fußvergehen')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        textOf('Was möchte ich mit dem Schiedsrichter besprechen?'),
+        'Laufweg ansprechen',
+      );
     });
 
     testWidgets('TC-218-01: Mikrofon in der Coaching-Notiz des Detail-Sheets',

@@ -906,14 +906,23 @@ class _CoachingTab extends ConsumerStatefulWidget {
   ConsumerState<_CoachingTab> createState() => _CoachingTabState();
 }
 
-class _CoachingTabState extends ConsumerState<_CoachingTab> {
+class _CoachingTabState extends ConsumerState<_CoachingTab>
+    with AutomaticKeepAliveClientMixin {
   late final TextEditingController _overallCtrl;
   late final FocusNode _overallFocus;
+
+  // Beim Tab-Wechsel nicht verwerfen — sonst gehen Notizen verloren, die
+  // ohne Fokus im Feld (z. B. per Diktat, US-218) erfasst wurden.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _overallCtrl = TextEditingController(text: widget.game.coachingNote ?? '');
+    // Gespeicherter Stand vor dem beim Öffnen übergebenen Spiel
+    final game =
+        ref.read(gameProvider(widget.game.id)).valueOrNull ?? widget.game;
+    _overallCtrl = TextEditingController(text: game.coachingNote ?? '');
     _overallFocus = FocusNode()..addListener(_saveOverallNoteOnBlur);
   }
 
@@ -921,13 +930,21 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
     if (!_overallFocus.hasFocus) _saveOverallNote();
   }
 
-  void _saveOverallNote() {
+  Future<void> _saveOverallNote() async {
     final note = _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
-    ref.read(gameRepositoryProvider).updateCoachingNote(widget.game.id, note);
+    // Container statt ref: der Tab kann beim Speichern schon weg sein
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container
+        .read(gameRepositoryProvider)
+        .updateCoachingNote(widget.game.id, note);
+    container
+      ..invalidate(gameProvider(widget.game.id))
+      ..invalidate(gamesProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final eventsAsync = ref.watch(eventsProvider(widget.game.id));
 
     return eventsAsync.when(
@@ -953,7 +970,11 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
                   )
                 else
                   ...coaching.map(
-                    (e) => _CoachingItem(event: e, game: widget.game),
+                    (e) => _CoachingItem(
+                      key: ValueKey(e.id),
+                      event: e,
+                      game: widget.game,
+                    ),
                   ),
               ],
             ),
@@ -1037,7 +1058,7 @@ class _CoachingItem extends ConsumerStatefulWidget {
   final Event event;
   final Game game;
 
-  const _CoachingItem({required this.event, required this.game});
+  const _CoachingItem({super.key, required this.event, required this.game});
 
   String get gameId => game.id;
 
@@ -1060,9 +1081,15 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
     if (!_noteFocus.hasFocus) _saveNote();
   }
 
-  void _saveNote() {
+  Future<void> _saveNote() async {
     final note = _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
-    ref.read(eventRepositoryProvider).updateCoachingNote(widget.event.id, note);
+    // Container statt ref: der Eintrag kann beim Speichern schon weg sein
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container
+        .read(eventRepositoryProvider)
+        .updateCoachingNote(widget.event.id, note);
+    // Szenenliste und Detail-Sheet zeigen sonst den alten Stand
+    container.invalidate(eventsProvider(widget.gameId));
   }
 
   Future<void> _toggleFlag() async {

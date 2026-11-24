@@ -154,6 +154,14 @@ Automatisierte Tests verwenden eine `FakeSpeechInput` (Provider-Override von `sp
 
 ---
 
+### TC-218-26: Notizen bleiben nach dem Tab-Wechsel erhalten
+
+**Aktion:** In der Coaching-Ansicht die Allgemeine Notiz und eine Coaching-Notiz zu einer Szene diktieren. Dann zum Tab „Szenen“ bzw. „Statistik“ wechseln und zurück zu „Coaching“.
+
+**Erwartetes Ergebnis:** Beide Notizen stehen unverändert in ihren Feldern. Im Szenen-Detail erscheint die diktierte Coaching-Notiz.
+
+---
+
 ## Fehler & Verfügbarkeit
 
 ### TC-218-16: Keine Spracherkennung vorhanden

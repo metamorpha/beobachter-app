@@ -312,11 +312,13 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
   - `dispose()` stoppt die Aufnahme.
   - Beim Start nimmt der Button dem Feld den Fokus (`primaryFocus?.unfocus()`). Sonst konnte die Tastatur, z. B. Gboard, ihren alten Textstand ohne das Diktat zurückschreiben. Das trat in der Coaching-Ansicht auf, wenn vorher getippt wurde.
   - Leere Ergebnisse werden ignoriert.
+  - `_CoachingTab` bleibt beim Tab-Wechsel erhalten (`AutomaticKeepAliveClientMixin`). Vorher hielt nur ein fokussiertes Feld den Tab am Leben. Ohne Fokus, z. B. nach einem Diktat, wurde der Tab aus veralteten Daten neu aufgebaut, und die Notizen waren weg.
+  - Nach dem Speichern werden die Daten neu geladen: bei Szenen-Notizen `eventsProvider`, bei der Allgemeinen Notiz `gameProvider` und `gamesProvider`. Die Allgemeine Notiz startet mit dem Stand aus `gameProvider`.
   - In der Coaching-Ansicht speichert `onFinished` sofort: `_saveNote` und `_saveOverallNote`. Das Speichern beim Fokusverlust liegt jetzt in `_save…OnBlur`.
 - **Berechtigungen:**
   - Android: `RECORD_AUDIO` und `<queries>` für `android.speech.RecognitionService`.
   - iOS: `NSMicrophoneUsageDescription` und `NSSpeechRecognitionUsageDescription`.
   - Windows: keine Änderung. Die Windows-Spracherkennung („Online-Spracherkennung“ in den Datenschutzeinstellungen) muss aktiv sein.
 - **Grenzen:** Die Windows-Unterstützung des Pakets ist Beta. macOS wird nicht unterstützt, es fehlen Entitlements, und macOS ist auch keine Zielplattform.
-- **Tests:** `test/spracheingabe_test.dart` (21 Tests). Die Geräteprüfung folgt TC-218-15 und TC-218-20 bis TC-218-22.
+- **Tests:** `test/spracheingabe_test.dart` (22 Tests). Die Geräteprüfung folgt TC-218-15 und TC-218-20 bis TC-218-22.
 
