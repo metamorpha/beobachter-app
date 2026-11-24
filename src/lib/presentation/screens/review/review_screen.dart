@@ -22,6 +22,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/event_type_style.dart';
 import '../../theme/form_factor.dart';
 import '../../theme/kit_colors.dart';
+import '../../widgets/dictation_button.dart';
 import '../../widgets/phone_dialog.dart';
 import '../../widgets/scene_info.dart';
 import '../../widgets/section_header.dart';
@@ -802,8 +803,9 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
           TextField(
             controller: _coachingCtrl,
             maxLines: 3,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Was möchte ich mit dem Schiedsrichter besprechen?',
+              suffixIcon: DictationButton.suffix(ref, _coachingCtrl),
             ),
           ),
           const SizedBox(height: AppSpacing.l),
@@ -912,14 +914,16 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
   void initState() {
     super.initState();
     _overallCtrl = TextEditingController(text: widget.game.coachingNote ?? '');
-    _overallFocus = FocusNode()..addListener(_saveOverallNote);
+    _overallFocus = FocusNode()..addListener(_saveOverallNoteOnBlur);
+  }
+
+  void _saveOverallNoteOnBlur() {
+    if (!_overallFocus.hasFocus) _saveOverallNote();
   }
 
   void _saveOverallNote() {
-    if (!_overallFocus.hasFocus) {
-      final note = _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
-      ref.read(gameRepositoryProvider).updateCoachingNote(widget.game.id, note);
-    }
+    final note = _overallCtrl.text.isEmpty ? null : _overallCtrl.text;
+    ref.read(gameRepositoryProvider).updateCoachingNote(widget.game.id, note);
   }
 
   @override
@@ -939,6 +943,7 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
                 _OverallNoteSection(
                   controller: _overallCtrl,
                   focusNode: _overallFocus,
+                  onDictated: _saveOverallNote,
                 ),
                 const SizedBox(height: AppSpacing.l),
                 if (coaching.isEmpty)
@@ -962,24 +967,26 @@ class _CoachingTabState extends ConsumerState<_CoachingTab> {
 
   @override
   void dispose() {
-    _overallFocus.removeListener(_saveOverallNote);
+    _overallFocus.removeListener(_saveOverallNoteOnBlur);
     _overallCtrl.dispose();
     _overallFocus.dispose();
     super.dispose();
   }
 }
 
-class _OverallNoteSection extends StatelessWidget {
+class _OverallNoteSection extends ConsumerWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
+  final VoidCallback onDictated;
 
   const _OverallNoteSection({
     required this.controller,
     required this.focusNode,
+    required this.onDictated,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       color: context.scheme.primaryContainer.withValues(alpha: 0.5),
       child: Padding(
@@ -1012,6 +1019,11 @@ class _OverallNoteSection extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'Eröffnungsworte, allgemeines Fazit …',
                 fillColor: context.scheme.surface,
+                suffixIcon: DictationButton.suffix(
+                  ref,
+                  controller,
+                  onFinished: onDictated,
+                ),
               ),
             ),
           ],
@@ -1041,16 +1053,16 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
   void initState() {
     super.initState();
     _noteCtrl = TextEditingController(text: widget.event.coachingNote ?? '');
-    _noteFocus = FocusNode()..addListener(_saveNote);
+    _noteFocus = FocusNode()..addListener(_saveNoteOnBlur);
+  }
+
+  void _saveNoteOnBlur() {
+    if (!_noteFocus.hasFocus) _saveNote();
   }
 
   void _saveNote() {
-    if (!_noteFocus.hasFocus) {
-      final note = _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
-      ref
-          .read(eventRepositoryProvider)
-          .updateCoachingNote(widget.event.id, note);
-    }
+    final note = _noteCtrl.text.isEmpty ? null : _noteCtrl.text;
+    ref.read(eventRepositoryProvider).updateCoachingNote(widget.event.id, note);
   }
 
   Future<void> _toggleFlag() async {
@@ -1156,8 +1168,13 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
                       controller: _noteCtrl,
                       focusNode: _noteFocus,
                       maxLines: null,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Coaching-Notiz …',
+                        suffixIcon: DictationButton.suffix(
+                          ref,
+                          _noteCtrl,
+                          onFinished: _saveNote,
+                        ),
                       ),
                     ),
                   ],
@@ -1172,7 +1189,7 @@ class _CoachingItemState extends ConsumerState<_CoachingItem> {
 
   @override
   void dispose() {
-    _noteFocus.removeListener(_saveNote);
+    _noteFocus.removeListener(_saveNoteOnBlur);
     _noteCtrl.dispose();
     _noteFocus.dispose();
     super.dispose();

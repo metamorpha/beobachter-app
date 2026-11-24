@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   screen_retriever_windows
+  speech_to_text_windows
   sqlite3_flutter_libs
   window_manager
 )

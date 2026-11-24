@@ -1385,3 +1385,61 @@ Keine neue Interaktion — nur mehr Information auf bestehenden Flächen. Beschr
 
 - Kopfzeile: Typ · Karte · Bewertung (Fortsetzung wandert in die Infozeile).
 - Auf dem Smartphone bricht die Infozeile um (Fouler und Fortsetzung untereinander).
+
+---
+
+## Flow 11 — Notiz per Sprache diktieren (US-218)
+
+```
+Notizfeld (Szenennotiz · Coaching-Notiz · Allgemeine Notiz)
+  │
+  ▼ Tap auf 🎤 (rechts im Feld)
+  │
+  ├── [Erstes Mal] System-Dialog Mikrofon-/Spracherkennungs-Freigabe
+  │     ├── erlaubt   → weiter
+  │     └── abgelehnt → SnackBar „Mikrofon nicht freigegeben", 🎤 bleibt bereit
+  │
+  ▼
+Aufnahme läuft  (🎤 rot, pulsiert; Tooltip „Aufnahme beenden")
+  │   erkannter Text erscheint live am Ende des Feldes
+  │
+  ├── Tap auf 🎤            → Aufnahme endet
+  ├── ca. 3 s Sprechpause   → Aufnahme endet automatisch
+  ├── Formular/Dialog zu    → Aufnahme endet, Text bleibt wie bei Tastatureingabe
+  └── Erkennungsfehler      → SnackBar mit Hinweis, Aufnahme endet
+  │
+  ▼
+Text steht im Feld, normal editierbar
+  (Coaching-Ansicht: wird sofort gespeichert wie beim Verlassen des Feldes)
+```
+
+Damit kostet eine diktierte Notiz im Ereignisformular **2 Taps** (Notiz aufklappen, 🎤) statt Tippen; Speichern bleibt unverändert.
+
+### Wireframe — Szenennotiz im Ereignisformular
+
+```
+  ˄ Notiz
+┌──────────────────────────────────────────────┐
+│ Hand am Trikot, Vorteil zu spät        🎤    │   bereit: mic_none, onSurfaceVariant
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│ Hand am Trikot, Vorteil zu spät ab|    (●)   │   hört zu: mic, Fehlerfarbe, pulsiert
+└──────────────────────────────────────────────┘
+```
+
+- Das Mikrofon ist das `suffixIcon` des Feldes — gleiches Muster in allen vier Notizfeldern (Szenennotiz, Coaching-Notiz im Detail-Sheet, Coaching-Notiz je Szene, Allgemeine Notiz).
+- Tippfläche mind. 48 dp, Tooltip „Diktieren" / „Aufnahme beenden".
+- Neuer Text wird mit einem Leerzeichen an vorhandenen Text angehängt, der Cursor steht danach am Ende.
+- Kein eigener Statusbereich, kein Overlay — die pulsierende Farbe reicht als Rückmeldung und verdeckt nichts.
+
+### Hinweise (SnackBar)
+
+| Situation | Text |
+|---|---|
+| Mikrofon/Spracherkennung abgelehnt | „Mikrofon nicht freigegeben" |
+| Keine Verbindung / Sprachpaket fehlt | „Spracherkennung nicht verfügbar – Internet oder Offline-Sprachpaket Deutsch erforderlich" |
+| Nichts verstanden | „Nichts erkannt – bitte noch einmal versuchen" |
+| Sonstiger Fehler | „Spracherkennung fehlgeschlagen" |
+
+Ist auf dem Gerät gar keine Spracherkennung vorhanden (Initialisierung schlägt fehl), wird das 🎤 nicht angezeigt — keine Fehlermeldung, das Feld sieht aus wie bisher.
