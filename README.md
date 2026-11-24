@@ -168,12 +168,13 @@ Eine Beispiel-CSV für den Import liegt unter [`resources/`](resources/).
 
 ### Builds (GitHub Actions)
 
-Windows und Android werden in zwei getrennten Workflows gebaut. Beide laufen bei jedem Push auf `main` und bei jedem Pull Request gegen `main`, sodass ein PR vor dem Merge für beide Plattformen geprüft ist. Zusätzlich lassen sie sich unter **Actions** einzeln über **Run workflow** starten:
+Windows, Android und iOS werden in getrennten Workflows gebaut. Alle laufen bei jedem Push auf `main` und bei jedem Pull Request gegen `main`, sodass ein PR vor dem Merge für alle Plattformen geprüft ist. Zusätzlich lassen sie sich unter **Actions** einzeln über **Run workflow** starten:
 
 | Workflow | Datei | Artefakt |
 |---|---|---|
 | Build Windows | [`build-windows.yml`](.github/workflows/build-windows.yml) | `beobachter-app-windows` (Release-Ordner) |
 | Build Android | [`build-android.yml`](.github/workflows/build-android.yml) | `beobachter-app-android` (`app-release.apk`) |
+| Build iOS | [`build-ios.yml`](.github/workflows/build-ios.yml) | `beobachter-app-ios` (`.ipa`, nur signiert) + Upload zu TestFlight |
 
 Die APK wird direkt auf dem Gerät installiert (kein Play Store; ggf. „Installation aus unbekannten Quellen" erlauben).
 
@@ -199,6 +200,44 @@ Dann unter **GitHub → Settings → Secrets and variables → Actions** anlegen
 | `ANDROID_KEY_PASSWORD` | Schlüssel-Passwort |
 
 Den Keystore und die Passwörter sicher aufbewahren – geht der Schlüssel verloren, lässt sich die App nicht mehr ohne Deinstallation aktualisieren. Für lokale Release-Builds eine `src/android/key.properties` anlegen (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`); sie ist per `.gitignore` ausgeschlossen. Fehlen Schlüssel oder Secrets, entsteht weiterhin eine debug-signierte APK.
+
+### iOS: Signierung und TestFlight einrichten
+
+Bei Pull Requests und Pushes auf `main` baut „Build iOS“ nur unsigniert, als Kompilierprüfung. Manuell (**Run workflow**) oder bei einem Tag `v*` baut er eine signierte `.ipa` und lädt sie zu TestFlight hoch. Das passiert nur, wenn die Secrets unten angelegt sind. Fehlen sie, gibt es eine Warnung, und der Lauf baut unsigniert.
+
+Einmalig bei Apple:
+
+1. Dem [Apple Developer Program](https://developer.apple.com/programs/) beitreten (99 €/Jahr). Die **Team-ID** steht unter *Membership details*.
+2. Unter *Certificates, Identifiers & Profiles*:
+   - **Identifier** (App ID) `de.beobachter.beobachterApp` anlegen.
+   - **Apple Distribution**-Zertifikat erstellen, in der Schlüsselbundverwaltung mit privatem Schlüssel als `.p12` exportieren und dabei ein Passwort vergeben.
+   - **Provisioning Profile** vom Typ *App Store Connect* für diese App ID und dieses Zertifikat erstellen und herunterladen.
+3. In [App Store Connect](https://appstoreconnect.apple.com) unter *Apps* die App „Beobachter“ mit dieser Bundle-ID anlegen.
+4. Unter *Benutzer und Zugriff → Integrationen → App Store Connect API* einen Schlüssel mit der Rolle *App Manager* erzeugen. Die `.p8`-Datei lässt sich nur einmal herunterladen. Key-ID und Issuer-ID notieren.
+5. In TestFlight eine **externe Testgruppe** anlegen und den **öffentlichen Link** aktivieren. Der erste Build einer Version durchläuft eine kurze Beta-Prüfung durch Apple. Danach installieren Kollegen über die App „TestFlight“ und den Link.
+
+Base64 erzeugen (macOS) und unter **GitHub → Settings → Secrets and variables → Actions** anlegen:
+
+```bash
+base64 -i Distribution.p12 | pbcopy
+base64 -i Beobachter_AppStore.mobileprovision | pbcopy
+base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy
+```
+
+| Secret | Inhalt |
+|---|---|
+| `IOS_TEAM_ID` | Team-ID (10 Zeichen) |
+| `IOS_DIST_CERT_P12_BASE64` | Base64 der `.p12` |
+| `IOS_DIST_CERT_PASSWORD` | Passwort der `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | Base64 des Provisioning Profiles |
+| `APPSTORE_API_KEY_ID` | Key-ID des API-Schlüssels |
+| `APPSTORE_API_ISSUER_ID` | Issuer-ID |
+| `APPSTORE_API_KEY_P8_BASE64` | Base64 der `.p8` |
+
+Hinweise:
+- **Gültigkeit:** TestFlight-Builds laufen nach **90 Tagen** ab. Spätestens dann braucht es einen neuen Lauf. Zertifikat und Profil gelten ein Jahr und müssen danach erneuert und als Secret ersetzt werden.
+- **Versionen:** Die Versionsnummer kommt aus `version` in `src/pubspec.yaml`, die Build-Nummer aus der Laufnummer. Für eine neue Version in TestFlight die Versionsnummer erhöhen.
+- **Lokale Builds:** Wer lokal auf einem Mac mit Xcode für ein eigenes iPhone baut, braucht keine Secrets: `flutter run --release`. Die Signierung dafür erfolgt in Xcode mit dem eigenen Apple-Account.
 
 ---
 
@@ -291,6 +330,16 @@ Die Anforderungen sind in sieben Epics gegliedert. Die vollständigen Stories mi
 | US-704 | **Nachbereitung und Statistik** auf dem Smartphone | ✅ |
 | US-705 | **Android-App-Grundlagen**: Name, Icon, feste Signatur | ✅ |
 | US-706 | **Getrennte Builds** für Windows und Android | ✅ |
+
+### Epic 8 — iOS (iPhone & iPad) · [details](docs/02_us_ios.md)
+
+| ID | Story | Status |
+|---|---|---|
+| US-801 | **iOS-Build in der CI**: unsigniert bei PRs, signiert manuell oder per Tag | ⏳ |
+| US-802 | **Verteilung über TestFlight** an einen kleinen Kreis | ⏳ |
+| US-803 | **Display bleibt während des Spiels an**, auch auf iPhone und iPad | ✅ |
+| US-804 | **Live-Screen quer auf dem iPhone**, auch auf dem iPhone SE | ✅ |
+| US-805 | **iPad** im Tablet-Layout, hoch und quer | ✅ |
 
 ### Ideen für später
 - Synchronisation mit einem Server

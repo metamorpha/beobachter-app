@@ -1,2 +1,6 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// Signierung für App Store/TestFlight — wird nur in der CI erzeugt
+// (build-ios.yml) und ist nicht eingecheckt (US-801).
+#include? "Signing.xcconfig"

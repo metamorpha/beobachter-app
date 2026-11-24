@@ -322,3 +322,25 @@ Widget-Tests nutzen `pumpAndSettle`; Endlos-Animationen würden nie zur Ruhe kom
 - **Grenzen:** Die Windows-Unterstützung des Pakets ist Beta. macOS wird nicht unterstützt, es fehlen Entitlements, und macOS ist auch keine Zielplattform.
 - **Tests:** `test/spracheingabe_test.dart` (22 Tests). Die Geräteprüfung folgt TC-218-15 und TC-218-20 bis TC-218-22.
 
+## iOS — iPhone & iPad (US-801–805)
+
+- **Entscheidung:** native Flutter-App statt Web-App (2026-11-24). Gründe: Auf iOS wären Offline-Speicher (Safari kann Website-Daten löschen), Offline-Start (Flutter erzeugt keinen Service Worker mehr), Display-Sperre und Querformat als Web-App nicht verlässlich.
+- **Plattform-Weiche:** `isAndroidProvider` heißt jetzt `isMobileProvider` (`Platform.isAndroid || Platform.isIOS`). Er steuert Display-Sperre (`live_screen.dart`) und Ausrichtung (`PreferredOrientation`). Das Layout entscheidet weiter nur `FormFactor.isPhone`: iPhone → Smartphone, iPad → Tablet.
+- **Display:** `AppDelegate.swift` bedient `de.beobachter/screen` → `setKeepScreenOn`. Das setzt `UIApplication.shared.isIdleTimerDisabled`. Der Messenger kommt aus `engineBridge.applicationRegistrar` (Flutter-Vorlage mit implizitem Engine-Start).
+- **Info.plist:**
+  - `CFBundleDisplayName` = „Beobachter“
+  - `ITSAppUsesNonExemptEncryption` = false, damit beim Upload keine Exportfrage kommt
+- **Icon:** Die iOS-Icons sind aus dem adaptiven Android-Icon gerendert: weißer Ball (`sports_soccer`) auf `#1B6B3A`, Ausschnitt wie die sichtbare Android-Zone (72 von 108 dp), ohne Alphakanal.
+- **Signierung:**
+  - `ios/Flutter/Release.xcconfig` bindet optional `Signing.xcconfig` ein (`#include?`). Die Datei schreibt nur die CI: Manual, Team, „Apple Distribution“, Profil-UUID. Sie steht in `.gitignore`.
+  - Weil die Einstellungen nur über die Basis-Konfiguration des Runner-Targets wirken, bleiben Swift-Package-Targets unberührt. Ein `PROVISIONING_PROFILE_SPECIFIER` auf der Kommandozeile würde sie brechen.
+  - `ExportOptions.plist` (`app-store-connect`, manual) entsteht ebenfalls in der CI.
+- **Upload:** `xcrun altool --upload-app` mit App-Store-Connect-API-Key (`~/.appstoreconnect/private_keys/AuthKey_<ID>.p8`).
+- **Swift Package Manager:** Flutter 3.47 stellt beim iOS-Build das Projekt auf SwiftPM und iOS 15 um. Das passiert in der CI bei jedem Lauf automatisch. Die Umstellung ist bewusst nicht eingecheckt, solange sie nicht auf einem echten Gerät geprüft ist.
+- **Kleine iPhones:** Die kompakte Kopfzeile des Live-Screens zeigt unter 200 dp Restbreite nur den Spielstand ohne Teamnamen (`FittedBox`). Unter 660 dp Gesamtbreite zeigen die Tor-Buttons „+“ statt „+ Tor“. Das betrifft das iPhone SE quer mit Zurück-Pfeil; 844 × 390 und die Goldens sind unverändert.
+- **Lokal:** Auf dem Entwicklungs-Mac fehlt die iOS-Plattform in Xcode („Found no destinations“). iOS wird deshalb nur in der CI gebaut.
+- **Tests:** Gruppe „US-803–805 · iOS“ in `test/android_smartphone_test.dart`:
+  - Kanal-Vertrag
+  - iPhone SE in allen Spielphasen
+  - iPad hoch und quer für Live-Screen, Liste, Setup und Nachbereitung
+

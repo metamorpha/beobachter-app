@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Offline-first** — no network required during a game
 - **Speed** — the user is distracted and time-pressured; every interaction must be minimal (one-tap where possible)
-- **Cross-platform** — iOS, Android, and Surface (Windows tablet)
+- **Cross-platform** — iOS (iPhone & iPad), Android, and Surface (Windows tablet)
 - **Local database** — server sync is optional/future
 - **Language** — UI and all user-facing text is German only (no i18n infrastructure)
 
@@ -67,6 +67,7 @@ Key design decisions:
 | `02_us_datenpersistenz.md` | User stories — Epic 5: Datenpersistenz & Offline (US-501–502) |
 | `02_us_ui_redesign.md` | User stories — Epic 6: UI-Modernisierung (US-601–606) |
 | `02_us_android.md` | User stories — Epic 7: Android-Smartphone (US-701–706) |
+| `02_us_ios.md` | User stories — Epic 8: iOS — iPhone & iPad (US-801–805) |
 | `03_ux_review.md` | UX feedback and decisions |
 | `04_ux_design.md` | Wireframes, user flows, UX principles |
 | `05_arch_review.md` | Architecture feasibility review |
@@ -93,6 +94,7 @@ Key design decisions:
 | `28_fouler_sr_ball_tests.md` | Fouler only, dropped ball decision — US-216/217 (17 TCs) |
 | `29_szeneninfos_tests.md` | Full scene info in scene list, detail sheet, coaching — US-308 (16 TCs) |
 | `30_spracheingabe_tests.md` | Dictate notes via speech input — US-218 (26 TCs) |
+| `31_ios_tests.md` | iOS build, TestFlight, wakelock, iPhone/iPad layout — US-801–805 (14 TCs) |
 
 ### src/lib/ structure
 
@@ -110,7 +112,7 @@ core/
   timer_service.dart              Background-safe game clock
   pressebericht_csv_parser.dart  DFB/FLVW Pressebericht CSV parser
 presentation/
-  platform/     device_providers (isAndroid, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch) · speech_input (SpeechInput, US-218)
+  platform/     device_providers (isMobile = Android/iOS, ScreenWakeLock) · preferred_orientation (Smartphone: Live quer, sonst hoch) · speech_input (SpeechInput, US-218)
   providers/    All Riverpod providers
   screens/      game_list · game_setup · live · review
   theme/        app_theme · app_colors (ThemeExtension) · app_spacing · app_motion · event_type_style · form_factor · kit_colors
@@ -131,7 +133,7 @@ flutter pub run build_runner build
 # Statische Analyse (prüft alle Dateien, auch main.dart — immer vor flutter test ausführen)
 flutter analyze
 
-# Run tests (372 tests incl. 18 golden, all green)
+# Run tests (392 tests incl. 18 golden, all green)
 flutter test
 
 # Golden-Referenzbilder neu erzeugen (nach gewollten UI-Änderungen) — nur auf macOS;
@@ -210,6 +212,7 @@ All MVP features are implemented. See `docs/07_implementation.md` and `docs/08_t
 | Nur Fouler, SR-Ball (US-216/217) | Done — Ereignisformular erfasst nur den Fouler; alte Gefoulten-Einträge bleiben beim Bearbeiten erhalten (`_legacyFouled`); `RefDecision.droppedBall` „SR-Ball" nach Einwurf; kein Schemawechsel |
 | Szeneninfos (US-308) | Done — Fouler (Teamfarbe + Name + #Nr.) und „Fortsetzung: …" in Szenenliste und Coaching-Ansicht, Detail-Sheet mit allen Feldern; gemeinsames Widget `SceneInfoLine`/`ScenePlayer` (`widgets/scene_info.dart`), Spieler über `eventPlayersProvider(gameId)` (einmal pro Spiel, hängt an `eventsProvider`); kein Schemawechsel |
 | Spracheingabe (US-218) | Done — Mikrofon (`DictationButton.suffix`) in Szenennotiz, Coaching-Notizen und Allgemeiner Notiz; `speech_to_text` über `speechInputProvider` (Systemerkennung, Deutsch, Text wird angehängt); ohne Erkennung kein Icon; Coaching-Notizen speichern nach dem Diktat sofort; kein Schemawechsel |
+| iOS — iPhone & iPad (US-801–805) | Done (CI-/Geräteprüfung offen) — `build-ios.yml` (macOS-Runner; unsigniert bei PR/`main`, signiert + TestFlight-Upload bei `workflow_dispatch`/Tag `v*`, Signatur über CI-erzeugte `ios/Flutter/Signing.xcconfig`); Display-Kanal `de.beobachter/screen` in `AppDelegate.swift`; `isMobileProvider` (Android oder iOS) steuert Wakelock und Ausrichtung; iOS-Icon aus dem Android-Icon; schmale Kopfzeile (iPhone SE) zeigt „+“ statt „+ Tor“ |
 | UI-Redesign (US-601–606) | Done — helles Theme mit Inter, Aktionsleiste unten links im Live-Screen, große Auswahlflächen, Karten-Layouts, Statistik-Dashboard; Farben nur über `context.colors` / `context.scheme` (Teamfarben über `TeamKits`) |
 
 ## Development Pipeline

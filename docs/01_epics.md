@@ -138,6 +138,26 @@ User Stories: [`02_us_android.md`](02_us_android.md)
 
 ---
 
+## Epic 8 — iOS (iPhone & iPad)
+
+**Ziel:** Die App läuft als native iOS-App auf iPhone und iPad, mit demselben Funktionsumfang wie auf Android und Windows.
+
+**Warum wichtig:** Viele Beobachter nutzen ein iPhone oder iPad. Eine Web-App würde Offline-Betrieb, eingeschaltetes Display und Querformat auf iOS nicht zuverlässig leisten (Entscheidung 2026-11-24).
+
+**Scope:**
+- iOS-Build in der CI (GitHub Actions, macOS-Runner)
+- Verteilung an einen kleinen Kreis (< 100 Personen) über TestFlight
+- Display bleibt während des Spiels an, Live-Screen auf dem iPhone quer – wie auf Android
+- iPad nutzt das Tablet-Layout
+
+**Außerhalb Scope:**
+- Öffentlicher App Store, Web-App
+- Änderungen an Geschäftslogik oder Datenmodell
+
+User Stories: [`02_us_ios.md`](02_us_ios.md)
+
+---
+
 ## Priorisierung
 
 | Priorität | Epic | Begründung |
